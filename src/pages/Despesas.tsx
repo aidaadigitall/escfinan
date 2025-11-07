@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Search, Eye, Edit, Trash2, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 const summaryData = [
   { label: "Vencidos", value: "1.250,00", variant: "expense" as const },
@@ -53,16 +54,40 @@ const transactions = [
 ];
 
 const Despesas = () => {
+  const handleAdvancedSearch = () => {
+    toast.info("Busca avançada em desenvolvimento");
+  };
+
+  const handleAdd = () => {
+    toast.info("Adicionar nova conta a pagar em desenvolvimento");
+  };
+
+  const handleView = (id: string) => {
+    toast.info(`Visualizar conta ${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    toast.info(`Editar conta ${id}`);
+  };
+
+  const handleDelete = (id: string) => {
+    toast.success(`Conta ${id} excluída com sucesso`);
+  };
+
+  const handleCopy = (id: string) => {
+    toast.success(`Conta ${id} copiada com sucesso`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Contas a Pagar</h1>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleAdvancedSearch}>
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Adicionar
           </Button>
@@ -122,16 +147,36 @@ const Despesas = () => {
                 <TableCell className="font-semibold">{transaction.value}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleView(transaction.id)}
+                    >
                       <Eye className="h-4 w-4 text-primary" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleEdit(transaction.id)}
+                    >
                       <Edit className="h-4 w-4 text-warning" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleDelete(transaction.id)}
+                    >
                       <Trash2 className="h-4 w-4 text-expense" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleCopy(transaction.id)}
+                    >
                       <Copy className="h-4 w-4 text-income" />
                     </Button>
                   </div>
