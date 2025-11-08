@@ -8,12 +8,14 @@ import {
   Settings,
   Receipt,
   CreditCard,
+  BarChart3,
 } from "lucide-react";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", path: "/" },
   { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
   { icon: CreditCard, label: "Contas a Pagar", path: "/despesas" },
+  { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-caixa" },
   { icon: TrendingUp, label: "Relatórios", path: "/relatorios" },
   { icon: Wallet, label: "Carteiras", path: "/carteiras" },
   { icon: FileText, label: "Categorias", path: "/categorias" },
