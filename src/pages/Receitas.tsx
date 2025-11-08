@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,81 +10,112 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Search, Eye, Edit, Trash2, Copy } from "lucide-react";
+import { useTransactions, Transaction } from "@/hooks/useTransactions";
+import { TransactionDialog } from "@/components/TransactionDialog";
 import { toast } from "sonner";
 
-const summaryData = [
-  { label: "Vencidos", value: "499,90", variant: "expense" as const },
-  { label: "Vencem hoje", value: "130,00", variant: "warning" as const },
-  { label: "A vencer", value: "7.758,54", variant: "pending" as const },
-  { label: "Recebidos", value: "522,58", variant: "income" as const },
-  { label: "Total", value: "8.911,02", variant: "default" as const },
-];
-
-const transactions = [
-  {
-    id: "10940",
-    description: "Empréstimo Elton",
-    entity: "Elton Santos",
-    account: "Recebimento de empréstimo",
-    payment: "PIX",
-    date: "03/11/2025",
-    status: "Confirmada",
-    value: "89,34",
-  },
-  {
-    id: "9902",
-    description: "Contrato de serviços nº 124 (2/6)",
-    entity: "MARTELENA ALMEIDA",
-    account: "Contratos de serviços",
-    payment: "PIX",
-    date: "04/11/2025",
-    status: "Confirmada",
-    value: "31,44",
-  },
-  {
-    id: "9903",
-    description: "Contrato de serviços nº 124 (2/6)",
-    entity: "MARTELENA ALMEIDA",
-    account: "Contratos de serviços",
-    payment: "PIX",
-    date: "04/11/2025",
-    status: "Confirmada",
-    value: "31,14",
-  },
-];
-
 const Receitas = () => {
-  const handleAdvancedSearch = () => {
-    toast.info("Busca avançada em desenvolvimento");
-  };
+  const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("income");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+
+  const summaryData = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const overdue = transactions.filter(t => 
+      new Date(t.due_date) < today && t.status !== "received"
+    );
+    const dueToday = transactions.filter(t => {
+      const dueDate = new Date(t.due_date);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate.getTime() === today.getTime() && t.status !== "received";
+    });
+    const upcoming = transactions.filter(t => 
+      new Date(t.due_date) > today && t.status !== "received"
+    );
+    const received = transactions.filter(t => t.status === "received");
+
+    const total = transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const overdueTotal = overdue.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const dueTodayTotal = dueToday.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const upcomingTotal = upcoming.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const receivedTotal = received.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+
+    return [
+      { label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "expense" as const },
+      { label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const },
+      { label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "pending" as const },
+      { label: "Recebidos", value: receivedTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "income" as const },
+      { label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const },
+    ];
+  }, [transactions]);
 
   const handleAdd = () => {
-    toast.info("Adicionar nova conta a receber em desenvolvimento");
+    setSelectedTransaction(undefined);
+    setDialogOpen(true);
   };
 
-  const handleView = (id: string) => {
-    toast.info(`Visualizar conta ${id}`);
-  };
-
-  const handleEdit = (id: string) => {
-    toast.info(`Editar conta ${id}`);
+  const handleEdit = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    toast.success(`Conta ${id} excluída com sucesso`);
+    setTransactionToDelete(id);
+    setDeleteDialogOpen(true);
   };
 
-  const handleCopy = (id: string) => {
-    toast.success(`Conta ${id} copiada com sucesso`);
+  const confirmDelete = () => {
+    if (transactionToDelete) {
+      deleteTransaction(transactionToDelete);
+      setDeleteDialogOpen(false);
+      setTransactionToDelete(null);
+    }
   };
+
+  const handleCopy = (transaction: Transaction) => {
+    const { id, user_id, created_at, updated_at, ...transactionData } = transaction;
+    createTransaction(transactionData);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; className: string }> = {
+      pending: { label: "Pendente", className: "bg-warning text-warning-foreground" },
+      confirmed: { label: "Confirmada", className: "bg-income text-income-foreground" },
+      overdue: { label: "Atrasada", className: "bg-destructive text-destructive-foreground" },
+      received: { label: "Recebida", className: "bg-income text-income-foreground" },
+    };
+    return statusMap[status] || { label: status, className: "bg-muted text-muted-foreground" };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Contas a Receber</h1>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm" onClick={handleAdvancedSearch}>
+          <Button variant="outline" size="sm">
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
           </Button>
@@ -115,10 +147,9 @@ const Receitas = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nº</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Entidade</TableHead>
-              <TableHead>Plano de contas</TableHead>
+              <TableHead>Conta</TableHead>
               <TableHead>Pagamento</TableHead>
               <TableHead>Data</TableHead>
               <TableHead>Situação</TableHead>
@@ -127,61 +158,108 @@ const Receitas = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell className="font-medium">{transaction.id}</TableCell>
-                <TableCell>{transaction.description}</TableCell>
-                <TableCell>{transaction.entity}</TableCell>
-                <TableCell>{transaction.account}</TableCell>
-                <TableCell>{transaction.payment}</TableCell>
-                <TableCell>{transaction.date}</TableCell>
-                <TableCell>
-                  <Badge className="bg-income text-income-foreground">
-                    {transaction.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-semibold">{transaction.value}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => handleView(transaction.id)}
-                    >
-                      <Eye className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => handleEdit(transaction.id)}
-                    >
-                      <Edit className="h-4 w-4 text-warning" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => handleDelete(transaction.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-expense" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => handleCopy(transaction.id)}
-                    >
-                      <Copy className="h-4 w-4 text-income" />
-                    </Button>
-                  </div>
+            {transactions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  Nenhuma conta a receber cadastrada
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              transactions.map((transaction) => {
+                const statusBadge = getStatusBadge(transaction.status);
+                return (
+                  <TableRow key={transaction.id}>
+                    <TableCell>{transaction.description}</TableCell>
+                    <TableCell>{transaction.entity || "-"}</TableCell>
+                    <TableCell>{transaction.account || "-"}</TableCell>
+                    <TableCell>{transaction.payment_method || "-"}</TableCell>
+                    <TableCell>{new Date(transaction.due_date).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>
+                      <Badge className={statusBadge.className}>
+                        {statusBadge.label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleEdit(transaction)}
+                          title="Visualizar/Editar"
+                        >
+                          <Eye className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleEdit(transaction)}
+                          title="Editar"
+                        >
+                          <Edit className="h-4 w-4 text-warning" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleDelete(transaction.id)}
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4 text-expense" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleCopy(transaction)}
+                          title="Copiar"
+                        >
+                          <Copy className="h-4 w-4 text-income" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </Card>
+
+      <TransactionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        type="income"
+        transaction={selectedTransaction}
+        onSave={(data) => {
+          if (selectedTransaction) {
+            updateTransaction(data);
+          } else {
+            createTransaction(data);
+          }
+        }}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta conta a receber? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
