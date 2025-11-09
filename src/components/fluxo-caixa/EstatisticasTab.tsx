@@ -1,29 +1,41 @@
 import { Card } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { useFluxoCaixaData } from "@/hooks/useFluxoCaixaData";
 
-const cashFlowData = [
-  { month: "11 2025", value: -4073.47 },
-];
+interface EstatisticasTabProps {
+  selectedPeriod: { start: Date; end: Date };
+}
 
-const paymentsVsReceiptsData = [
-  { name: "Pagamentos", value: 12984.48, color: "hsl(var(--expense))" },
-  { name: "Recebimentos", value: 8911.02, color: "hsl(var(--income))" },
-];
+export const EstatisticasTab = ({ selectedPeriod }: EstatisticasTabProps) => {
+  const { income, expenses, categoryData, isLoading } = useFluxoCaixaData(selectedPeriod);
 
-const accountPlanData = [
-  { name: "Combustível e translados", value: 3930.80, color: "#FF6B35" },
-  { name: "Área Comercial", value: 2676.44, color: "#004E89" },
-  { name: "Licença ou Aluguel de softwares", value: 1730.00, color: "#1A936F" },
-  { name: "Marketing e publicidade", value: 1480.44, color: "#F77F00" },
-  { name: "Telefones", value: 627.60, color: "#D62828" },
-  { name: "Servidor de contabilidade", value: 656.90, color: "#8338EC" },
-  { name: "Salário", value: 0, color: "#4CC9F0" },
-  { name: "Pró Labore", value: 0, color: "#9D4EDD" },
-  { name: "Outros", value: 883.30, color: "#06AED5" },
-];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-export const EstatisticasTab = () => {
+  const cashFlowData = [
+    { month: "Período", value: income - expenses },
+  ];
+
+  const paymentsVsReceiptsData = [
+    { name: "Pagamentos", value: expenses, color: "hsl(var(--expense))" },
+    { name: "Recebimentos", value: income, color: "hsl(var(--income))" },
+  ];
+
+  const colors = [
+    "#FF6B35", "#004E89", "#1A936F", "#F77F00", "#D62828", 
+    "#8338EC", "#4CC9F0", "#9D4EDD", "#06AED5", "#FFB627"
+  ];
+
+  const accountPlanData = categoryData.map((item, index) => ({
+    ...item,
+    color: colors[index % colors.length],
+  }));
+
   return (
     <div className="space-y-6">
       {/* Cash Flow Chart */}
@@ -31,10 +43,17 @@ export const EstatisticasTab = () => {
         <h3 className="text-lg font-semibold mb-4">Fluxo de caixa mensal</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={cashFlowData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
+            <YAxis stroke="hsl(var(--muted-foreground))" />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: "hsl(var(--card))", 
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "8px"
+              }}
+              formatter={(value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} 
+            />
             <Bar dataKey="value" fill="hsl(var(--primary))" />
           </BarChart>
         </ResponsiveContainer>
@@ -60,7 +79,14 @@ export const EstatisticasTab = () => {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: "hsl(var(--card))", 
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px"
+                }}
+                formatter={(value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} 
+              />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-4 space-y-2">
@@ -69,14 +95,14 @@ export const EstatisticasTab = () => {
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: "hsl(var(--expense))" }}></div>
                 <span className="text-sm">Pagamentos</span>
               </div>
-              <span className="font-semibold">Total:8112.284,48</span>
+              <span className="font-semibold">Total: {expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: "hsl(var(--income))" }}></div>
                 <span className="text-sm">Recebimentos</span>
               </div>
-              <span className="font-semibold">Total:8818.911,02</span>
+              <span className="font-semibold">Total: {income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
         </Card>
@@ -99,14 +125,21 @@ export const EstatisticasTab = () => {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: "hsl(var(--card))", 
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px"
+                }}
+                formatter={(value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} 
+              />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
             {accountPlanData.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }}></div>
-                <span className="truncate">{item.name}</span>
+                <span className="truncate">{item.name}: {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
             ))}
           </div>

@@ -10,10 +10,16 @@ import { DemonstrativoTab } from "@/components/fluxo-caixa/DemonstrativoTab";
 import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import { PeriodSelector } from "@/components/fluxo-caixa/PeriodSelector";
 import { toast } from "sonner";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 const FluxoDeCaixa = () => {
+  const today = new Date();
   const [activeTab, setActiveTab] = useState("saldo");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState({
+    start: startOfMonth(today),
+    end: endOfMonth(today),
+  });
 
   const handleExport = () => {
     toast.success("Exportando dados...");
@@ -26,7 +32,7 @@ const FluxoDeCaixa = () => {
           <span className="text-primary">📊</span> Fluxo de caixa
         </h1>
         <div className="flex gap-3">
-          <PeriodSelector />
+          <PeriodSelector onPeriodChange={setSelectedPeriod} />
           <Button variant="outline" size="sm" onClick={() => setSearchOpen(true)}>
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
@@ -54,19 +60,19 @@ const FluxoDeCaixa = () => {
         </TabsContent>
 
         <TabsContent value="resumo">
-          <ResumoTab />
+          <ResumoTab selectedPeriod={selectedPeriod} />
         </TabsContent>
 
         <TabsContent value="diario">
-          <DiarioTab />
+          <DiarioTab selectedPeriod={selectedPeriod} />
         </TabsContent>
 
         <TabsContent value="estatisticas">
-          <EstatisticasTab />
+          <EstatisticasTab selectedPeriod={selectedPeriod} />
         </TabsContent>
 
         <TabsContent value="demonstrativo">
-          <DemonstrativoTab />
+          <DemonstrativoTab selectedPeriod={selectedPeriod} />
         </TabsContent>
       </Tabs>
 

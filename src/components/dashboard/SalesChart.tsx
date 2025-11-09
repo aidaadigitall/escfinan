@@ -1,21 +1,26 @@
 import { Card } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-const data = [
-  { name: "Jan", valor: 9500 },
-  { name: "Fev", valor: 10200 },
-  { name: "Mar", valor: 9800 },
-  { name: "Abr", valor: 9200 },
-  { name: "Mai", valor: 6800 },
-  { name: "Jun", valor: 3200 },
-];
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 export const SalesChart = () => {
+  const { last6MonthsData, isLoading } = useDashboardData();
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Gráfico de despesas</h3>
+        <div className="flex items-center justify-center h-[300px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">Gráfico de despesas</h3>
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data}>
+        <BarChart data={last6MonthsData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
           <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -25,6 +30,7 @@ export const SalesChart = () => {
               border: "1px solid hsl(var(--border))",
               borderRadius: "8px"
             }}
+            formatter={(value: number) => Math.abs(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           />
           <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
         </BarChart>
