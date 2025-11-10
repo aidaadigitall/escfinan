@@ -53,6 +53,7 @@ const Dashboard = () => {
           expected={`R$ ${(monthIncomeReceived + monthIncomePending).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           percentage={incomePercentage}
           linkText="Ir para fluxo de caixa"
+          onLinkClick={() => navigate("/fluxo-de-caixa")}
         />
         <ProgressCard
           title="Pagamentos do mês"
@@ -62,6 +63,7 @@ const Dashboard = () => {
           expected={`R$ ${(monthExpensesPaid + monthExpensesPending).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           percentage={expensePercentage}
           linkText="Ir para fluxo de caixa"
+          onLinkClick={() => navigate("/fluxo-de-caixa")}
         />
       </div>
 
