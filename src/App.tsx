@@ -11,6 +11,9 @@ import Despesas from "./pages/Despesas";
 import FluxoDeCaixa from "./pages/FluxoDeCaixa";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ContasFixas from "./pages/ContasFixas";
+import ContasBancarias from "./pages/ContasBancarias";
+import CentrosCustos from "./pages/CentrosCustos";
 
 const queryClient = new QueryClient();
 
@@ -31,17 +34,17 @@ const App = () => (
           <Route path="/boletos/remessas" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Remessas</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/boletos/retornos" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Retornos</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/caixas" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Caixas</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
-          <Route path="/auxiliares/contas-bancarias" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Contas Bancárias</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
+          <Route path="/auxiliares/contas-bancarias" element={<ProtectedRoute><Layout><ContasBancarias /></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/formas-pagamento" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Formas de Pagamento</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/plano-contas" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Plano de Contas</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/situacoes" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Situações</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
-          <Route path="/auxiliares/centros-custos" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Centros de Custos</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
+          <Route path="/auxiliares/centros-custos" element={<ProtectedRoute><Layout><CentrosCustos /></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/conciliacao" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Conciliação Bancária</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/transferencias" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Transferências</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/campos-extras" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Campos Extras</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/modelos-emails" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Modelos de E-mails</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/tabelas-rateios" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Tabelas de Rateios</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
-          <Route path="/contas-fixas" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Contas Fixas</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
+          <Route path="/contas-fixas" element={<ProtectedRoute><Layout><ContasFixas /></Layout></ProtectedRoute>} />
           <Route path="/configuracoes" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Configurações</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
