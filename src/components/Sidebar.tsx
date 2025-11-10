@@ -34,7 +34,7 @@ const menuItems: MenuItem[] = [
   { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
   { icon: CreditCard, label: "Contas a Pagar", path: "/despesas" },
   { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
-  { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-caixa" },
+  { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },
   {
     icon: Landmark,
     label: "Boletos Bancários",

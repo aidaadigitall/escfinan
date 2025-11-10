@@ -6,7 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCategories } from "@/hooks/useCategories";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { useClients } from "@/hooks/useClients";
+import { useSuppliers } from "@/hooks/useSuppliers";
+import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { Transaction } from "@/hooks/useTransactions";
+import { QuickAddDialog } from "@/components/QuickAddDialog";
+import { Plus } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
@@ -27,6 +33,13 @@ type TransactionDialogProps = {
 
 export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSave }: TransactionDialogProps) => {
   const { categories } = useCategories(type);
+  const { paymentMethods, createPaymentMethod } = usePaymentMethods();
+  const { clients, createClient } = useClients();
+  const { suppliers, createSupplier } = useSuppliers();
+  const { accounts: bankAccounts } = useBankAccounts();
+  
+  const [quickAddOpen, setQuickAddOpen] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState<{
     description: string;
     amount: string;
@@ -174,38 +187,86 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
 
             <div className="space-y-2">
               <Label htmlFor="entity">Entidade</Label>
-              <Input
-                id="entity"
-                value={formData.entity}
-                onChange={(e) => setFormData({ ...formData, entity: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <Select value={formData.entity} onValueChange={(value) => setFormData({ ...formData, entity: value })}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecione uma entidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.name}>
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("entity")}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="client">Cliente</Label>
-              <Input
-                id="client"
-                value={formData.client}
-                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <Select value={formData.client} onValueChange={(value) => setFormData({ ...formData, client: value })}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.name}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("client")}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="account">Conta</Label>
-              <Input
-                id="account"
-                value={formData.account}
-                onChange={(e) => setFormData({ ...formData, account: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <Select value={formData.account} onValueChange={(value) => setFormData({ ...formData, account: value })}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecione uma conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.name}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("account")}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="payment_method">Forma de Pagamento</Label>
-              <Input
-                id="payment_method"
-                value={formData.payment_method}
-                onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecione uma forma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethods.map((method) => (
+                      <SelectItem key={method.id} value={method.name}>
+                        {method.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("payment")}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -264,6 +325,36 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
           </div>
         </form>
       </DialogContent>
+      
+      <QuickAddDialog
+        open={quickAddOpen === "entity"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title="Adicionar Fornecedor"
+        onSave={(name) => {
+          createSupplier(name);
+          setFormData({ ...formData, entity: name });
+        }}
+      />
+      
+      <QuickAddDialog
+        open={quickAddOpen === "client"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title="Adicionar Cliente"
+        onSave={(name) => {
+          createClient(name);
+          setFormData({ ...formData, client: name });
+        }}
+      />
+      
+      <QuickAddDialog
+        open={quickAddOpen === "payment"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title="Adicionar Forma de Pagamento"
+        onSave={(name) => {
+          createPaymentMethod(name);
+          setFormData({ ...formData, payment_method: name });
+        }}
+      />
     </Dialog>
   );
 };
