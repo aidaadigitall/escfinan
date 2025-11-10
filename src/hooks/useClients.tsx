@@ -6,10 +6,19 @@ export type Client = {
   id: string;
   user_id: string;
   name: string;
-  document?: string;
+  company_name?: string;
+  cpf?: string;
+  cnpj?: string;
   email?: string;
   phone?: string;
+  zipcode?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  notes?: string;
+  is_active: boolean;
   created_at: string;
+  updated_at?: string;
 };
 
 export const useClients = () => {
@@ -29,13 +38,13 @@ export const useClients = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (clientData: Omit<Client, "id" | "user_id" | "created_at" | "updated_at" | "is_active">) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       const { data, error } = await supabase
         .from("clients")
-        .insert({ name, user_id: user.id })
+        .insert({ ...clientData, user_id: user.id })
         .select()
         .single();
 
@@ -51,9 +60,50 @@ export const useClients = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, ...clientData }: Partial<Client> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("clients")
+        .update(clientData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast.success("Cliente atualizado com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao atualizar cliente");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("clients")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast.success("Cliente excluído com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao excluir cliente");
+    },
+  });
+
   return {
     clients,
     isLoading,
     createClient: createMutation.mutate,
+    updateClient: updateMutation.mutate,
+    deleteClient: deleteMutation.mutate,
   };
 };

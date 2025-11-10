@@ -32,7 +32,7 @@ type TransactionDialogProps = {
 };
 
 export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSave }: TransactionDialogProps) => {
-  const { categories } = useCategories(type);
+  const { categories, createCategory } = useCategories(type);
   const { paymentMethods, createPaymentMethod } = usePaymentMethods();
   const { clients, createClient } = useClients();
   const { suppliers, createSupplier } = useSuppliers();
@@ -171,18 +171,23 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
 
             <div className="space-y-2">
               <Label htmlFor="category">Categoria</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("category")}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -327,11 +332,21 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
       </DialogContent>
       
       <QuickAddDialog
+        open={quickAddOpen === "category"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title={`Adicionar Categoria de ${type === "income" ? "Receita" : "Despesa"}`}
+        onSave={(name) => {
+          createCategory({ name, type });
+          // Não define formData.category_id aqui pois precisamos do ID retornado
+        }}
+      />
+      
+      <QuickAddDialog
         open={quickAddOpen === "entity"}
         onOpenChange={(open) => !open && setQuickAddOpen(null)}
         title="Adicionar Fornecedor"
         onSave={(name) => {
-          createSupplier(name);
+          createSupplier({ name });
           setFormData({ ...formData, entity: name });
         }}
       />
@@ -341,7 +356,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         onOpenChange={(open) => !open && setQuickAddOpen(null)}
         title="Adicionar Cliente"
         onSave={(name) => {
-          createClient(name);
+          createClient({ name });
           setFormData({ ...formData, client: name });
         }}
       />
