@@ -1,12 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
-import { Building2, TrendingDown, TrendingUp } from "lucide-react";
+import { Building2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 
 export const BankAccountsCard = () => {
   const { accounts: bankAccounts, isLoading } = useBankAccounts();
   const navigate = useNavigate();
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(
+    bankAccounts.map(acc => acc.id)
+  );
 
   if (isLoading) {
     return (
@@ -19,88 +24,137 @@ export const BankAccountsCard = () => {
     );
   }
 
-  const totalBalance = bankAccounts.reduce(
-    (sum, account) => sum + parseFloat(account.current_balance.toString()),
-    0
+  // Filter accounts based on selection
+  const visibleAccounts = bankAccounts.filter(acc => 
+    selectedAccounts.includes(acc.id)
   );
+
+  // Calculate max balance for chart scaling
+  const maxBalance = Math.max(
+    ...bankAccounts.map(acc => Math.abs(parseFloat(acc.current_balance.toString()))),
+    100
+  );
+
+  // Toggle account visibility
+  const toggleAccount = (accountId: string) => {
+    setSelectedAccounts(prev => 
+      prev.includes(accountId) 
+        ? prev.filter(id => id !== accountId)
+        : [...prev, accountId]
+    );
+  };
+
+  // Define colors for accounts
+  const accountColors = [
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+  ];
 
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Contas Bancárias</h3>
+        <h3 className="text-lg font-semibold">Contas bancárias</h3>
         <Button 
           variant="ghost" 
-          size="sm"
-          onClick={() => navigate("/boletos-bancarios")}
+          size="icon"
+          onClick={() => navigate("/auxiliares/contas-bancarias")}
+          className="h-8 w-8"
         >
-          Ver todas
+          <Settings2 className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="mb-6 p-4 bg-primary/10 rounded-lg">
-        <p className="text-sm text-muted-foreground mb-1">Saldo Total</p>
-        <p className={`text-2xl font-bold ${
-          totalBalance >= 0 ? "text-income" : "text-expense"
-        }`}>
-          R$ {totalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+      {bankAccounts.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8">
+          Nenhuma conta bancária cadastrada
         </p>
-      </div>
+      ) : (
+        <>
+          {/* Chart Area */}
+          <div className="mb-6">
+            <div className="h-48 flex items-end gap-2 mb-2">
+              {visibleAccounts.map((account, index) => {
+                const balance = Math.abs(parseFloat(account.current_balance.toString()));
+                const heightPercentage = (balance / maxBalance) * 100;
+                const color = accountColors[index % accountColors.length];
 
-      <div className="space-y-3">
-        {bankAccounts.length === 0 ? (
-          <p className="text-center text-muted-foreground py-4">
-            Nenhuma conta bancária cadastrada
-          </p>
-        ) : (
-          bankAccounts.slice(0, 4).map((account) => {
-            const balance = parseFloat(account.current_balance.toString());
-            const isPositive = balance >= 0;
-
-            return (
-              <div
-                key={account.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-background rounded-lg">
-                    <Building2 className="h-4 w-4 text-primary" />
+                return (
+                  <div key={account.id} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full flex items-end justify-center" style={{ height: "180px" }}>
+                      <div
+                        className="w-full rounded-t transition-all duration-300"
+                        style={{
+                          height: `${heightPercentage}%`,
+                          backgroundColor: color,
+                          minHeight: "8px"
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{account.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {account.bank_name || "Banco"}
-                    </p>
+                );
+              })}
+            </div>
+            <div className="text-center text-xs text-muted-foreground border-t pt-2">
+              Saldo atual
+            </div>
+          </div>
+
+          {/* Account List with Checkboxes */}
+          <div className="border rounded-lg p-3 mb-4">
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {bankAccounts.map((account, index) => {
+                const balance = parseFloat(account.current_balance.toString());
+                const color = accountColors[index % accountColors.length];
+                
+                return (
+                  <div key={account.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`account-${account.id}`}
+                      checked={selectedAccounts.includes(account.id)}
+                      onCheckedChange={() => toggleAccount(account.id)}
+                    />
+                    <label
+                      htmlFor={`account-${account.id}`}
+                      className="flex items-center gap-2 flex-1 cursor-pointer text-sm"
+                    >
+                      <div 
+                        className="w-3 h-3 rounded-sm"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="flex-1">{account.name}</span>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Legend with Values */}
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {visibleAccounts.map((account, index) => {
+              const balance = parseFloat(account.current_balance.toString());
+              const color = accountColors[index % accountColors.length];
+              
+              return (
+                <div key={account.id} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{account.name}</div>
+                    <div className={`text-xs ${balance >= 0 ? 'text-income' : 'text-expense'}`}>
+                      ({balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={`font-semibold text-sm ${
-                    isPositive ? "text-income" : "text-expense"
-                  }`}>
-                    R$ {Math.abs(balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                  <div className="flex items-center justify-end gap-1">
-                    {isPositive ? (
-                      <TrendingUp className="h-3 w-3 text-income" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-expense" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {bankAccounts.length > 4 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full mt-3"
-          onClick={() => navigate("/boletos-bancarios")}
-        >
-          Ver mais {bankAccounts.length - 4} contas
-        </Button>
+              );
+            })}
+          </div>
+        </>
       )}
     </Card>
   );
