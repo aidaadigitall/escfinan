@@ -32,12 +32,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { BankStatementImportDialog } from "@/components/BankStatementImportDialog";
 
 const ContasBancarias = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [selectedAccountForExport, setSelectedAccountForExport] = useState<string | null>(null);
+  const [selectedAccountForImport, setSelectedAccountForImport] = useState<string | null>(null);
   const [selectedAccountName, setSelectedAccountName] = useState<string>("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
@@ -116,67 +118,10 @@ const ContasBancarias = () => {
     setSelectedAccountName("");
   };
 
-  const handleImportStatement = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      const lines = text.split("\n");
-      
-      // Skip header
-      const dataLines = lines.slice(1).filter(line => line.trim());
-      
-      let imported = 0;
-      let errors = 0;
-
-      for (const line of dataLines) {
-        const [date, description, type, value, status] = line.split(";");
-        
-        if (!date || !description || !value) {
-          errors++;
-          continue;
-        }
-
-        try {
-          const [day, month, year] = date.trim().split("/");
-          const dueDate = `${year}-${month}-${day}`;
-          const amount = Math.abs(parseFloat(value.replace(",", ".")));
-          const transactionType = type?.toLowerCase().includes("receita") ? "income" : "expense";
-          const transactionStatus = status?.toLowerCase().includes("confirmado") ? "confirmed" : "pending";
-
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) continue;
-
-          await supabase.from("transactions").insert({
-            user_id: user.id,
-            description: description.trim(),
-            amount: amount,
-            type: transactionType,
-            status: transactionStatus,
-            due_date: dueDate,
-            bank_account_id: selectedAccountForExport,
-          });
-
-          imported++;
-        } catch (error) {
-          errors++;
-        }
-      }
-
-      if (imported > 0) {
-        toast.success(`${imported} transação(ões) importada(s) com sucesso!`);
-      }
-      if (errors > 0) {
-        toast.error(`${errors} transação(ões) com erro na importação`);
-      }
-
-      setImportDialogOpen(false);
-      setSelectedAccountForExport(null);
-    };
-    
-    reader.readAsText(file);
+  const openImportDialog = (accountId: string, accountName: string) => {
+    setSelectedAccountForImport(accountId);
+    setSelectedAccountName(accountName);
+    setImportDialogOpen(true);
   };
 
   const onSubmit = (data: any) => {
@@ -247,10 +192,7 @@ const ContasBancarias = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => {
-                          setSelectedAccountForExport(account.id);
-                          setImportDialogOpen(true);
-                        }}
+                        onClick={() => openImportDialog(account.id, account.name)}
                         title="Importar Extrato"
                       >
                         <Upload className="h-4 w-4" />
@@ -304,42 +246,12 @@ const ContasBancarias = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Importar Extrato Bancário</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              <p className="mb-2">O arquivo deve estar no formato CSV com as seguintes colunas separadas por ponto e vírgula (;):</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Data (dd/MM/yyyy)</li>
-                <li>Descrição</li>
-                <li>Tipo (Receita ou Despesa)</li>
-                <li>Valor (com vírgula decimal)</li>
-                <li>Status (Confirmado ou Pendente)</li>
-              </ul>
-            </div>
-            <div>
-              <Label htmlFor="file">Selecionar arquivo CSV</Label>
-              <Input
-                id="file"
-                type="file"
-                accept=".csv"
-                onChange={handleImportStatement}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => {
-                setImportDialogOpen(false);
-                setSelectedAccountForExport(null);
-              }}>
-                Cancelar
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BankStatementImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        bankAccountId={selectedAccountForImport || ""}
+        bankAccountName={selectedAccountName}
+      />
 
       <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
         <DialogContent>
