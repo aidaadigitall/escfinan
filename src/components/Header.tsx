@@ -44,8 +44,8 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
 
   return (
     <>
-      {/* Top bar - Black background */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-black border-b border-sidebar-border px-4 flex items-center justify-between z-20">
+      {/* Top bar - Dark blue background */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-[#1a1f37] border-b border-sidebar-border px-4 flex items-center justify-between z-20">
         <div className="flex items-center gap-3">
           {showMenuButton && onMenuClick && (
             <Button variant="ghost" size="icon" onClick={onMenuClick} className="text-white hover:bg-white/10">
