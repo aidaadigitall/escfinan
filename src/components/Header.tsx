@@ -43,44 +43,35 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   };
 
   return (
-    <>
-      {/* Top bar - Dark blue background */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-[#1a1f37] border-b border-sidebar-border px-4 flex items-center justify-between z-20">
-        <div className="flex items-center gap-3">
-          {showMenuButton && onMenuClick && (
-            <Button variant="ghost" size="icon" onClick={onMenuClick} className="text-white hover:bg-white/10">
-              <Menu className="h-5 w-5" />
-            </Button>
-          )}
-          <div className="flex items-center gap-2">
-            <div className="bg-primary p-1.5 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <h1 className="text-lg font-bold text-white">FinanceControl</h1>
-          </div>
+    <header className="fixed top-0 left-0 right-0 h-14 bg-[#1a1f37] px-4 flex items-center justify-between z-20">
+      <div className="flex items-center gap-3">
+        {showMenuButton && onMenuClick && (
+          <Button variant="ghost" size="icon" onClick={onMenuClick} className="text-white hover:bg-white/10">
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        <div className="bg-primary p-1.5 rounded-lg">
+          <TrendingUp className="h-5 w-5 text-primary-foreground" />
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/10">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-expense rounded-full" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-            <Calendar className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="text-white hover:bg-white/10">
-            <LogOut className="h-5 w-5" />
-          </Button>
+        <div className="hidden md:block">
+          <h2 className="text-base font-semibold text-white">
+            {greeting()}, {userName}
+          </h2>
         </div>
-      </header>
-
-      {/* Greeting section - Dark background */}
-      <div className="fixed top-14 left-0 right-0 bg-sidebar-background border-b border-sidebar-border px-4 md:px-6 py-3 z-10">
-        <h2 className="text-lg md:text-xl font-semibold text-sidebar-foreground">
-          {greeting()}, {userName}
-        </h2>
-        <p className="text-xs md:text-sm text-sidebar-foreground/70 capitalize">{currentDate}</p>
       </div>
-    </>
+
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/10">
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-1 right-1 h-2 w-2 bg-expense rounded-full" />
+        </Button>
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+          <Calendar className="h-5 w-5" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="text-white hover:bg-white/10">
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </div>
+    </header>
   );
 };
