@@ -395,6 +395,7 @@ export type Database = {
         Row: {
           account: string | null
           amount: number
+          bank_account_id: string | null
           category_id: string | null
           client: string | null
           created_at: string
@@ -403,6 +404,7 @@ export type Database = {
           entity: string | null
           id: string
           notes: string | null
+          paid_amount: number | null
           paid_date: string | null
           payment_method: string | null
           status: string
@@ -413,6 +415,7 @@ export type Database = {
         Insert: {
           account?: string | null
           amount: number
+          bank_account_id?: string | null
           category_id?: string | null
           client?: string | null
           created_at?: string
@@ -421,6 +424,7 @@ export type Database = {
           entity?: string | null
           id?: string
           notes?: string | null
+          paid_amount?: number | null
           paid_date?: string | null
           payment_method?: string | null
           status?: string
@@ -431,6 +435,7 @@ export type Database = {
         Update: {
           account?: string | null
           amount?: number
+          bank_account_id?: string | null
           category_id?: string | null
           client?: string | null
           created_at?: string
@@ -439,6 +444,7 @@ export type Database = {
           entity?: string | null
           id?: string
           notes?: string | null
+          paid_amount?: number | null
           paid_date?: string | null
           payment_method?: string | null
           status?: string
@@ -447,6 +453,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_category_id_fkey"
             columns: ["category_id"]
