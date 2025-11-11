@@ -6,7 +6,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { useTransactions } from "@/hooks/useTransactions";
 import { format, isSameDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const CalendarioFinanceiro = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -115,6 +116,57 @@ const CalendarioFinanceiro = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 p-6">
+          <style>{`
+            .calendar-expanded {
+              width: 100%;
+            }
+            .calendar-expanded .rdp-months {
+              justify-content: center;
+              width: 100%;
+            }
+            .calendar-expanded .rdp-month {
+              width: 100%;
+              max-width: 650px;
+            }
+            .calendar-expanded .rdp-caption {
+              font-size: 1.125rem;
+              font-weight: 600;
+              padding: 0.75rem 0;
+            }
+            .calendar-expanded .rdp-table {
+              width: 100%;
+              max-width: none;
+            }
+            .calendar-expanded .rdp-head_cell {
+              font-size: 0.875rem;
+              font-weight: 600;
+              padding: 0.75rem 0.5rem;
+              color: hsl(var(--muted-foreground));
+            }
+            .calendar-expanded .rdp-cell {
+              padding: 0.25rem;
+            }
+            .calendar-expanded .rdp-day {
+              width: 3.5rem;
+              height: 3.5rem;
+              font-size: 1rem;
+              border-radius: 0.5rem;
+              transition: all 0.2s;
+            }
+            .calendar-expanded .rdp-day:hover {
+              transform: scale(1.05);
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .calendar-expanded .rdp-day_selected {
+              background-color: hsl(var(--primary)) !important;
+              color: hsl(var(--primary-foreground)) !important;
+              font-weight: 700;
+            }
+            .calendar-expanded .rdp-day_today {
+              font-weight: 700;
+              border: 2px solid hsl(var(--primary));
+            }
+          `}</style>
           <div className="flex justify-center">
             <Calendar
               mode="single"
@@ -123,7 +175,7 @@ const CalendarioFinanceiro = () => {
               locale={ptBR}
               modifiers={modifiers}
               modifiersStyles={modifiersStyles}
-              className="rounded-md border"
+              className={cn("rounded-md border pointer-events-auto calendar-expanded")}
             />
           </div>
           
@@ -178,40 +230,71 @@ const CalendarioFinanceiro = () => {
 
       {selectedDateTransactions.length > 0 && (
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Compromissos do Dia</h3>
+          <h3 className="text-lg font-semibold mb-4">
+            Compromissos de {format(selectedDate, "dd/MM/yyyy", { locale: ptBR })}
+          </h3>
           <div className="space-y-3">
             {selectedDateTransactions.map((transaction) => {
               const statusBadge = getStatusBadge(transaction.status);
               return (
                 <div 
                   key={transaction.id}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                  className="flex flex-col p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-medium">{transaction.description}</h4>
-                      <Badge className={statusBadge.className}>
-                        {statusBadge.label}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      {transaction.entity && <span>{transaction.entity}</span>}
-                      {transaction.payment_method && <span>• {transaction.payment_method}</span>}
-                      {transaction.account && <span>• {transaction.account}</span>}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-bold ${
-                      transaction.type === "income" ? "text-income" : "text-expense"
-                    }`}>
-                      {transaction.type === "income" ? "+" : "-"} R$ {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </div>
-                    {transaction.paid_amount && transaction.paid_amount > 0 && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Pago: R$ {transaction.paid_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Badge variant={transaction.type === "income" ? "default" : "destructive"} className="text-xs">
+                          {transaction.type === "income" ? "Receita" : "Despesa"}
+                        </Badge>
+                        <Badge className={statusBadge.className}>
+                          {statusBadge.label}
+                        </Badge>
                       </div>
-                    )}
+                      <h4 className="font-semibold text-lg mb-1">{transaction.description}</h4>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        {transaction.entity && (
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">Entidade:</span> {transaction.entity}
+                          </span>
+                        )}
+                        {transaction.payment_method && (
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">• Pagamento:</span> {transaction.payment_method}
+                          </span>
+                        )}
+                        {transaction.account && (
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">• Categoria:</span> {transaction.account}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className={`text-xl font-bold ${
+                        transaction.type === "income" ? "text-income" : "text-expense"
+                      }`}>
+                        {transaction.type === "income" ? "+" : "-"} R$ {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </div>
+                      {transaction.paid_amount && transaction.paid_amount > 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Pago: R$ {transaction.paid_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  
+                  {transaction.notes && transaction.notes.trim() && !transaction.notes.includes("recurring_bill_id") && !transaction.notes.includes("transfer_") && (
+                    <div className="mt-2 pt-3 border-t">
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-muted-foreground mb-1">Observações:</p>
+                          <p className="text-sm text-foreground">{transaction.notes}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
