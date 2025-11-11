@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useSystemSettings } from "@/hooks/useSystemSettings";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,12 +26,17 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [userName, setUserName] = useState("Usuário");
+  const [systemSettings, setSystemSettings] = useState({
+    system_name: "FinanceControl",
+    system_subtitle: "Controle Financeiro Pessoal",
+    logo_url: "",
+  });
   const [dailyExpenseOpen, setDailyExpenseOpen] = useState(false);
   const { createTransaction } = useTransactions();
-  const { systemName, systemSubtitle, logoUrl } = useSystemSettings();
 
   useEffect(() => {
     if (user) {
+      // Buscar nome do usuário
       supabase
         .from("profiles")
         .select("full_name")
@@ -43,22 +47,24 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
             setUserName(data.full_name);
           }
         });
+
+      // Buscar configurações do sistema
+      supabase
+        .from("system_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setSystemSettings({
+              system_name: data.system_name || "FinanceControl",
+              system_subtitle: data.system_subtitle || "Controle Financeiro Pessoal",
+              logo_url: data.logo_url || "",
+            });
+          }
+        });
     }
   }, [user]);
-
-  const currentDate = new Date().toLocaleDateString("pt-BR", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
-    return "Boa noite";
-  };
 
   return (
     <header className="fixed top-0 left-0 right-0 h-14 bg-[#1a1f37] px-4 flex items-center justify-between z-20">
@@ -72,19 +78,23 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
           onClick={() => navigate("/")}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
-          {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="h-10 w-auto object-contain" />
+          {systemSettings.logo_url ? (
+            <img 
+              src={systemSettings.logo_url} 
+              alt={systemSettings.system_name}
+              className="h-10 object-contain"
+            />
           ) : (
             <div className="bg-primary p-1.5 rounded-lg">
               <TrendingUp className="h-5 w-5 text-primary-foreground" />
             </div>
           )}
           <div className="hidden md:block text-left">
-            <h1 className="text-base font-bold text-white leading-tight">
-              {systemName}
-            </h1>
+            <h2 className="text-sm font-bold text-white leading-tight">
+              {systemSettings.system_name}
+            </h2>
             <p className="text-xs text-white/70 leading-tight">
-              {systemSubtitle}
+              {systemSettings.system_subtitle}
             </p>
           </div>
         </button>
