@@ -15,6 +15,8 @@ import { QuickAddDialog } from "@/components/QuickAddDialog";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
 
 const transactionSchema = z.object({
   description: z.string().min(3, "Descrição deve ter no mínimo 3 caracteres"),
@@ -40,6 +42,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
   
   const [quickAddOpen, setQuickAddOpen] = useState<string | null>(null);
   
+  const [isRecurring, setIsRecurring] = useState(false);
+  
   const [formData, setFormData] = useState<{
     description: string;
     amount: string;
@@ -55,6 +59,10 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     due_date: string;
     paid_date: string;
     notes: string;
+    recurrence_type: string;
+    recurrence_day: string;
+    start_date: string;
+    end_date: string;
   }>({
     description: "",
     amount: "",
@@ -70,6 +78,10 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     due_date: "",
     paid_date: "",
     notes: "",
+    recurrence_type: "monthly",
+    recurrence_day: "1",
+    start_date: "",
+    end_date: "",
   });
 
   useEffect(() => {
@@ -89,7 +101,12 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         due_date: transaction.due_date,
         paid_date: transaction.paid_date || "",
         notes: transaction.notes || "",
+        recurrence_type: "monthly",
+        recurrence_day: "1",
+        start_date: "",
+        end_date: "",
       });
+      setIsRecurring(false);
     } else {
       setFormData({
         description: "",
@@ -106,11 +123,16 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         due_date: new Date().toISOString().split("T")[0],
         paid_date: "",
         notes: "",
+        recurrence_type: "monthly",
+        recurrence_day: "1",
+        start_date: new Date().toISOString().split("T")[0],
+        end_date: "",
       });
+      setIsRecurring(false);
     }
   }, [transaction, type, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
@@ -133,6 +155,27 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         notes: formData.notes || undefined,
       };
 
+      // Se é recorrente e não é edição, criar conta fixa também
+      if (isRecurring && !transaction) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("recurring_bills").insert({
+            user_id: user.id,
+            description: formData.description,
+            type: formData.type,
+            amount: parseFloat(formData.amount),
+            recurrence_type: formData.recurrence_type,
+            recurrence_day: parseInt(formData.recurrence_day) || undefined,
+            start_date: formData.start_date,
+            end_date: formData.end_date || undefined,
+            category_id: formData.category_id || undefined,
+            bank_account_id: formData.bank_account_id || undefined,
+            notes: formData.notes || undefined,
+          });
+          toast.success("Conta recorrente criada com sucesso!");
+        }
+      }
+
       if (transaction) {
         onSave({ id: transaction.id, ...dataToSave });
       } else {
@@ -142,6 +185,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || "Erro ao salvar");
       }
     }
   };
@@ -343,6 +388,76 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
               rows={3}
             />
           </div>
+
+          {!transaction && (
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="recurring"
+                  checked={isRecurring}
+                  onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+                />
+                <Label htmlFor="recurring" className="cursor-pointer">
+                  Criar como conta recorrente (fixa)
+                </Label>
+              </div>
+
+              {isRecurring && (
+                <div className="grid grid-cols-2 gap-4 pl-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="recurrence_type">Recorrência *</Label>
+                    <Select
+                      value={formData.recurrence_type}
+                      onValueChange={(value) => setFormData({ ...formData, recurrence_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Diário</SelectItem>
+                        <SelectItem value="weekly">Semanal</SelectItem>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                        <SelectItem value="yearly">Anual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recurrence_day">Dia da Recorrência (1-31)</Label>
+                    <Input
+                      id="recurrence_day"
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={formData.recurrence_day}
+                      onChange={(e) => setFormData({ ...formData, recurrence_day: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="start_date">Data de Início *</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                      required={isRecurring}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="end_date">Data de Término</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
