@@ -20,14 +20,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet, FileText, Settings } from "lucide-react";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
 import { DailyTransactionDialog } from "@/components/DailyTransactionDialog";
+import { useNavigate } from "react-router-dom";
 
 const Despesas = () => {
   const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("expense");
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -174,6 +176,23 @@ const Despesas = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Contas a Pagar</h1>
         <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/contas-fixas")}
+            className="bg-primary/10 hover:bg-primary/20 border-primary"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Contas fixas</span>
+            <span className="sm:hidden">Fixas</span>
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => {/* TODO: Implement actions menu */}}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Mais ações</span>
+            <span className="sm:hidden">Ações</span>
+          </Button>
           <Button variant="outline">
             <Search className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Busca avançada</span>
@@ -196,12 +215,13 @@ const Despesas = () => {
         {summaryData.cards.map((item) => (
           <Card 
             key={item.key} 
-            className={`p-4 transition-all hover:shadow-lg ${
+            className={`p-4 transition-all hover:shadow-lg cursor-pointer ${
               activeFilter === item.key ? "ring-2 ring-primary" : ""
             }`}
+            onClick={() => handleCardAction(item.key)}
           >
             <div className="flex items-start justify-between">
-              <div className="flex-1 cursor-pointer" onClick={() => handleCardAction(item.key)}>
+              <div className="flex-1">
                 <p className="text-sm text-muted-foreground mb-1">{item.label}</p>
                 <p className={`text-2xl font-bold ${
                   item.variant === "income" ? "text-income" :
@@ -219,15 +239,7 @@ const Despesas = () => {
                 )}
               </div>
               {item.key !== "total" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleCardAction(item.key)}
-                  title="Ver detalhes"
-                >
-                  <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                </Button>
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
               )}
             </div>
           </Card>
