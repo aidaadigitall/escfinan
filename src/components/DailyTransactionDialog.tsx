@@ -9,6 +9,8 @@ import { useCategories } from "@/hooks/useCategories";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useClients } from "@/hooks/useClients";
+import { QuickAddDialog } from "@/components/QuickAddDialog";
+import { Plus } from "lucide-react";
 
 type DailyTransactionDialogProps = {
   open: boolean;
@@ -18,10 +20,11 @@ type DailyTransactionDialogProps = {
 };
 
 export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: DailyTransactionDialogProps) => {
-  const { categories } = useCategories(type);
+  const { categories, createCategory } = useCategories(type);
   const { accounts } = useBankAccounts();
-  const { suppliers } = useSuppliers();
-  const { clients } = useClients();
+  const { suppliers, createSupplier } = useSuppliers();
+  const { clients, createClient } = useClients();
+  const [quickAddOpen, setQuickAddOpen] = useState<"category" | "entity" | "client" | null>(null);
 
   const [formData, setFormData] = useState({
     description: "",
@@ -106,49 +109,69 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
 
             <div>
               <Label htmlFor="category">Categoria</Label>
-              <Select
-                value={formData.category_id}
-                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.category_id}
+                  onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuickAddOpen("category")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="entity">Fornecedor/Cliente</Label>
-              <Select
-                value={formData.entity}
-                onValueChange={(value) => setFormData({ ...formData, entity: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {type === "expense" 
-                    ? suppliers.map((s) => (
-                        <SelectItem key={s.id} value={s.name}>
-                          {s.name}
-                        </SelectItem>
-                      ))
-                    : clients.map((c) => (
-                        <SelectItem key={c.id} value={c.name}>
-                          {c.name}
-                        </SelectItem>
-                      ))
-                  }
-                </SelectContent>
-              </Select>
+              <Label htmlFor="entity">{type === "expense" ? "Fornecedor" : "Cliente"}</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.entity}
+                  onValueChange={(value) => setFormData({ ...formData, entity: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {type === "expense" 
+                      ? suppliers.map((s) => (
+                          <SelectItem key={s.id} value={s.name}>
+                            {s.name}
+                          </SelectItem>
+                        ))
+                      : clients.map((c) => (
+                          <SelectItem key={c.id} value={c.name}>
+                            {c.name}
+                          </SelectItem>
+                        ))
+                    }
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuickAddOpen(type === "expense" ? "entity" : "client")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div>
@@ -213,6 +236,33 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
           </div>
         </form>
       </DialogContent>
+
+      <QuickAddDialog
+        open={quickAddOpen === "category"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title={`Adicionar Categoria de ${type === "income" ? "Receita" : "Despesa"}`}
+        onSave={(name) => createCategory({ name, type })}
+      />
+      
+      <QuickAddDialog
+        open={quickAddOpen === "entity"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title="Adicionar Fornecedor"
+        onSave={(name) => {
+          createSupplier({ name });
+          setFormData({ ...formData, entity: name });
+        }}
+      />
+      
+      <QuickAddDialog
+        open={quickAddOpen === "client"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title="Adicionar Cliente"
+        onSave={(name) => {
+          createClient({ name });
+          setFormData({ ...formData, client: name });
+        }}
+      />
     </Dialog>
   );
 };
