@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { BankStatementImportDialog } from "@/components/BankStatementImportDialog";
+import { BankAccountDialog } from "@/components/BankAccountDialog";
+import type { BankAccount } from "@/hooks/useBankAccounts";
 
 const ContasBancarias = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,9 +43,10 @@ const ContasBancarias = () => {
   const [selectedAccountForExport, setSelectedAccountForExport] = useState<string | null>(null);
   const [selectedAccountForImport, setSelectedAccountForImport] = useState<string | null>(null);
   const [selectedAccountName, setSelectedAccountName] = useState<string>("");
+  const [selectedAccountForEdit, setSelectedAccountForEdit] = useState<BankAccount | null>(null);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
-  const { accounts, isLoading, createAccount, deleteAccount } = useBankAccounts();
+  const { accounts, isLoading, createAccount, updateAccount, deleteAccount } = useBankAccounts();
   const { transactions } = useTransactions();
   const { register, handleSubmit, reset } = useForm();
 
@@ -124,6 +127,32 @@ const ContasBancarias = () => {
     setImportDialogOpen(true);
   };
 
+  const openEditDialog = (account: BankAccount) => {
+    setSelectedAccountForEdit(account);
+    setDialogOpen(true);
+  };
+
+  const handleSaveAccount = (data: any) => {
+    if (selectedAccountForEdit) {
+      // Editing existing account
+      updateAccount({
+        id: selectedAccountForEdit.id,
+        name: data.name,
+        initial_balance: parseFloat(data.initial_balance) || 0,
+        current_balance: parseFloat(data.current_balance),
+      });
+    } else {
+      // Creating new account
+      createAccount({
+        name: data.name,
+        initial_balance: parseFloat(data.initial_balance) || 0,
+        is_active: true,
+      });
+    }
+    setDialogOpen(false);
+    setSelectedAccountForEdit(null);
+  };
+
   const onSubmit = (data: any) => {
     createAccount({
       name: data.name,
@@ -146,7 +175,10 @@ const ContasBancarias = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Contas Bancárias</h1>
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
+        <Button size="sm" onClick={() => {
+          setSelectedAccountForEdit(null);
+          setDialogOpen(true);
+        }}>
           <Plus className="h-4 w-4 mr-2" />
           Adicionar
         </Button>
@@ -197,13 +229,19 @@ const ContasBancarias = () => {
                       >
                         <Upload className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => openEditDialog(account)}
+                        title="Editar Conta"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteAccount(account.id)}
+                        title="Excluir Conta"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -216,35 +254,15 @@ const ContasBancarias = () => {
         </Table>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Conta Bancária</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nome *</Label>
-              <Input id="name" {...register("name", { required: true })} placeholder="Ex: Banco do Brasil" />
-            </div>
-            <div>
-              <Label htmlFor="initial_balance">Saldo Inicial</Label>
-              <Input
-                id="initial_balance"
-                type="number"
-                step="0.01"
-                {...register("initial_balance")}
-                placeholder="0,00"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit">Cadastrar</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <BankAccountDialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setSelectedAccountForEdit(null);
+        }}
+        account={selectedAccountForEdit}
+        onSave={handleSaveAccount}
+      />
 
       <BankStatementImportDialog
         open={importDialogOpen}

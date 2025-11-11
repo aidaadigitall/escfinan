@@ -14,28 +14,52 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
       return dueDate >= start && dueDate <= end;
     });
 
-    // Resumo
+    // Resumo - incluindo pagamentos parciais
     const income = filteredTransactions
-      .filter(t => t.type === "income" && (t.status === "received" || t.status === "confirmed" || t.status === "paid"))
+      .filter(t => t.type === "income")
       .reduce((sum, t) => {
-        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
-        return sum + parseFloat(paidValue.toString());
+        // Se está confirmado, use paid_amount ou amount
+        if (t.status === "received" || t.status === "confirmed" || t.status === "paid") {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }
+        // Se está pendente mas tem pagamento parcial, some apenas o parcial
+        if (t.status === "pending" && t.paid_amount && t.paid_amount > 0) {
+          return sum + parseFloat(t.paid_amount.toString());
+        }
+        return sum;
       }, 0);
 
     const expenses = filteredTransactions
-      .filter(t => t.type === "expense" && (t.status === "paid" || t.status === "confirmed"))
+      .filter(t => t.type === "expense")
       .reduce((sum, t) => {
-        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
-        return sum + parseFloat(paidValue.toString());
+        // Se está confirmado, use paid_amount ou amount
+        if (t.status === "paid" || t.status === "confirmed") {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }
+        // Se está pendente mas tem pagamento parcial, some apenas o parcial
+        if (t.status === "pending" && t.paid_amount && t.paid_amount > 0) {
+          return sum + parseFloat(t.paid_amount.toString());
+        }
+        return sum;
       }, 0);
 
     const pendingIncome = filteredTransactions
       .filter(t => t.type === "income" && t.status === "pending")
-      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : 0;
+        const remainingValue = parseFloat(t.amount.toString()) - paidValue;
+        return sum + remainingValue;
+      }, 0);
 
     const pendingExpenses = filteredTransactions
       .filter(t => t.type === "expense" && t.status === "pending")
-      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : 0;
+        const remainingValue = parseFloat(t.amount.toString()) - paidValue;
+        return sum + remainingValue;
+      }, 0);
 
     const balance = income - expenses;
     const finalBalance = balance + pendingIncome - pendingExpenses;
@@ -52,17 +76,33 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
       });
 
       const dayIncome = dayTransactions
-        .filter(t => t.type === "income" && (t.status === "received" || t.status === "confirmed" || t.status === "paid"))
+        .filter(t => t.type === "income")
         .reduce((sum, t) => {
-          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
-          return sum + parseFloat(paidValue.toString());
+          // Se está confirmado, use paid_amount ou amount
+          if (t.status === "received" || t.status === "confirmed" || t.status === "paid") {
+            const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+            return sum + parseFloat(paidValue.toString());
+          }
+          // Se está pendente mas tem pagamento parcial, some apenas o parcial
+          if (t.status === "pending" && t.paid_amount && t.paid_amount > 0) {
+            return sum + parseFloat(t.paid_amount.toString());
+          }
+          return sum;
         }, 0);
 
       const dayExpenses = dayTransactions
-        .filter(t => t.type === "expense" && (t.status === "paid" || t.status === "confirmed"))
+        .filter(t => t.type === "expense")
         .reduce((sum, t) => {
-          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
-          return sum + parseFloat(paidValue.toString());
+          // Se está confirmado, use paid_amount ou amount
+          if (t.status === "paid" || t.status === "confirmed") {
+            const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+            return sum + parseFloat(paidValue.toString());
+          }
+          // Se está pendente mas tem pagamento parcial, some apenas o parcial
+          if (t.status === "pending" && t.paid_amount && t.paid_amount > 0) {
+            return sum + parseFloat(t.paid_amount.toString());
+          }
+          return sum;
         }, 0);
 
       return {
@@ -82,13 +122,22 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
       };
     });
 
-    // Estatísticas - por categoria
+    // Estatísticas - por categoria (incluindo pagamentos parciais)
     const expensesByCategory = filteredTransactions
-      .filter(t => t.type === "expense" && (t.status === "paid" || t.status === "confirmed"))
+      .filter(t => t.type === "expense")
       .reduce((acc, t) => {
         const category = t.account || "Outros";
-        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
-        acc[category] = (acc[category] || 0) + parseFloat(paidValue.toString());
+        let paidValue = 0;
+        
+        if (t.status === "paid" || t.status === "confirmed") {
+          paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+        } else if (t.status === "pending" && t.paid_amount && t.paid_amount > 0) {
+          paidValue = t.paid_amount;
+        }
+        
+        if (paidValue > 0) {
+          acc[category] = (acc[category] || 0) + parseFloat(paidValue.toString());
+        }
         return acc;
       }, {} as Record<string, number>);
 
