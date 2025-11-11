@@ -20,13 +20,21 @@ import {
   Mail,
   Table,
   FileBarChart,
+  ChevronLeft,
 } from "lucide-react";
+import { Button } from "./ui/button";
 
 interface MenuItem {
   icon: any;
   label: string;
   path?: string;
   submenu?: MenuItem[];
+}
+
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggle?: () => void;
+  onNavigate?: () => void;
 }
 
 const menuItems: MenuItem[] = [
@@ -71,7 +79,7 @@ const menuItems: MenuItem[] = [
   { icon: Settings, label: "Configurações", path: "/configuracoes" },
 ];
 
-export const Sidebar = () => {
+export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProps) => {
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
@@ -113,16 +121,18 @@ export const Sidebar = () => {
             )}
           >
             <div className="flex items-center gap-3">
-              <Icon className="h-5 w-5" />
-              <span className="text-sm font-medium">{item.label}</span>
+              <Icon className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </div>
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
+            {!collapsed && (
+              isExpanded ? (
+                <ChevronDown className="h-4 w-4 flex-shrink-0" />
+              ) : (
+                <ChevronRight className="h-4 w-4 flex-shrink-0" />
+              )
             )}
           </button>
-          {isExpanded && (
+          {!collapsed && isExpanded && (
             <div className="mt-1 space-y-1">
               {item.submenu!.map((subItem) => renderMenuItem(subItem, level + 1))}
             </div>
@@ -135,6 +145,7 @@ export const Sidebar = () => {
       <Link
         key={item.path}
         to={item.path!}
+        onClick={onNavigate}
         className={cn(
           "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
           level > 0 && "pl-8",
@@ -143,21 +154,40 @@ export const Sidebar = () => {
             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         )}
       >
-        <Icon className="h-5 w-5" />
-        <span className="text-sm font-medium">{item.label}</span>
+        <Icon className="h-5 w-5 flex-shrink-0" />
+        {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
       </Link>
     );
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto">
-      <div className="p-6 border-b border-sidebar-border">
-        <h1 className="text-2xl font-bold text-sidebar-foreground">
-          FinanceControl
-        </h1>
-        <p className="text-sm text-sidebar-foreground/60 mt-1">
-          Controle Financeiro Pessoal
-        </p>
+    <aside 
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
+        {!collapsed && (
+          <div>
+            <h1 className="text-2xl font-bold text-sidebar-foreground">
+              FinanceControl
+            </h1>
+            <p className="text-sm text-sidebar-foreground/60 mt-1">
+              Controle Financeiro Pessoal
+            </p>
+          </div>
+        )}
+        {onToggle && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className={cn("flex-shrink-0", collapsed && "mx-auto")}
+          >
+            <ChevronLeft className={cn("h-5 w-5 transition-transform", collapsed && "rotate-180")} />
+          </Button>
+        )}
       </div>
 
       <nav className="flex-1 p-4 space-y-1">

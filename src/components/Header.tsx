@@ -1,10 +1,15 @@
-import { Bell, Calendar, LogOut } from "lucide-react";
+import { Bell, Calendar, LogOut, Menu } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Header = () => {
+interface HeaderProps {
+  onMenuClick?: () => void;
+  showMenuButton?: boolean;
+}
+
+export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}) => {
   const { user, signOut } = useAuth();
   const [userName, setUserName] = useState("Usuário");
 
@@ -38,12 +43,19 @@ export const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 bg-card border-b border-border px-6 flex items-center justify-between z-10">
-      <div>
-        <h2 className="text-xl font-semibold text-foreground">
-          {greeting()}, {userName}
-        </h2>
-        <p className="text-sm text-muted-foreground capitalize">{currentDate}</p>
+    <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border px-6 flex items-center justify-between z-10">
+      <div className="flex items-center gap-4">
+        {showMenuButton && onMenuClick && (
+          <Button variant="ghost" size="icon" onClick={onMenuClick}>
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">
+            {greeting()}, {userName}
+          </h2>
+          <p className="text-sm text-muted-foreground capitalize">{currentDate}</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
