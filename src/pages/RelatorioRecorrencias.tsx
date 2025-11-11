@@ -118,9 +118,10 @@ const RelatorioRecorrencias = () => {
     const pending = transactions.filter((t: any) => t.status === 'pending');
     const overdue = transactions.filter((t: any) => t.status === 'overdue');
 
-    const totalPaid = paid.reduce((sum: number, t: any) => 
-      sum + parseFloat(t.paid_amount || t.amount), 0
-    );
+    const totalPaid = paid.reduce((sum: number, t: any) => {
+      const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+      return sum + parseFloat(paidValue);
+    }, 0);
 
     return {
       total: transactions.length,
@@ -361,7 +362,12 @@ const RelatorioRecorrencias = () => {
                               }
                             </TableCell>
                             <TableCell className="text-right font-medium">
-                              R$ {parseFloat(transaction.paid_amount || transaction.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              R$ {(() => {
+                                const paidValue = transaction.paid_amount && transaction.paid_amount > 0 
+                                  ? transaction.paid_amount 
+                                  : transaction.amount;
+                                return parseFloat(paidValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                              })()}
                             </TableCell>
                           </TableRow>
                         ))}

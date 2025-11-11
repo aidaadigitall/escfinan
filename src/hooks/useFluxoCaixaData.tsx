@@ -17,11 +17,17 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
     // Resumo
     const income = filteredTransactions
       .filter(t => t.type === "income" && (t.status === "received" || t.status === "confirmed" || t.status === "paid"))
-      .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+        return sum + parseFloat(paidValue.toString());
+      }, 0);
 
     const expenses = filteredTransactions
       .filter(t => t.type === "expense" && (t.status === "paid" || t.status === "confirmed"))
-      .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+        return sum + parseFloat(paidValue.toString());
+      }, 0);
 
     const pendingIncome = filteredTransactions
       .filter(t => t.type === "income" && t.status === "pending")
@@ -47,11 +53,17 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
 
       const dayIncome = dayTransactions
         .filter(t => t.type === "income" && (t.status === "received" || t.status === "confirmed" || t.status === "paid"))
-        .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+        .reduce((sum, t) => {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }, 0);
 
       const dayExpenses = dayTransactions
         .filter(t => t.type === "expense" && (t.status === "paid" || t.status === "confirmed"))
-        .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+        .reduce((sum, t) => {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }, 0);
 
       return {
         date: format(day, "dd/MM", { locale: ptBR }),
@@ -75,7 +87,8 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
       .filter(t => t.type === "expense" && (t.status === "paid" || t.status === "confirmed"))
       .reduce((acc, t) => {
         const category = t.account || "Outros";
-        acc[category] = (acc[category] || 0) + parseFloat((t.paid_amount || t.amount).toString());
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+        acc[category] = (acc[category] || 0) + parseFloat(paidValue.toString());
         return acc;
       }, {} as Record<string, number>);
 

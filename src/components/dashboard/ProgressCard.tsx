@@ -54,7 +54,7 @@ export const ProgressCard = ({
             />
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
-            {percentage}%
+            {Math.round(percentage)}%
           </span>
         </div>
       </div>

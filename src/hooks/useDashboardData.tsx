@@ -50,7 +50,10 @@ export const useDashboardData = () => {
         return t.type === "income" && dueDate >= startMonth && dueDate <= endMonth && 
                (t.status === "received" || t.status === "confirmed" || t.status === "paid");
       })
-      .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+        return sum + parseFloat(paidValue.toString());
+      }, 0);
 
     const monthIncomePending = transactions
       .filter(t => {
@@ -67,7 +70,10 @@ export const useDashboardData = () => {
         return t.type === "expense" && dueDate >= startMonth && dueDate <= endMonth && 
                (t.status === "paid" || t.status === "confirmed");
       })
-      .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+        return sum + parseFloat(paidValue.toString());
+      }, 0);
 
     const monthExpensesPending = transactions
       .filter(t => {
@@ -89,7 +95,10 @@ export const useDashboardData = () => {
           return t.type === "income" && dueDate >= monthStart && dueDate <= monthEnd &&
                  (t.status === "received" || t.status === "confirmed" || t.status === "paid");
         })
-        .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+        .reduce((sum, t) => {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }, 0);
 
       const expenses = transactions
         .filter(t => {
@@ -97,7 +106,10 @@ export const useDashboardData = () => {
           return t.type === "expense" && dueDate >= monthStart && dueDate <= monthEnd &&
                  (t.status === "paid" || t.status === "confirmed");
         })
-        .reduce((sum, t) => sum + parseFloat((t.paid_amount || t.amount).toString()), 0);
+        .reduce((sum, t) => {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }, 0);
 
       return {
         name: format(monthDate, "MMM", { locale: ptBR }),
