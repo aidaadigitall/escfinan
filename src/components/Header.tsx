@@ -43,30 +43,30 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border px-6 flex items-center justify-between z-10">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border px-6 flex items-center justify-between z-10">
       <div className="flex items-center gap-4">
         {showMenuButton && onMenuClick && (
-          <Button variant="ghost" size="icon" onClick={onMenuClick}>
+          <Button variant="ghost" size="icon" onClick={onMenuClick} className="text-sidebar-foreground hover:bg-sidebar-accent">
             <Menu className="h-5 w-5" />
           </Button>
         )}
         <div>
-          <h2 className="text-xl font-semibold text-foreground">
+          <h2 className="text-xl font-semibold text-sidebar-foreground">
             {greeting()}, {userName}
           </h2>
-          <p className="text-sm text-muted-foreground capitalize">{currentDate}</p>
+          <p className="text-sm text-sidebar-foreground/60 capitalize">{currentDate}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative text-sidebar-foreground hover:bg-sidebar-accent">
           <Bell className="h-5 w-5" />
           <span className="absolute top-1 right-1 h-2 w-2 bg-expense rounded-full" />
         </Button>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent">
           <Calendar className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+        <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="text-sidebar-foreground hover:bg-sidebar-accent">
           <LogOut className="h-5 w-5" />
         </Button>
       </div>
