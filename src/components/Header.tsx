@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,7 @@ interface HeaderProps {
 
 export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [userName, setUserName] = useState("Usuário");
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
         .from("profiles")
         .select("full_name")
         .eq("user_id", user.id)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
           if (data?.full_name) {
             setUserName(data.full_name);
@@ -98,11 +100,11 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/perfil")}>
               <User className="mr-2 h-4 w-4" />
               <span>Editar Perfil</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/configuracoes")}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Configurações</span>
             </DropdownMenuItem>

@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import ContasFixas from "./pages/ContasFixas";
 import ContasBancarias from "./pages/ContasBancarias";
 import CentrosCustos from "./pages/CentrosCustos";
+import Perfil from "./pages/Perfil";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/auxiliares/modelos-emails" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Modelos de E-mails</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/tabelas-rateios" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Tabelas de Rateios</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/contas-fixas" element={<ProtectedRoute><Layout><ContasFixas /></Layout></ProtectedRoute>} />
+          <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
           <Route path="/configuracoes" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Configurações</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
