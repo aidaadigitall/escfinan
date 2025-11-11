@@ -20,9 +20,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Eye, Edit, Trash2, Copy } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet } from "lucide-react";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
+import { DailyTransactionDialog } from "@/components/DailyTransactionDialog";
 
 const Despesas = () => {
   const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("expense");
@@ -31,6 +33,9 @@ const Despesas = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [partialPaymentDialogOpen, setPartialPaymentDialogOpen] = useState(false);
+  const [transactionForPartialPayment, setTransactionForPartialPayment] = useState<Transaction | null>(null);
+  const [dailyDialogOpen, setDailyDialogOpen] = useState(false);
 
   const summaryData = useMemo(() => {
     const today = new Date();
@@ -137,6 +142,15 @@ const Despesas = () => {
     createTransaction(transactionData);
   };
 
+  const handlePartialPayment = (transaction: Transaction) => {
+    setTransactionForPartialPayment(transaction);
+    setPartialPaymentDialogOpen(true);
+  };
+
+  const handleCardAction = (filterKey: string) => {
+    setActiveFilter(activeFilter === filterKey ? null : filterKey);
+  };
+
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
       pending: { label: "Pendente", className: "bg-warning text-warning-foreground" },
@@ -164,6 +178,10 @@ const Despesas = () => {
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setDailyDialogOpen(true)}>
+            <Wallet className="h-4 w-4 mr-2" />
+            Lançamento Diário
+          </Button>
           <Button size="sm" onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Adicionar
@@ -175,26 +193,40 @@ const Despesas = () => {
         {summaryData.cards.map((item) => (
           <Card 
             key={item.key} 
-            className={`p-4 cursor-pointer transition-all hover:shadow-lg ${
+            className={`p-4 transition-all hover:shadow-lg ${
               activeFilter === item.key ? "ring-2 ring-primary" : ""
             }`}
-            onClick={() => setActiveFilter(activeFilter === item.key ? null : item.key)}
           >
-            <p className="text-sm text-muted-foreground mb-1">{item.label}</p>
-            <p className={`text-2xl font-bold ${
-              item.variant === "income" ? "text-income" :
-              item.variant === "expense" ? "text-expense" :
-              item.variant === "warning" ? "text-warning" :
-              item.variant === "pending" ? "text-pending" :
-              "text-foreground"
-            }`}>
-              {item.value}
-            </p>
-            {activeFilter === item.key && (
-              <p className="text-xs text-primary mt-1">
-                Mostrando {item.count} lançamento(s)
-              </p>
-            )}
+            <div className="flex items-start justify-between">
+              <div className="flex-1 cursor-pointer" onClick={() => handleCardAction(item.key)}>
+                <p className="text-sm text-muted-foreground mb-1">{item.label}</p>
+                <p className={`text-2xl font-bold ${
+                  item.variant === "income" ? "text-income" :
+                  item.variant === "expense" ? "text-expense" :
+                  item.variant === "warning" ? "text-warning" :
+                  item.variant === "pending" ? "text-pending" :
+                  "text-foreground"
+                }`}>
+                  {item.value}
+                </p>
+                {activeFilter === item.key && (
+                  <p className="text-xs text-primary mt-1">
+                    Mostrando {item.count} lançamento(s)
+                  </p>
+                )}
+              </div>
+              {item.key !== "total" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handleCardAction(item.key)}
+                  title="Ver detalhes"
+                >
+                  <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                </Button>
+              )}
+            </div>
           </Card>
         ))}
       </div>
@@ -240,6 +272,15 @@ const Despesas = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handlePartialPayment(transaction)}
+                          title="Pagamento Parcial"
+                        >
+                          <Wallet className="h-4 w-4 text-income" />
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -298,6 +339,20 @@ const Despesas = () => {
             createTransaction(data);
           }
         }}
+      />
+
+      <PartialPaymentDialog
+        open={partialPaymentDialogOpen}
+        onOpenChange={setPartialPaymentDialogOpen}
+        transaction={transactionForPartialPayment}
+        onSave={updateTransaction}
+      />
+
+      <DailyTransactionDialog
+        open={dailyDialogOpen}
+        onOpenChange={setDailyDialogOpen}
+        type="expense"
+        onSave={createTransaction}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
