@@ -122,18 +122,18 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
           >
             <div className="flex items-center gap-3">
               <Icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+              {!collapsed && <span className="text-sm font-medium transition-opacity duration-200">{item.label}</span>}
             </div>
             {!collapsed && (
               isExpanded ? (
-                <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                <ChevronDown className="h-4 w-4 flex-shrink-0 transition-transform duration-200" />
               ) : (
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200" />
               )
             )}
           </button>
           {!collapsed && isExpanded && (
-            <div className="mt-1 space-y-1">
+            <div className="mt-1 space-y-1 animate-accordion-down">
               {item.submenu!.map((subItem) => renderMenuItem(subItem, level + 1))}
             </div>
           )}
@@ -155,7 +155,7 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
         )}
       >
         <Icon className="h-5 w-5 flex-shrink-0" />
-        {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+        {!collapsed && <span className="text-sm font-medium transition-opacity duration-200">{item.label}</span>}
       </Link>
     );
   };
@@ -163,13 +163,13 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
   return (
     <aside 
       className={cn(
-        "fixed left-0 top-14 h-[calc(100vh-56px)] bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300",
+        "fixed left-0 top-14 h-[calc(100vh-56px)] bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300 ease-in-out",
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
+      <div className="p-6 border-b border-sidebar-border flex items-center justify-between animate-fade-in">
         {!collapsed && (
-          <div>
+          <div className="transition-opacity duration-200">
             <h1 className="text-2xl font-bold text-sidebar-foreground">
               FinanceControl
             </h1>
@@ -185,12 +185,12 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
             onClick={onToggle}
             className={cn("flex-shrink-0", collapsed && "mx-auto")}
           >
-            <ChevronLeft className={cn("h-5 w-5 transition-transform", collapsed && "rotate-180")} />
+            <ChevronLeft className={cn("h-5 w-5 transition-transform duration-300", collapsed && "rotate-180")} />
           </Button>
         )}
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 animate-fade-in">
         {menuItems.map((item) => renderMenuItem(item))}
       </nav>
     </aside>

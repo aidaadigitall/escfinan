@@ -18,7 +18,10 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Mobile: Sidebar as overlay */}
       {isMobile ? (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="p-0 w-64">
+          <SheetContent 
+            side="left" 
+            className="p-0 w-64 animate-slide-in-right data-[state=closed]:animate-slide-out-right"
+          >
             <Sidebar onNavigate={() => setSidebarOpen(false)} />
           </SheetContent>
         </Sheet>
