@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import escSolutionsLogo from "@/assets/esc_solutions_logo.png";
+import { Facebook, Instagram, Youtube } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
@@ -239,37 +241,36 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Sistema Financeiro</CardTitle>
-          <CardDescription className="text-center">
-            Gerencie suas finanças com facilidade e segurança
+    <div className="min-h-screen flex flex-col items-center justify-center bg-dark_background p-4">
+      <Card className="w-full max-w-md shadow-xl bg-dark_card border-none text-white">
+        <CardHeader className="flex flex-col items-center space-y-4">
+          <img src={escSolutionsLogo} alt="ESC Solutions Logo" className="w-48" />
+          <CardDescription className="text-center text-gray-400">
+            Soluções Empresariais
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-gray-700/50">
+              <TabsTrigger value="signin" className="data-[state=active]:bg-black data-[state=active]:text-white text-gray-300">Entrar</TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-black data-[state=active]:text-white text-gray-300">Cadastrar</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="signin" className="space-y-4">
+            <TabsContent value="signin" className="space-y-4 pt-4">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email" className="text-gray-300">E-mail</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signin-email"
                       type="email"
-                      placeholder="seu@email.com"
+                      placeholder="financeiro@escinformaticago.com.br"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
                         if (e.target.value) validateEmail(e.target.value);
                       }}
-                      className="pl-10"
+                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
                       required
                     />
                   </div>
@@ -282,17 +283,9 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="signin-password">Senha</Label>
-                    <button
-                      type="button"
-                      onClick={() => setShowForgotPassword(true)}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Esqueci minha senha
-                    </button>
+                    <Label htmlFor="signin-password" className="text-gray-300">Senha</Label>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signin-password"
                       type={showPassword ? "text" : "password"}
@@ -302,13 +295,13 @@ const Auth = () => {
                         setPassword(e.target.value);
                         if (e.target.value) validatePassword(e.target.value);
                       }}
-                      className="pl-10 pr-10"
+                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500 pr-10"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-3 text-gray-400 hover:text-white"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -320,7 +313,7 @@ const Auth = () => {
                     </p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-black hover:bg-gray-900 text-white" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -331,14 +324,27 @@ const Auth = () => {
                   )}
                 </Button>
               </form>
+              <div className="flex justify-between text-sm mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-gray-400 hover:text-white flex items-center gap-1"
+                >
+                  <Lock className="h-3 w-3" />
+                  Esqueci minha senha
+                </button>
+                <TabsTrigger value="signup" className="text-gray-400 hover:text-white flex items-center gap-1 p-0 h-auto">
+                  <User className="h-3 w-3" />
+                  Cadastre-se
+                </TabsTrigger>
+              </div>
             </TabsContent>
 
-            <TabsContent value="signup" className="space-y-4">
+            <TabsContent value="signup" className="space-y-4 pt-4">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Nome Completo</Label>
+                  <Label htmlFor="signup-name" className="text-gray-300">Nome Completo</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-name"
                       type="text"
@@ -348,7 +354,7 @@ const Auth = () => {
                         setFullName(e.target.value);
                         if (e.target.value) validateName(e.target.value);
                       }}
-                      className="pl-10"
+                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
                       required
                     />
                   </div>
@@ -366,9 +372,8 @@ const Auth = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email" className="text-gray-300">E-mail</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-email"
                       type="email"
@@ -378,7 +383,7 @@ const Auth = () => {
                         setEmail(e.target.value);
                         if (e.target.value) validateEmail(e.target.value);
                       }}
-                      className="pl-10"
+                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
                       required
                     />
                   </div>
@@ -396,9 +401,8 @@ const Auth = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
+                  <Label htmlFor="signup-password" className="text-gray-300">Senha</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-password"
                       type={showPassword ? "text" : "password"}
@@ -408,13 +412,13 @@ const Auth = () => {
                         setPassword(e.target.value);
                         if (e.target.value) validatePassword(e.target.value);
                       }}
-                      className="pl-10 pr-10"
+                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500 pr-10"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-3 text-gray-400 hover:text-white"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -422,7 +426,7 @@ const Auth = () => {
                   {password && (
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                        <div className="flex-1 h-1 bg-gray-600 rounded-full overflow-hidden">
                           <div
                             className={`h-full transition-all ${
                               passwordStrength.strength === 1
@@ -445,14 +449,14 @@ const Auth = () => {
                       )}
                     </div>
                   )}
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
+                  <Alert className="bg-gray-700/50 border-gray-600 text-gray-300">
+                    <AlertCircle className="h-4 w-4 text-gray-400" />
                     <AlertDescription className="text-xs">
                       Use pelo menos 8 caracteres com letras maiúsculas e números para uma senha forte
                     </AlertDescription>
                   </Alert>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-black hover:bg-gray-900 text-white" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -463,8 +467,28 @@ const Auth = () => {
                   )}
                 </Button>
               </form>
+              <div className="flex justify-between text-sm mt-2">
+                <TabsTrigger value="signin" className="text-gray-400 hover:text-white flex items-center gap-1 p-0 h-auto">
+                  <Lock className="h-3 w-3" />
+                  Já tenho conta
+                </TabsTrigger>
+              </div>
             </TabsContent>
           </Tabs>
+          <div className="mt-6 text-center space-y-3">
+            <p className="text-gray-400 text-sm">Siga-nos nas redes sociais</p>
+            <div className="flex justify-center space-x-4">
+              <a href="https://www.facebook.com/escinformaticago" target="_blank" rel="noopener noreferrer" className="text-white hover:text-blue-500 transition-colors">
+                <Facebook className="h-6 w-6" />
+              </a>
+              <a href="https://www.instagram.com/escinformaticago" target="_blank" rel="noopener noreferrer" className="text-white hover:text-pink-500 transition-colors">
+                <Instagram className="h-6 w-6" />
+              </a>
+              <a href="https://www.youtube.com/@escinformatica-go" target="_blank" rel="noopener noreferrer" className="text-white hover:text-red-600 transition-colors">
+                <Youtube className="h-6 w-6" />
+              </a>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
