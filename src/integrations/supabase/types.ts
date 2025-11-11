@@ -550,6 +550,36 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          system_name: string | null
+          system_subtitle: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          system_name?: string | null
+          system_subtitle?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          system_name?: string | null
+          system_subtitle?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           account: string | null

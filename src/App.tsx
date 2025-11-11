@@ -19,6 +19,7 @@ import ContasBancarias from "./pages/ContasBancarias";
 import CartoesCredito from "./pages/CartoesCredito";
 import CentrosCustos from "./pages/CentrosCustos";
 import Perfil from "./pages/Perfil";
+import Configuracoes from "./pages/Configuracoes";
 import RelatorioRecorrencias from "./pages/RelatorioRecorrencias";
 import CalendarioFinanceiro from "./pages/CalendarioFinanceiro";
 
@@ -64,7 +65,7 @@ const App = () => (
           <Route path="/contas-fixas" element={<ProtectedRoute><Layout><ContasFixas /></Layout></ProtectedRoute>} />
           <Route path="/relatorio-recorrencias" element={<ProtectedRoute><Layout><RelatorioRecorrencias /></Layout></ProtectedRoute>} />
           <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
-          <Route path="/configuracoes" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Configurações</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
+          <Route path="/configuracoes" element={<ProtectedRoute><Layout><Configuracoes /></Layout></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

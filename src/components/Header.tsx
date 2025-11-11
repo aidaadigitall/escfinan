@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   const [userName, setUserName] = useState("Usuário");
   const [dailyExpenseOpen, setDailyExpenseOpen] = useState(false);
   const { createTransaction } = useTransactions();
+  const { systemName, systemSubtitle, logoUrl } = useSystemSettings();
 
   useEffect(() => {
     if (user) {
@@ -66,14 +68,26 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
             <Menu className="h-5 w-5" />
           </Button>
         )}
-        <div className="bg-primary p-1.5 rounded-lg">
-          <TrendingUp className="h-5 w-5 text-primary-foreground" />
-        </div>
-        <div className="hidden md:block">
-          <h2 className="text-base font-semibold text-white">
-            {greeting()}, {userName}
-          </h2>
-        </div>
+        <button 
+          onClick={() => navigate("/")}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="h-10 w-auto object-contain" />
+          ) : (
+            <div className="bg-primary p-1.5 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-primary-foreground" />
+            </div>
+          )}
+          <div className="hidden md:block text-left">
+            <h1 className="text-base font-bold text-white leading-tight">
+              {systemName}
+            </h1>
+            <p className="text-xs text-white/70 leading-tight">
+              {systemSubtitle}
+            </p>
+          </div>
+        </button>
       </div>
 
       <div className="flex items-center gap-2">
