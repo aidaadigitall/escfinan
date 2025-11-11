@@ -61,7 +61,11 @@ export const useDashboardData = () => {
         return t.type === "income" && dueDate >= startMonth && dueDate <= endMonth && 
                t.status === "pending";
       })
-      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : 0;
+        const remainingValue = parseFloat(t.amount.toString()) - paidValue;
+        return sum + remainingValue;
+      }, 0);
 
     // Pago vs a pagar
     const monthExpensesPaid = transactions
@@ -81,7 +85,11 @@ export const useDashboardData = () => {
         return t.type === "expense" && dueDate >= startMonth && dueDate <= endMonth && 
                t.status === "pending";
       })
-      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+      .reduce((sum, t) => {
+        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : 0;
+        const remainingValue = parseFloat(t.amount.toString()) - paidValue;
+        return sum + remainingValue;
+      }, 0);
 
     // Últimos 6 meses para gráficos
     const last6MonthsData = Array.from({ length: 6 }, (_, i) => {

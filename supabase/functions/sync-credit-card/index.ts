@@ -83,7 +83,7 @@ serve(async (req) => {
     console.error("Error syncing card:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || "Erro ao sincronizar cartão" 
+        error: error instanceof Error ? error.message : "Erro ao sincronizar cartão" 
       }),
       { 
         status: 400,
