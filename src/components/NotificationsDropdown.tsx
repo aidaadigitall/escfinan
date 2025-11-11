@@ -30,6 +30,8 @@ export const NotificationsDropdown = () => {
         return "✅";
       case "received":
         return "💰";
+      case "recurring":
+        return "🔄";
       default:
         return "ℹ️";
     }

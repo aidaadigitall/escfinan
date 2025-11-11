@@ -70,7 +70,7 @@ serve(async (req) => {
         }
 
         // Criar nova transação
-        const { error: insertError } = await supabase
+        const { data: newTransaction, error: insertError } = await supabase
           .from('transactions')
           .insert({
             user_id: bill.user_id,
@@ -82,12 +82,33 @@ serve(async (req) => {
             status: 'pending',
             due_date: dueDate,
             notes: bill.notes ? `${bill.notes} (Gerada automaticamente)` : 'Gerada automaticamente pela conta recorrente',
-          });
+          })
+          .select()
+          .single();
 
         if (insertError) {
           console.error(`Error inserting transaction for bill ${bill.id}:`, insertError);
           errors.push({ billId: bill.id, error: insertError.message });
           continue;
+        }
+
+        // Criar notificação para alertar o usuário
+        const notificationTitle = bill.type === 'income' ? 'Nova Receita Recorrente' : 'Nova Despesa Recorrente';
+        const notificationMessage = `A ${bill.type === 'income' ? 'receita' : 'despesa'} recorrente "${bill.description}" foi gerada automaticamente no valor de R$ ${Number(bill.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`;
+        
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: bill.user_id,
+            title: notificationTitle,
+            message: notificationMessage,
+            type: 'recurring',
+            transaction_id: newTransaction.id,
+          });
+
+        if (notificationError) {
+          console.error(`Error creating notification for bill ${bill.id}:`, notificationError);
+          // Não interromper o processo se a notificação falhar
         }
 
         processedCount++;
