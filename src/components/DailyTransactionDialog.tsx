@@ -9,6 +9,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useClients } from "@/hooks/useClients";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { QuickAddDialog } from "@/components/QuickAddDialog";
 import { Plus } from "lucide-react";
 
@@ -24,7 +25,8 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
   const { accounts } = useBankAccounts();
   const { suppliers, createSupplier } = useSuppliers();
   const { clients, createClient } = useClients();
-  const [quickAddOpen, setQuickAddOpen] = useState<"category" | "entity" | "client" | null>(null);
+  const { paymentMethods, createPaymentMethod } = usePaymentMethods();
+  const [quickAddOpen, setQuickAddOpen] = useState<"category" | "entity" | "client" | "payment_method" | null>(null);
 
   const [formData, setFormData] = useState({
     description: "",
@@ -32,6 +34,7 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
     category_id: "",
     entity: "",
     client: "",
+    payment_method: "",
     bank_account_id: "",
     notes: "",
     due_date: new Date().toISOString().split('T')[0],
@@ -48,6 +51,7 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
       category_id: formData.category_id || undefined,
       entity: formData.entity || undefined,
       client: formData.client || undefined,
+      payment_method: formData.payment_method || undefined,
       bank_account_id: formData.bank_account_id || undefined,
       notes: formData.notes || undefined,
       due_date: formData.due_date,
@@ -64,6 +68,7 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
       category_id: "",
       entity: "",
       client: "",
+      payment_method: "",
       bank_account_id: "",
       notes: "",
       due_date: new Date().toISOString().split('T')[0],
@@ -175,24 +180,53 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
             </div>
 
             <div>
-              <Label htmlFor="bank_account">Conta Bancária *</Label>
-              <Select
-                value={formData.bank_account_id}
-                onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="payment_method">Forma de Pagamento</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.payment_method}
+                  onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethods.map((method) => (
+                      <SelectItem key={method.id} value={method.name}>
+                        {method.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuickAddOpen("payment_method")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="bank_account">Conta Bancária *</Label>
+            <Select
+              value={formData.bank_account_id}
+              onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -261,6 +295,16 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
         onSave={(name) => {
           createClient({ name });
           setFormData({ ...formData, client: name });
+        }}
+      />
+      
+      <QuickAddDialog
+        open={quickAddOpen === "payment_method"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        title="Adicionar Forma de Pagamento"
+        onSave={(name) => {
+          createPaymentMethod(name);
+          setFormData({ ...formData, payment_method: name });
         }}
       />
     </Dialog>
