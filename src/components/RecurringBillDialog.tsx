@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
+import { useCategories } from "@/hooks/useCategories";
+import { useCostCenters } from "@/hooks/useCostCenters";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 
 interface RecurringBillDialogProps {
   open: boolean;
@@ -32,18 +36,16 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
     notes: "",
   });
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories", formData.type],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("type", formData.type)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [showNewCostCenter, setShowNewCostCenter] = useState(false);
+  const [newCostCenterName, setNewCostCenterName] = useState("");
+  const [showNewPaymentMethod, setShowNewPaymentMethod] = useState(false);
+  const [newPaymentMethodName, setNewPaymentMethodName] = useState("");
+
+  const { categories, isLoading: categoriesLoading, createCategory } = useCategories(formData.type as "income" | "expense");
+  const { costCenters, isLoading: costCentersLoading, createCostCenter } = useCostCenters();
+  const { paymentMethods, isLoading: paymentMethodsLoading, createPaymentMethod } = usePaymentMethods();
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bank-accounts"],
@@ -58,31 +60,35 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
     },
   });
 
-  const { data: costCenters = [] } = useQuery({
-    queryKey: ["cost-centers"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cost_centers")
-        .select("*")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const handleCreateCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Digite um nome para a categoria");
+      return;
+    }
+    createCategory({ name: newCategoryName, type: formData.type as "income" | "expense" });
+    setNewCategoryName("");
+    setShowNewCategory(false);
+  };
 
-  const { data: paymentMethods = [] } = useQuery({
-    queryKey: ["payment-methods"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payment_methods")
-        .select("*")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const handleCreateCostCenter = () => {
+    if (!newCostCenterName.trim()) {
+      toast.error("Digite um nome para o centro de custo");
+      return;
+    }
+    createCostCenter({ name: newCostCenterName, is_active: true });
+    setNewCostCenterName("");
+    setShowNewCostCenter(false);
+  };
+
+  const handleCreatePaymentMethod = () => {
+    if (!newPaymentMethodName.trim()) {
+      toast.error("Digite um nome para a forma de pagamento");
+      return;
+    }
+    createPaymentMethod(newPaymentMethodName);
+    setNewPaymentMethodName("");
+    setShowNewPaymentMethod(false);
+  };
 
   useEffect(() => {
     if (bill) {
@@ -262,16 +268,34 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
 
             <div>
               <Label htmlFor="category_id">Categoria</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat: any) => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {!showNewCategory ? (
+                <div className="flex gap-2">
+                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat: any) => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewCategory(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Nova categoria"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreateCategory())}
+                  />
+                  <Button type="button" onClick={handleCreateCategory}>Criar</Button>
+                  <Button type="button" variant="outline" onClick={() => setShowNewCategory(false)}>Cancelar</Button>
+                </div>
+              )}
             </div>
 
             <div>
@@ -290,30 +314,66 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
 
             <div>
               <Label htmlFor="cost_center_id">Centro de Custo</Label>
-              <Select value={formData.cost_center_id} onValueChange={(value) => setFormData({ ...formData, cost_center_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {costCenters.map((cc: any) => (
-                    <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {!showNewCostCenter ? (
+                <div className="flex gap-2">
+                  <Select value={formData.cost_center_id} onValueChange={(value) => setFormData({ ...formData, cost_center_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {costCenters.map((cc: any) => (
+                        <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewCostCenter(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Novo centro de custo"
+                    value={newCostCenterName}
+                    onChange={(e) => setNewCostCenterName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreateCostCenter())}
+                  />
+                  <Button type="button" onClick={handleCreateCostCenter}>Criar</Button>
+                  <Button type="button" variant="outline" onClick={() => setShowNewCostCenter(false)}>Cancelar</Button>
+                </div>
+              )}
             </div>
 
             <div>
               <Label htmlFor="payment_method_id">Forma de Pagamento</Label>
-              <Select value={formData.payment_method_id} onValueChange={(value) => setFormData({ ...formData, payment_method_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((pm: any) => (
-                    <SelectItem key={pm.id} value={pm.id}>{pm.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {!showNewPaymentMethod ? (
+                <div className="flex gap-2">
+                  <Select value={formData.payment_method_id} onValueChange={(value) => setFormData({ ...formData, payment_method_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.map((pm: any) => (
+                        <SelectItem key={pm.id} value={pm.id}>{pm.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewPaymentMethod(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Nova forma de pagamento"
+                    value={newPaymentMethodName}
+                    onChange={(e) => setNewPaymentMethodName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreatePaymentMethod())}
+                  />
+                  <Button type="button" onClick={handleCreatePaymentMethod}>Criar</Button>
+                  <Button type="button" variant="outline" onClick={() => setShowNewPaymentMethod(false)}>Cancelar</Button>
+                </div>
+              )}
             </div>
 
             <div className="col-span-2">
