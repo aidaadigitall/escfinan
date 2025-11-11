@@ -49,6 +49,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     client: string;
     account: string;
     payment_method: string;
+    bank_account_id: string;
+    paid_amount: string;
     status: "pending" | "confirmed" | "overdue" | "paid" | "received";
     due_date: string;
     paid_date: string;
@@ -62,6 +64,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     client: "",
     account: "",
     payment_method: "",
+    bank_account_id: "",
+    paid_amount: "",
     status: "pending",
     due_date: "",
     paid_date: "",
@@ -79,6 +83,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         client: transaction.client || "",
         account: transaction.account || "",
         payment_method: transaction.payment_method || "",
+        bank_account_id: transaction.bank_account_id || "",
+        paid_amount: transaction.paid_amount?.toString() || "",
         status: transaction.status,
         due_date: transaction.due_date,
         paid_date: transaction.paid_date || "",
@@ -94,6 +100,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         client: "",
         account: "",
         payment_method: "",
+        bank_account_id: "",
+        paid_amount: "",
         status: "pending",
         due_date: new Date().toISOString().split("T")[0],
         paid_date: "",
@@ -114,11 +122,13 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
       const dataToSave = {
         ...formData,
         amount: parseFloat(formData.amount),
+        paid_amount: formData.paid_amount ? parseFloat(formData.paid_amount) : undefined,
         category_id: formData.category_id || undefined,
         entity: formData.entity || undefined,
         client: formData.client || undefined,
         account: formData.account || undefined,
         payment_method: formData.payment_method || undefined,
+        bank_account_id: formData.bank_account_id || undefined,
         paid_date: formData.paid_date || undefined,
         notes: formData.notes || undefined,
       };
@@ -233,24 +243,19 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="account">Conta</Label>
-              <div className="flex gap-2">
-                <Select value={formData.account} onValueChange={(value) => setFormData({ ...formData, account: value })}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecione uma conta" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bankAccounts.map((account) => (
-                      <SelectItem key={account.id} value={account.name}>
-                        {account.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("account")}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Label htmlFor="bank_account">Conta Bancária</Label>
+              <Select value={formData.bank_account_id} onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma conta bancária" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name} - {account.bank_name || "Sem banco"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -309,6 +314,23 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                 value={formData.paid_date}
                 onChange={(e) => setFormData({ ...formData, paid_date: e.target.value })}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paid_amount">Valor Pago (Pagamento Parcial)</Label>
+              <Input
+                id="paid_amount"
+                type="number"
+                step="0.01"
+                placeholder="Deixe vazio para pagamento total"
+                value={formData.paid_amount}
+                onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })}
+              />
+              {formData.paid_amount && formData.amount && (
+                <p className="text-sm text-muted-foreground">
+                  Restante: R$ {(parseFloat(formData.amount) - parseFloat(formData.paid_amount)).toFixed(2)}
+                </p>
+              )}
             </div>
           </div>
 

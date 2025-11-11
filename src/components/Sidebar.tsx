@@ -32,7 +32,14 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { icon: Home, label: "Dashboard", path: "/" },
   { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
-  { icon: CreditCard, label: "Contas a Pagar", path: "/despesas" },
+  {
+    icon: CreditCard,
+    label: "Contas a Pagar",
+    submenu: [
+      { icon: CreditCard, label: "Despesas", path: "/despesas" },
+      { icon: FileText, label: "Despesas Fixas", path: "/contas-fixas" },
+    ],
+  },
   { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
   { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },
   {
@@ -61,7 +68,6 @@ const menuItems: MenuItem[] = [
       { icon: Table, label: "Tabelas de Rateios", path: "/auxiliares/tabelas-rateios" },
     ],
   },
-  { icon: FileText, label: "Contas Fixas", path: "/contas-fixas" },
   { icon: Settings, label: "Configurações", path: "/configuracoes" },
 ];
 

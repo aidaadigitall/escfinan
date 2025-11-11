@@ -16,6 +16,8 @@ export type Transaction = {
   status: "pending" | "confirmed" | "overdue" | "paid" | "received";
   due_date: string;
   paid_date?: string;
+  paid_amount?: number;
+  bank_account_id?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -58,6 +60,7 @@ export const useTransactions = (type?: "income" | "expense") => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
       toast.success("Transação criada com sucesso!");
     },
     onError: (error: any) => {
@@ -79,6 +82,7 @@ export const useTransactions = (type?: "income" | "expense") => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
       toast.success("Transação atualizada com sucesso!");
     },
     onError: (error: any) => {
@@ -97,6 +101,7 @@ export const useTransactions = (type?: "income" | "expense") => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
       toast.success("Transação excluída com sucesso!");
     },
     onError: (error: any) => {
