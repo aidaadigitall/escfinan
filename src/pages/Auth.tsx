@@ -30,6 +30,7 @@ const Auth = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [nameError, setNameError] = useState("");
+  const [activeTab, setActiveTab] = useState("signin");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -250,7 +251,7 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-700/50">
               <TabsTrigger value="signin" className="data-[state=active]:bg-black data-[state=active]:text-white text-gray-300">Entrar</TabsTrigger>
               <TabsTrigger value="signup" className="data-[state=active]:bg-black data-[state=active]:text-white text-gray-300">Cadastrar</TabsTrigger>
@@ -333,10 +334,14 @@ const Auth = () => {
                   <Lock className="h-3 w-3" />
                   Esqueci minha senha
                 </button>
-                <TabsTrigger value="signup" className="text-gray-400 hover:text-white flex items-center gap-1 p-0 h-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("signup")}
+                  className="text-gray-400 hover:text-white flex items-center gap-1"
+                >
                   <User className="h-3 w-3" />
                   Cadastre-se
-                </TabsTrigger>
+                </button>
               </div>
             </TabsContent>
 
@@ -468,10 +473,14 @@ const Auth = () => {
                 </Button>
               </form>
               <div className="flex justify-between text-sm mt-2">
-                <TabsTrigger value="signin" className="text-gray-400 hover:text-white flex items-center gap-1 p-0 h-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("signin")}
+                  className="text-gray-400 hover:text-white flex items-center gap-1"
+                >
                   <Lock className="h-3 w-3" />
                   Já tenho conta
-                </TabsTrigger>
+                </button>
               </div>
             </TabsContent>
           </Tabs>
