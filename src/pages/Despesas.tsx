@@ -30,23 +30,31 @@ const Despesas = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const summaryData = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const overdue = transactions.filter(t => 
-      new Date(t.due_date) < today && t.status !== "paid"
-    );
+    const overdue = transactions.filter(t => {
+      const dueDate = new Date(t.due_date);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < today && t.status !== "paid" && t.status !== "confirmed";
+    });
+    
     const dueToday = transactions.filter(t => {
       const dueDate = new Date(t.due_date);
       dueDate.setHours(0, 0, 0, 0);
-      return dueDate.getTime() === today.getTime() && t.status !== "paid";
+      return dueDate.getTime() === today.getTime() && t.status !== "paid" && t.status !== "confirmed";
     });
-    const upcoming = transactions.filter(t => 
-      new Date(t.due_date) > today && t.status !== "paid"
-    );
-    const paid = transactions.filter(t => t.status === "paid");
+    
+    const upcoming = transactions.filter(t => {
+      const dueDate = new Date(t.due_date);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate > today && t.status !== "paid" && t.status !== "confirmed";
+    });
+    
+    const paid = transactions.filter(t => t.status === "paid" || t.status === "confirmed");
 
     const total = transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     const overdueTotal = overdue.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
@@ -54,14 +62,52 @@ const Despesas = () => {
     const upcomingTotal = upcoming.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     const paidTotal = paid.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-    return [
-      { label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "expense" as const },
-      { label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const },
-      { label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "pending" as const },
-      { label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "income" as const },
-      { label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const },
-    ];
+    return {
+      cards: [
+        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "expense" as const, count: overdue.length },
+        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const, count: dueToday.length },
+        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "pending" as const, count: upcoming.length },
+        { key: "paid", label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "income" as const, count: paid.length },
+        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length },
+      ],
+      overdue,
+      dueToday,
+      upcoming,
+      paid,
+    };
   }, [transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    if (!activeFilter) return transactions;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    switch (activeFilter) {
+      case "overdue":
+        return transactions.filter(t => {
+          const dueDate = new Date(t.due_date);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate < today && t.status !== "paid" && t.status !== "confirmed";
+        });
+      case "dueToday":
+        return transactions.filter(t => {
+          const dueDate = new Date(t.due_date);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === today.getTime() && t.status !== "paid" && t.status !== "confirmed";
+        });
+      case "upcoming":
+        return transactions.filter(t => {
+          const dueDate = new Date(t.due_date);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate > today && t.status !== "paid" && t.status !== "confirmed";
+        });
+      case "paid":
+        return transactions.filter(t => t.status === "paid" || t.status === "confirmed");
+      default:
+        return transactions;
+    }
+  }, [transactions, activeFilter]);
 
   const handleAdd = () => {
     setSelectedTransaction(undefined);
@@ -126,8 +172,14 @@ const Despesas = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {summaryData.map((item) => (
-          <Card key={item.label} className="p-4">
+        {summaryData.cards.map((item) => (
+          <Card 
+            key={item.key} 
+            className={`p-4 cursor-pointer transition-all hover:shadow-lg ${
+              activeFilter === item.key ? "ring-2 ring-primary" : ""
+            }`}
+            onClick={() => setActiveFilter(activeFilter === item.key ? null : item.key)}
+          >
             <p className="text-sm text-muted-foreground mb-1">{item.label}</p>
             <p className={`text-2xl font-bold ${
               item.variant === "income" ? "text-income" :
@@ -138,6 +190,11 @@ const Despesas = () => {
             }`}>
               {item.value}
             </p>
+            {activeFilter === item.key && (
+              <p className="text-xs text-primary mt-1">
+                Mostrando {item.count} lançamento(s)
+              </p>
+            )}
           </Card>
         ))}
       </div>
@@ -157,14 +214,14 @@ const Despesas = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                  Nenhuma conta a pagar cadastrada
+                  {activeFilter ? "Nenhum lançamento encontrado para este filtro" : "Nenhuma conta a pagar cadastrada"}
                 </TableCell>
               </TableRow>
             ) : (
-              transactions.map((transaction) => {
+              filteredTransactions.map((transaction) => {
                 const statusBadge = getStatusBadge(transaction.status);
                 return (
                   <TableRow key={transaction.id}>
