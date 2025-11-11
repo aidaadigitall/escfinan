@@ -173,18 +173,21 @@ const Despesas = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Contas a Pagar</h1>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm">
+        <div className="flex gap-2">
+          <Button variant="outline">
             <Search className="h-4 w-4 mr-2" />
-            Busca avançada
+            <span className="hidden sm:inline">Busca avançada</span>
+            <span className="sm:hidden">Buscar</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setDailyDialogOpen(true)}>
+          <Button variant="outline" onClick={() => setDailyDialogOpen(true)}>
             <Wallet className="h-4 w-4 mr-2" />
-            Lançamento Diário
+            <span className="hidden md:inline">Lançamento Diário</span>
+            <span className="md:hidden">Diário</span>
           </Button>
-          <Button size="sm" onClick={handleAdd}>
+          <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
-            Adicionar
+            <span className="hidden sm:inline">Adicionar</span>
+            <span className="sm:hidden">+</span>
           </Button>
         </div>
       </div>

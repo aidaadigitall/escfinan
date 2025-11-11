@@ -121,14 +121,16 @@ const ContasFixas = () => {
             As contas fixas são geradas automaticamente pelo sistema e passam a ser visualizadas nas contas a pagar de acordo com a configuração feita pelo usuário.
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm" onClick={() => setSearchOpen(true)}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setSearchOpen(true)}>
             <Search className="h-4 w-4 mr-2" />
-            Busca avançada
+            <span className="hidden sm:inline">Busca avançada</span>
+            <span className="sm:hidden">Buscar</span>
           </Button>
-          <Button size="sm" onClick={handleAdd}>
+          <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
-            Adicionar
+            <span className="hidden sm:inline">Adicionar</span>
+            <span className="sm:hidden">+</span>
           </Button>
         </div>
       </div>
