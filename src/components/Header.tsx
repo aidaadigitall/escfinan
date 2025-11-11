@@ -1,4 +1,4 @@
-import { Bell, Calendar, LogOut, Menu, TrendingUp, User, Settings, Plus } from "lucide-react";
+import { Calendar, LogOut, Menu, TrendingUp, User, Settings, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { DailyTransactionDialog } from "./DailyTransactionDialog";
 import { useTransactions } from "@/hooks/useTransactions";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -85,10 +86,7 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
           <Plus className="h-4 w-4" />
           Despesa Rápida
         </Button>
-        <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/10">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 bg-expense rounded-full" />
-        </Button>
+        <NotificationDropdown />
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <Calendar className="h-5 w-5" />
         </Button>
