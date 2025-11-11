@@ -18,6 +18,7 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
+        auth_background: "#141A29",
         dark_background: "#1e1e1e",
         dark_card: "#2c2c2c",
         foreground: "hsl(var(--foreground))",
