@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { DailyTransactionDialog } from "./DailyTransactionDialog";
 import { useTransactions } from "@/hooks/useTransactions";
-import { NotificationDropdown } from "./NotificationDropdown";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -86,7 +86,7 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
           <Plus className="h-4 w-4" />
           Despesa Rápida
         </Button>
-        <NotificationDropdown />
+        <NotificationsDropdown />
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <Calendar className="h-5 w-5" />
         </Button>
