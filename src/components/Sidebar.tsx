@@ -46,6 +46,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { icon: CreditCard, label: "Despesas", path: "/despesas" },
       { icon: FileText, label: "Despesas Fixas", path: "/contas-fixas" },
+      { icon: FileBarChart, label: "Relatório de Recorrências", path: "/relatorio-recorrencias" },
     ],
   },
   { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },

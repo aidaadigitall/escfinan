@@ -2,6 +2,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { ProgressCard } from "@/components/dashboard/ProgressCard";
 import { CashFlowChart } from "@/components/dashboard/CashFlowChart";
 import { SalesChart } from "@/components/dashboard/SalesChart";
+import { UpcomingRecurringBills } from "@/components/dashboard/UpcomingRecurringBills";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -71,6 +72,8 @@ const Dashboard = () => {
         <CashFlowChart />
         <SalesChart />
       </div>
+
+      <UpcomingRecurringBills />
     </div>
   );
 };
