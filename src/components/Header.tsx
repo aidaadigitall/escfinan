@@ -80,7 +80,7 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
           variant="outline"
           size="sm"
           onClick={() => setDailyExpenseOpen(true)}
-          className="hidden sm:flex items-center gap-2 text-white border-white/20 hover:bg-white/10"
+          className="hidden sm:flex items-center gap-2 bg-white text-primary border-white hover:bg-white/90"
         >
           <Plus className="h-4 w-4" />
           Despesa Rápida
