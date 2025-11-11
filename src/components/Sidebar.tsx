@@ -14,7 +14,6 @@ import {
   ChevronRight,
   Landmark,
   Building2,
-  Tag,
   Target,
   ArrowRightLeft,
   Mail,
@@ -66,9 +65,6 @@ const menuItems: MenuItem[] = [
     submenu: [
       { icon: Wallet, label: "Caixas", path: "/auxiliares/caixas" },
       { icon: Building2, label: "Contas Bancárias", path: "/auxiliares/contas-bancarias" },
-      { icon: CreditCard, label: "Formas de Pagamento", path: "/auxiliares/formas-pagamento" },
-      { icon: FileText, label: "Plano de Contas", path: "/auxiliares/plano-contas" },
-      { icon: Tag, label: "Situações", path: "/auxiliares/situacoes" },
       { icon: Target, label: "Centros de Custos", path: "/auxiliares/centros-custos" },
       { icon: ArrowRightLeft, label: "Conciliação Bancária", path: "/auxiliares/conciliacao" },
       { icon: ArrowRightLeft, label: "Transferências", path: "/auxiliares/transferencias" },
