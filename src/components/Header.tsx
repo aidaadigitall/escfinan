@@ -26,13 +26,17 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [userName, setUserName] = useState("Usuário");
-  const [systemSettings, setSystemSettings] = useState({
-    system_name: "FinanceControl",
-    system_subtitle: "Controle Financeiro Pessoal",
-    logo_url: "",
-  });
+  const [logoUrl, setLogoUrl] = useState("");
   const [dailyExpenseOpen, setDailyExpenseOpen] = useState(false);
   const { createTransaction } = useTransactions();
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 0 && hour < 6) return "Boa madrugada";
+    if (hour >= 6 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
 
   useEffect(() => {
     if (user) {
@@ -48,19 +52,15 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
           }
         });
 
-      // Buscar configurações do sistema
+      // Buscar logo do sistema
       supabase
         .from("system_settings")
-        .select("*")
+        .select("logo_url")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }) => {
-          if (data) {
-            setSystemSettings({
-              system_name: data.system_name || "FinanceControl",
-              system_subtitle: data.system_subtitle || "Controle Financeiro Pessoal",
-              logo_url: data.logo_url || "",
-            });
+          if (data?.logo_url) {
+            setLogoUrl(data.logo_url);
           }
         });
     }
@@ -74,30 +74,29 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
             <Menu className="h-5 w-5" />
           </Button>
         )}
-        <button 
-          onClick={() => navigate("/")}
-          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-        >
-          {systemSettings.logo_url ? (
-            <img 
-              src={systemSettings.logo_url} 
-              alt={systemSettings.system_name}
-              className="h-10 object-contain"
-            />
-          ) : (
-            <div className="bg-primary p-1.5 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-primary-foreground" />
-            </div>
-          )}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/")}
+            className="hover:opacity-80 transition-opacity"
+          >
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt="Logo"
+                className="h-10 object-contain"
+              />
+            ) : (
+              <div className="bg-primary p-1.5 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-primary-foreground" />
+              </div>
+            )}
+          </button>
           <div className="hidden md:block text-left">
-            <h2 className="text-sm font-bold text-white leading-tight">
-              {systemSettings.system_name}
-            </h2>
-            <p className="text-xs text-white/70 leading-tight">
-              {systemSettings.system_subtitle}
+            <p className="text-sm text-white/90 leading-tight">
+              {getGreeting()}, <span className="font-semibold">{userName}</span>
             </p>
           </div>
-        </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
