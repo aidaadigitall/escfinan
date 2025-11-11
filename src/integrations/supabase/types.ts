@@ -167,6 +167,132 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_card_transactions: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          credit_card_id: string
+          current_installment: number | null
+          description: string
+          id: string
+          installments: number | null
+          is_synced: boolean
+          operator_transaction_id: string | null
+          transaction_date: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          credit_card_id: string
+          current_installment?: number | null
+          description: string
+          id?: string
+          installments?: number | null
+          is_synced?: boolean
+          operator_transaction_id?: string | null
+          transaction_date: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          credit_card_id?: string
+          current_installment?: number | null
+          description?: string
+          id?: string
+          installments?: number | null
+          is_synced?: boolean
+          operator_transaction_id?: string | null
+          transaction_date?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_card_transactions_credit_card_id_fkey"
+            columns: ["credit_card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_card_transactions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_cards: {
+        Row: {
+          available_credit: number
+          card_brand: string
+          card_name: string
+          card_number: string
+          cardholder_name: string
+          closing_day: number
+          created_at: string
+          credit_limit: number
+          due_day: number
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          operator_card_id: string | null
+          operator_integration: string | null
+          sync_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_credit?: number
+          card_brand: string
+          card_name: string
+          card_number: string
+          cardholder_name: string
+          closing_day: number
+          created_at?: string
+          credit_limit?: number
+          due_day: number
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          operator_card_id?: string | null
+          operator_integration?: string | null
+          sync_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_credit?: number
+          card_brand?: string
+          card_name?: string
+          card_number?: string
+          cardholder_name?: string
+          closing_day?: number
+          created_at?: string
+          credit_limit?: number
+          due_day?: number
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          operator_card_id?: string | null
+          operator_integration?: string | null
+          sync_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

@@ -65,6 +65,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { icon: Wallet, label: "Caixas", path: "/auxiliares/caixas" },
       { icon: Building2, label: "Contas Bancárias", path: "/auxiliares/contas-bancarias" },
+      { icon: CreditCard, label: "Cartões de Crédito", path: "/auxiliares/cartoes-credito" },
       { icon: Target, label: "Centros de Custos", path: "/auxiliares/centros-custos" },
       { icon: ArrowRightLeft, label: "Conciliação Bancária", path: "/auxiliares/conciliacao" },
       { icon: ArrowRightLeft, label: "Transferências", path: "/auxiliares/transferencias" },
