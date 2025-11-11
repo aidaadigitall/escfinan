@@ -1,1 +1,4 @@
 project_id = "qdavvdfjhskdwelyvwjy"
+
+[functions.process-recurring-bills]
+verify_jwt = false
