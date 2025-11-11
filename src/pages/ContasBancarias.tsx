@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Download, Upload } from "lucide-react";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import {
   Dialog,
@@ -21,11 +21,124 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
+import { useTransactions } from "@/hooks/useTransactions";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContasBancarias = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [selectedAccountForExport, setSelectedAccountForExport] = useState<string | null>(null);
   const { accounts, isLoading, createAccount, deleteAccount } = useBankAccounts();
+  const { transactions } = useTransactions();
   const { register, handleSubmit, reset } = useForm();
+
+  const handleExportStatement = async (accountId: string, accountName: string) => {
+    const accountTransactions = transactions.filter(
+      t => t.bank_account_id === accountId
+    );
+
+    if (accountTransactions.length === 0) {
+      toast.error("Não há transações para esta conta");
+      return;
+    }
+
+    // Generate CSV
+    const csvContent = [
+      ["Data", "Descrição", "Tipo", "Valor", "Status", "Saldo"].join(";"),
+      ...accountTransactions
+        .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+        .map(t => {
+          const amount = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          const value = t.type === "expense" ? -amount : amount;
+          return [
+            format(new Date(t.due_date), "dd/MM/yyyy"),
+            t.description,
+            t.type === "income" ? "Receita" : "Despesa",
+            value.toFixed(2).replace(".", ","),
+            t.status === "paid" || t.status === "received" || t.status === "confirmed" ? "Confirmado" : "Pendente",
+            ""
+          ].join(";");
+        })
+    ].join("\n");
+
+    // Download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `extrato_${accountName.replace(/\s/g, "_")}_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Extrato exportado com sucesso!");
+  };
+
+  const handleImportStatement = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split("\n");
+      
+      // Skip header
+      const dataLines = lines.slice(1).filter(line => line.trim());
+      
+      let imported = 0;
+      let errors = 0;
+
+      for (const line of dataLines) {
+        const [date, description, type, value, status] = line.split(";");
+        
+        if (!date || !description || !value) {
+          errors++;
+          continue;
+        }
+
+        try {
+          const [day, month, year] = date.trim().split("/");
+          const dueDate = `${year}-${month}-${day}`;
+          const amount = Math.abs(parseFloat(value.replace(",", ".")));
+          const transactionType = type?.toLowerCase().includes("receita") ? "income" : "expense";
+          const transactionStatus = status?.toLowerCase().includes("confirmado") ? "confirmed" : "pending";
+
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) continue;
+
+          await supabase.from("transactions").insert({
+            user_id: user.id,
+            description: description.trim(),
+            amount: amount,
+            type: transactionType,
+            status: transactionStatus,
+            due_date: dueDate,
+            bank_account_id: selectedAccountForExport,
+          });
+
+          imported++;
+        } catch (error) {
+          errors++;
+        }
+      }
+
+      if (imported > 0) {
+        toast.success(`${imported} transação(ões) importada(s) com sucesso!`);
+      }
+      if (errors > 0) {
+        toast.error(`${errors} transação(ões) com erro na importação`);
+      }
+
+      setImportDialogOpen(false);
+      setSelectedAccountForExport(null);
+    };
+    
+    reader.readAsText(file);
+  };
 
   const onSubmit = (data: any) => {
     createAccount({
@@ -84,6 +197,25 @@ const ContasBancarias = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleExportStatement(account.id, account.name)}
+                        title="Exportar Extrato"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedAccountForExport(account.id);
+                          setImportDialogOpen(true);
+                        }}
+                        title="Importar Extrato"
+                      >
+                        <Upload className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -130,6 +262,43 @@ const ContasBancarias = () => {
               <Button type="submit">Cadastrar</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importar Extrato Bancário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              <p className="mb-2">O arquivo deve estar no formato CSV com as seguintes colunas separadas por ponto e vírgula (;):</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Data (dd/MM/yyyy)</li>
+                <li>Descrição</li>
+                <li>Tipo (Receita ou Despesa)</li>
+                <li>Valor (com vírgula decimal)</li>
+                <li>Status (Confirmado ou Pendente)</li>
+              </ul>
+            </div>
+            <div>
+              <Label htmlFor="file">Selecionar arquivo CSV</Label>
+              <Input
+                id="file"
+                type="file"
+                accept=".csv"
+                onChange={handleImportStatement}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => {
+                setImportDialogOpen(false);
+                setSelectedAccountForExport(null);
+              }}>
+                Cancelar
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

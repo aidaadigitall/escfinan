@@ -3,6 +3,7 @@ import { ProgressCard } from "@/components/dashboard/ProgressCard";
 import { CashFlowChart } from "@/components/dashboard/CashFlowChart";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { UpcomingRecurringBills } from "@/components/dashboard/UpcomingRecurringBills";
+import { BankAccountsCard } from "@/components/dashboard/BankAccountsCard";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -73,7 +74,10 @@ const Dashboard = () => {
         <SalesChart />
       </div>
 
-      <UpcomingRecurringBills />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <BankAccountsCard />
+        <UpcomingRecurringBills />
+      </div>
     </div>
   );
 };
