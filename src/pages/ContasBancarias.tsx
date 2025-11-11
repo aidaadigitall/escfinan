@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Plus, Edit, Trash2, Download, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, Download, Upload, CalendarIcon } from "lucide-react";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import {
   Dialog,
@@ -25,22 +25,55 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const ContasBancarias = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [selectedAccountForExport, setSelectedAccountForExport] = useState<string | null>(null);
+  const [selectedAccountName, setSelectedAccountName] = useState<string>("");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const { accounts, isLoading, createAccount, deleteAccount } = useBankAccounts();
   const { transactions } = useTransactions();
   const { register, handleSubmit, reset } = useForm();
 
-  const handleExportStatement = async (accountId: string, accountName: string) => {
-    const accountTransactions = transactions.filter(
-      t => t.bank_account_id === accountId
+  const openExportDialog = (accountId: string, accountName: string) => {
+    setSelectedAccountForExport(accountId);
+    setSelectedAccountName(accountName);
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setExportDialogOpen(true);
+  };
+
+  const handleExportStatement = async () => {
+    if (!selectedAccountForExport) return;
+
+    let accountTransactions = transactions.filter(
+      t => t.bank_account_id === selectedAccountForExport
     );
 
+    // Apply date filters
+    if (startDate) {
+      accountTransactions = accountTransactions.filter(t => 
+        new Date(t.due_date) >= startDate
+      );
+    }
+    if (endDate) {
+      accountTransactions = accountTransactions.filter(t => 
+        new Date(t.due_date) <= endDate
+      );
+    }
+
     if (accountTransactions.length === 0) {
-      toast.error("Não há transações para esta conta");
+      toast.error("Não há transações para esta conta no período selecionado");
       return;
     }
 
@@ -67,14 +100,20 @@ const ContasBancarias = () => {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
+    const dateRange = startDate && endDate 
+      ? `_${format(startDate, "yyyy-MM-dd")}_a_${format(endDate, "yyyy-MM-dd")}`
+      : "";
     link.setAttribute("href", url);
-    link.setAttribute("download", `extrato_${accountName.replace(/\s/g, "_")}_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.setAttribute("download", `extrato_${selectedAccountName.replace(/\s/g, "_")}${dateRange}_${format(new Date(), "yyyy-MM-dd")}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast.success("Extrato exportado com sucesso!");
+    setExportDialogOpen(false);
+    setSelectedAccountForExport(null);
+    setSelectedAccountName("");
   };
 
   const handleImportStatement = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,7 +239,7 @@ const ContasBancarias = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleExportStatement(account.id, account.name)}
+                        onClick={() => openExportDialog(account.id, account.name)}
                         title="Exportar Extrato"
                       >
                         <Download className="h-4 w-4" />
@@ -296,6 +335,96 @@ const ContasBancarias = () => {
                 setSelectedAccountForExport(null);
               }}>
                 Cancelar
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Exportar Extrato - {selectedAccountName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Selecione o período para exportar as transações. Deixe em branco para exportar todas.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Data Inicial</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "dd/MM/yyyy") : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data Final</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "dd/MM/yyyy") : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      disabled={(date) => startDate ? date < startDate : false}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {startDate && endDate && (
+              <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                Exportando transações de {format(startDate, "dd/MM/yyyy")} até {format(endDate, "dd/MM/yyyy")}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => {
+                setExportDialogOpen(false);
+                setSelectedAccountForExport(null);
+                setSelectedAccountName("");
+              }}>
+                Cancelar
+              </Button>
+              <Button type="button" onClick={handleExportStatement}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
               </Button>
             </DialogFooter>
           </div>
