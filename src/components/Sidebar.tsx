@@ -163,7 +163,7 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
   return (
     <aside 
       className={cn(
-        "fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300",
+        "fixed left-0 top-14 h-[calc(100vh-56px)] bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
