@@ -1,6 +1,8 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { Sheet, SheetContent } from "./ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: ReactNode;
@@ -8,25 +10,36 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Fixed sidebar */}
-      <Sidebar 
-        collapsed={sidebarCollapsed} 
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      {/* Mobile: Sidebar as overlay */}
+      {isMobile ? (
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-64">
+            <Sidebar onNavigate={() => setSidebarOpen(false)} />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        /* Desktop: Fixed sidebar */
+        <Sidebar 
+          collapsed={sidebarCollapsed} 
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      )}
 
-      {/* Main content with dynamic margin */}
+      {/* Main content */}
       <div 
-        className="transition-all duration-300"
-        style={{ 
+        className={isMobile ? "w-full" : "transition-all duration-300"}
+        style={!isMobile ? { 
           marginLeft: sidebarCollapsed ? '64px' : '256px' 
-        }}
+        } : undefined}
       >
         <Header 
-          onMenuClick={() => setSidebarCollapsed(!sidebarCollapsed)} 
-          showMenuButton={false}
+          onMenuClick={isMobile ? () => setSidebarOpen(true) : () => setSidebarCollapsed(!sidebarCollapsed)} 
+          showMenuButton={isMobile}
         />
         <main className="pt-16 p-4 md:p-6">
           {children}
