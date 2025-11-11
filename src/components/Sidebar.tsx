@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import escSolutionsLogo from "@/assets/esc_solutions_logo.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import {
@@ -71,6 +72,7 @@ const menuItems: MenuItem[] = [
 ];
 
 export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProps) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
@@ -159,22 +161,19 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
       )}
     >
       <div className="p-6 border-b border-sidebar-border flex items-center justify-between animate-fade-in">
-        {!collapsed && (
-          <div className="transition-opacity duration-200">
-            <h1 className="text-2xl font-bold text-sidebar-foreground">
-              FinanceControl
-            </h1>
-            <p className="text-sm text-sidebar-foreground/60 mt-1">
-              Controle Financeiro Pessoal
-            </p>
-          </div>
-        )}
+        <button
+          onClick={() => navigate("/")}
+          className={cn("flex items-center justify-center", collapsed ? "w-full" : "w-auto")}
+        >
+          <img src={escSolutionsLogo} alt="ESC Solutions Logo" className={cn("transition-all duration-200", collapsed ? "w-8 h-8" : "w-40")} />
+        </button>
+        
         {onToggle && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className={cn("flex-shrink-0", collapsed && "mx-auto")}
+            className={cn("flex-shrink-0", collapsed ? "mx-auto" : "ml-auto")}
           >
             <ChevronLeft className={cn("h-5 w-5 transition-transform duration-300", collapsed && "rotate-180")} />
           </Button>
