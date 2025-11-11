@@ -284,7 +284,21 @@ const Receitas = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="font-semibold">
-                      {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      <div className="flex flex-col gap-1">
+                        <span>
+                          R$ {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                        {transaction.paid_amount && transaction.paid_amount > 0 && (
+                          <div className="text-xs space-y-0.5">
+                            <div className="text-income">
+                              Pago: R$ {transaction.paid_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </div>
+                            <div className="text-warning">
+                              Restante: R$ {(parseFloat(transaction.amount.toString()) - transaction.paid_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">

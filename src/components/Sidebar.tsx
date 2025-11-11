@@ -50,23 +50,16 @@ const menuItems: MenuItem[] = [
   },
   { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
   { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },
-  {
-    icon: Landmark,
-    label: "Boletos Bancários",
-    submenu: [
-      { icon: FileText, label: "Gerar Boletos", path: "/boletos/gerar" },
-      { icon: FileText, label: "Remessas", path: "/boletos/remessas" },
-      { icon: FileText, label: "Retornos", path: "/boletos/retornos" },
-    ],
-  },
+  { icon: Target, label: "Calendário Financeiro", path: "/calendario-financeiro" },
   {
     icon: Settings,
-    label: "Opções Auxiliares",
+    label: "Configurações Avançadas",
     submenu: [
       { icon: Wallet, label: "Caixas", path: "/auxiliares/caixas" },
       { icon: Building2, label: "Contas Bancárias", path: "/auxiliares/contas-bancarias" },
       { icon: CreditCard, label: "Cartões de Crédito", path: "/auxiliares/cartoes-credito" },
       { icon: Target, label: "Centros de Custos", path: "/auxiliares/centros-custos" },
+      { icon: Landmark, label: "Boletos Bancários", path: "/boletos" },
       { icon: ArrowRightLeft, label: "Conciliação Bancária", path: "/auxiliares/conciliacao" },
       { icon: ArrowRightLeft, label: "Transferências", path: "/auxiliares/transferencias" },
       { icon: FileText, label: "Campos Extras", path: "/auxiliares/campos-extras" },

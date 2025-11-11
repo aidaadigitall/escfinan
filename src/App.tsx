@@ -18,6 +18,7 @@ import CartoesCredito from "./pages/CartoesCredito";
 import CentrosCustos from "./pages/CentrosCustos";
 import Perfil from "./pages/Perfil";
 import RelatorioRecorrencias from "./pages/RelatorioRecorrencias";
+import CalendarioFinanceiro from "./pages/CalendarioFinanceiro";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +43,8 @@ const App = () => (
           <Route path="/despesas" element={<ProtectedRoute><Layout><Despesas /></Layout></ProtectedRoute>} />
           <Route path="/fluxo-de-caixa" element={<ProtectedRoute><Layout><FluxoDeCaixa /></Layout></ProtectedRoute>} />
           <Route path="/dre-gerencial" element={<ProtectedRoute><Layout><DreGerencial /></Layout></ProtectedRoute>} />
+          <Route path="/calendario-financeiro" element={<ProtectedRoute><Layout><CalendarioFinanceiro /></Layout></ProtectedRoute>} />
+          <Route path="/boletos" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Boletos Bancários</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/boletos/gerar" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Gerar Boletos</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/boletos/remessas" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Remessas</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/boletos/retornos" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Retornos</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
