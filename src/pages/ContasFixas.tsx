@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -15,9 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RecurringBillDialog } from "@/components/RecurringBillDialog";
+import { RecurringBillSearchDialog } from "@/components/RecurringBillSearchDialog";
 
 const ContasFixas = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<any>(null);
+  const [searchFilters, setSearchFilters] = useState<any>({});
   const queryClient = useQueryClient();
 
   const { data: recurringBills = [], isLoading } = useQuery({
@@ -52,6 +57,29 @@ const ContasFixas = () => {
     },
   });
 
+  const filteredBills = useMemo(() => {
+    if (!recurringBills) return [];
+    
+    return recurringBills.filter((bill: any) => {
+      if (searchFilters.description && !bill.description.toLowerCase().includes(searchFilters.description.toLowerCase())) {
+        return false;
+      }
+      if (searchFilters.type && bill.type !== searchFilters.type) {
+        return false;
+      }
+      if (searchFilters.recurrence_type && bill.recurrence_type !== searchFilters.recurrence_type) {
+        return false;
+      }
+      if (searchFilters.minAmount && parseFloat(bill.amount) < parseFloat(searchFilters.minAmount)) {
+        return false;
+      }
+      if (searchFilters.maxAmount && parseFloat(bill.amount) > parseFloat(searchFilters.maxAmount)) {
+        return false;
+      }
+      return true;
+    });
+  }, [recurringBills, searchFilters]);
+
   const getRecurrenceLabel = (type: string) => {
     const labels: Record<string, string> = {
       daily: "Diário",
@@ -60,6 +88,20 @@ const ContasFixas = () => {
       yearly: "Anual",
     };
     return labels[type] || type;
+  };
+
+  const handleEdit = (bill: any) => {
+    setSelectedBill(bill);
+    setDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedBill(null);
+    setDialogOpen(true);
+  };
+
+  const handleSearch = (filters: any) => {
+    setSearchFilters(filters);
   };
 
   if (isLoading) {
@@ -84,7 +126,7 @@ const ContasFixas = () => {
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Adicionar
           </Button>
@@ -113,14 +155,14 @@ const ContasFixas = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recurringBills.length === 0 ? (
+            {filteredBills.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                  Nenhuma conta fixa cadastrada
+                  Nenhuma conta fixa encontrada
                 </TableCell>
               </TableRow>
             ) : (
-              recurringBills.map((bill: any) => (
+              filteredBills.map((bill: any) => (
                 <TableRow key={bill.id}>
                   <TableCell>{bill.description}</TableCell>
                   <TableCell>-</TableCell>
@@ -140,7 +182,7 @@ const ContasFixas = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(bill)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
@@ -158,6 +200,18 @@ const ContasFixas = () => {
           </TableBody>
         </Table>
       </Card>
+
+      <RecurringBillDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        bill={selectedBill}
+      />
+
+      <RecurringBillSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSearch={handleSearch}
+      />
     </div>
   );
 };
