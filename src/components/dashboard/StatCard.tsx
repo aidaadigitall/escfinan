@@ -26,12 +26,12 @@ export const StatCard = ({
   return (
     <Card
       className={cn(
-        "p-6 relative overflow-hidden transition-all hover:shadow-lg",
+        "p-6 relative overflow-hidden transition-all hover:shadow-lg min-h-[180px] flex flex-col justify-between",
         variantClasses[variant]
       )}
     >
       <div className="relative z-10">
-        <h3 className="text-sm font-medium opacity-90 mb-2">{title}</h3>
+        <h3 className="text-base font-medium opacity-90 mb-3">{title}</h3>
         <p className="text-3xl font-bold mb-4">{amount}</p>
         {linkText && (
           <button

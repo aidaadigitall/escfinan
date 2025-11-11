@@ -1,4 +1,4 @@
-import { Bell, Calendar, LogOut, Menu, TrendingUp, User, Settings } from "lucide-react";
+import { Bell, Calendar, LogOut, Menu, TrendingUp, User, Settings, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "./ui/avatar";
+import { DailyTransactionDialog } from "./DailyTransactionDialog";
+import { useTransactions } from "@/hooks/useTransactions";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -23,6 +25,8 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [userName, setUserName] = useState("Usuário");
+  const [dailyExpenseOpen, setDailyExpenseOpen] = useState(false);
+  const { createTransaction } = useTransactions();
 
   useEffect(() => {
     if (user) {
@@ -72,6 +76,15 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
       </div>
 
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDailyExpenseOpen(true)}
+          className="hidden sm:flex items-center gap-2 text-white border-white/20 hover:bg-white/10"
+        >
+          <Plus className="h-4 w-4" />
+          Despesa Rápida
+        </Button>
         <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/10">
           <Bell className="h-5 w-5" />
           <span className="absolute top-1 right-1 h-2 w-2 bg-expense rounded-full" />
@@ -116,6 +129,13 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <DailyTransactionDialog
+        open={dailyExpenseOpen}
+        onOpenChange={setDailyExpenseOpen}
+        type="expense"
+        onSave={(data) => createTransaction(data)}
+      />
     </header>
   );
 };

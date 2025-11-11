@@ -24,10 +24,10 @@ export const ProgressCard = ({
   onLinkClick,
 }: ProgressCardProps) => {
   return (
-    <Card className="p-6 bg-primary text-primary-foreground hover:shadow-lg transition-all">
+    <Card className="p-6 bg-primary text-primary-foreground hover:shadow-lg transition-all min-h-[280px] flex flex-col">
       <div className="flex justify-between items-start mb-6">
-        <div>
-          <h3 className="text-sm font-medium opacity-90">{title}</h3>
+        <div className="flex-1">
+          <h3 className="text-base font-medium opacity-90">{title}</h3>
           <p className="text-xs opacity-75 mt-1">{subtitle}</p>
         </div>
         <div className="relative">
