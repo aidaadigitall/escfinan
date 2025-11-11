@@ -43,16 +43,23 @@ export const useDashboardData = () => {
       })
       .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-    // Recebido vs a receber
+    // Recebido vs a receber (incluindo parciais)
     const monthIncomeReceived = transactions
       .filter(t => {
         const dueDate = new Date(t.due_date);
-        return t.type === "income" && dueDate >= startMonth && dueDate <= endMonth && 
-               (t.status === "received" || t.status === "confirmed" || t.status === "paid");
+        return t.type === "income" && dueDate >= startMonth && dueDate <= endMonth;
       })
       .reduce((sum, t) => {
-        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
-        return sum + parseFloat(paidValue.toString());
+        // Se está confirmado, use paid_amount ou amount
+        if (t.status === "received" || t.status === "confirmed" || t.status === "paid") {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }
+        // Se está pendente mas tem pagamento parcial, some apenas o parcial
+        if (t.status === "pending" && t.paid_amount && t.paid_amount > 0) {
+          return sum + parseFloat(t.paid_amount.toString());
+        }
+        return sum;
       }, 0);
 
     const monthIncomePending = transactions
@@ -67,16 +74,23 @@ export const useDashboardData = () => {
         return sum + remainingValue;
       }, 0);
 
-    // Pago vs a pagar
+    // Pago vs a pagar (incluindo parciais)
     const monthExpensesPaid = transactions
       .filter(t => {
         const dueDate = new Date(t.due_date);
-        return t.type === "expense" && dueDate >= startMonth && dueDate <= endMonth && 
-               (t.status === "paid" || t.status === "confirmed");
+        return t.type === "expense" && dueDate >= startMonth && dueDate <= endMonth;
       })
       .reduce((sum, t) => {
-        const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
-        return sum + parseFloat(paidValue.toString());
+        // Se está confirmado, use paid_amount ou amount
+        if (t.status === "paid" || t.status === "confirmed") {
+          const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
+          return sum + parseFloat(paidValue.toString());
+        }
+        // Se está pendente mas tem pagamento parcial, some apenas o parcial
+        if (t.status === "pending" && t.paid_amount && t.paid_amount > 0) {
+          return sum + parseFloat(t.paid_amount.toString());
+        }
+        return sum;
       }, 0);
 
     const monthExpensesPending = transactions
