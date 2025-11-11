@@ -142,8 +142,11 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
       });
 
       const dataToSave = {
-        ...formData,
+        description: formData.description,
         amount: parseFloat(formData.amount),
+        type: formData.type,
+        status: formData.status,
+        due_date: formData.due_date,
         paid_amount: formData.paid_amount ? parseFloat(formData.paid_amount) : undefined,
         category_id: formData.category_id || undefined,
         entity: formData.entity || undefined,
