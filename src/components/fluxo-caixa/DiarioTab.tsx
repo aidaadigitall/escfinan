@@ -15,10 +15,11 @@ import { ptBR } from "date-fns/locale";
 
 interface DiarioTabProps {
   selectedPeriod: { start: Date; end: Date };
+  filters?: any;
 }
 
-export const DiarioTab = ({ selectedPeriod }: DiarioTabProps) => {
-  const { dailyFlow, isLoading } = useFluxoCaixaData(selectedPeriod);
+export const DiarioTab = ({ selectedPeriod, filters }: DiarioTabProps) => {
+  const { dailyFlow, isLoading } = useFluxoCaixaData(selectedPeriod, filters);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {

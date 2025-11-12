@@ -5,9 +5,10 @@ import { ptBR } from "date-fns/locale";
 
 interface DemonstrativoTabProps {
   selectedPeriod: { start: Date; end: Date };
+  filters?: any;
 }
 
-export const DemonstrativoTab = ({ selectedPeriod }: DemonstrativoTabProps) => {
+export const DemonstrativoTab = ({ selectedPeriod, filters }: DemonstrativoTabProps) => {
   const {
     income,
     expenses,
@@ -18,7 +19,7 @@ export const DemonstrativoTab = ({ selectedPeriod }: DemonstrativoTabProps) => {
     pendingIncome,
     pendingExpenses,
     isLoading,
-  } = useFluxoCaixaData(selectedPeriod);
+} = useFluxoCaixaData(selectedPeriod, filters);
 
   if (isLoading) {
     return (

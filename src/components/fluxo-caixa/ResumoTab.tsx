@@ -14,9 +14,10 @@ import { ptBR } from "date-fns/locale";
 
 interface ResumoTabProps {
   selectedPeriod: { start: Date; end: Date };
+  filters?: any;
 }
 
-export const ResumoTab = ({ selectedPeriod }: ResumoTabProps) => {
+export const ResumoTab = ({ selectedPeriod, filters }: ResumoTabProps) => {
   const {
     balance,
     finalBalance,
@@ -27,7 +28,7 @@ export const ResumoTab = ({ selectedPeriod }: ResumoTabProps) => {
     incomeTransactions,
     expenseTransactions,
     isLoading,
-  } = useFluxoCaixaData(selectedPeriod);
+} = useFluxoCaixaData(selectedPeriod, filters);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {

@@ -4,10 +4,11 @@ import { useFluxoCaixaData } from "@/hooks/useFluxoCaixaData";
 
 interface EstatisticasTabProps {
   selectedPeriod: { start: Date; end: Date };
+  filters?: any;
 }
 
-export const EstatisticasTab = ({ selectedPeriod }: EstatisticasTabProps) => {
-  const { income, expenses, categoryData, isLoading } = useFluxoCaixaData(selectedPeriod);
+export const EstatisticasTab = ({ selectedPeriod, filters }: EstatisticasTabProps) => {
+  const { income, expenses, categoryData, isLoading } = useFluxoCaixaData(selectedPeriod, filters);
 
   if (isLoading) {
     return (

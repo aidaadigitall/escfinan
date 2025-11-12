@@ -61,19 +61,19 @@ const FluxoDeCaixa = () => {
         </TabsContent>
 
         <TabsContent value="resumo">
-          <ResumoTab selectedPeriod={selectedPeriod} />
+          <ResumoTab selectedPeriod={selectedPeriod} filters={filters} />
         </TabsContent>
 
         <TabsContent value="diario">
-          <DiarioTab selectedPeriod={selectedPeriod} />
+          <DiarioTab selectedPeriod={selectedPeriod} filters={filters} />
         </TabsContent>
 
         <TabsContent value="estatisticas">
-          <EstatisticasTab selectedPeriod={selectedPeriod} />
+          <EstatisticasTab selectedPeriod={selectedPeriod} filters={filters} />
         </TabsContent>
 
         <TabsContent value="demonstrativo">
-          <DemonstrativoTab selectedPeriod={selectedPeriod} />
+          <DemonstrativoTab selectedPeriod={selectedPeriod} filters={filters} />
         </TabsContent>
       </Tabs>
 
@@ -82,6 +82,16 @@ const FluxoDeCaixa = () => {
         onOpenChange={setSearchOpen}
         onSearch={(newFilters) => {
           setFilters(newFilters);
+          // Se o período foi definido na busca, atualiza o período selecionado
+          if (newFilters.startDate && newFilters.endDate) {
+            try {
+              const start = new Date(newFilters.startDate);
+              const end = new Date(newFilters.endDate);
+              if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                setSelectedPeriod({ start, end });
+              }
+            } catch {}
+          }
           toast.success("Busca avançada aplicada!");
         }}
         onClear={() => {

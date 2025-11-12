@@ -48,7 +48,7 @@ const Receitas = () => {
   const [transactionForPartialPayment, setTransactionForPartialPayment] = useState<Transaction | null>(null);
   const [dailyDialogOpen, setDailyDialogOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState<any>({});
 
   const summaryData = useMemo(() => {
     const today = new Date();
@@ -96,36 +96,70 @@ const Receitas = () => {
   }, [transactions]);
 
   const filteredTransactions = useMemo(() => {
-    if (!activeFilter) return transactions;
-    
+    // 1) Começa com todas as transações
+    let base = transactions;
+
+    // 2) Filtros da busca avançada
+    if (filters && Object.keys(filters).length > 0) {
+      base = base.filter((t) => {
+        // Período (due_date)
+        if (filters.startDate) {
+          const start = new Date(filters.startDate);
+          if (!isNaN(start.getTime()) && new Date(t.due_date) < start) return false;
+        }
+        if (filters.endDate) {
+          const end = new Date(filters.endDate);
+          if (!isNaN(end.getTime()) && new Date(t.due_date) > end) return false;
+        }
+
+        if (filters.client && !t.client?.toLowerCase().includes(String(filters.client).toLowerCase())) return false;
+        if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
+
+        if (filters.minValue && parseFloat(String(t.amount)) < parseFloat(String(filters.minValue))) return false;
+        if (filters.maxValue && parseFloat(String(t.amount)) > parseFloat(String(filters.maxValue))) return false;
+
+        if (filters.account && filters.account !== "todos" && t.account !== filters.account) return false;
+        if (filters.payment && filters.payment !== "todos" && t.payment_method !== filters.payment) return false;
+        if (filters.status && filters.status !== "todos" && t.status !== filters.status) return false;
+        if (filters.bank && filters.bank !== "todos" && t.bank_account_id !== filters.bank) return false;
+
+        // Movimento: esta página é apenas de receitas; se o usuário escolher "despesas", não mostrará nada
+        if (filters.movement && filters.movement === "despesas") return false;
+        return true;
+      });
+    }
+
+    // 3) Filtro rápido pelos cards
+    if (!activeFilter) return base;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     switch (activeFilter) {
       case "overdue":
-        return transactions.filter(t => {
+        return base.filter(t => {
           const dueDate = new Date(t.due_date);
           dueDate.setHours(0, 0, 0, 0);
           return dueDate < today && t.status !== "received" && t.status !== "paid";
         });
       case "dueToday":
-        return transactions.filter(t => {
+        return base.filter(t => {
           const dueDate = new Date(t.due_date);
           dueDate.setHours(0, 0, 0, 0);
           return dueDate.getTime() === today.getTime() && t.status !== "received" && t.status !== "paid";
         });
       case "upcoming":
-        return transactions.filter(t => {
+        return base.filter(t => {
           const dueDate = new Date(t.due_date);
           dueDate.setHours(0, 0, 0, 0);
           return dueDate > today && t.status !== "received" && t.status !== "paid";
         });
       case "received":
-        return transactions.filter(t => t.status === "received" || t.status === "paid");
+        return base.filter(t => t.status === "received" || t.status === "paid");
       default:
-        return transactions;
+        return base;
     }
-  }, [transactions, activeFilter]);
+  }, [transactions, activeFilter, filters]);
 
   const handleAdd = () => {
     setSelectedTransaction(undefined);

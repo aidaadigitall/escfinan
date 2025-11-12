@@ -49,8 +49,8 @@ export const AdvancedSearchDialog = ({ open, onOpenChange, onSearch, onClear }: 
   const [filters, setFilters] = useState<SearchFilters>({
     entity: "todos",
     client: "",
-    startDate: "2025-11-01", // Valores default para o período
-    endDate: "2025-11-30",
+    startDate: "", // Valores default vazios; será preenchido pelo usuário
+    endDate: "",
     competenceStartDate: "",
     competenceEndDate: "",
     description: "",
@@ -205,9 +205,11 @@ export const AdvancedSearchDialog = ({ open, onOpenChange, onSearch, onClear }: 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="confirmada">Confirmada</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="atrasado">Atrasado</SelectItem>
+                <SelectItem value="confirmed">Confirmada</SelectItem>
+                <SelectItem value="pending">Pendente</SelectItem>
+                <SelectItem value="overdue">Atrasado</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="received">Recebido</SelectItem>
               </SelectContent>
             </Select>
           </div>
