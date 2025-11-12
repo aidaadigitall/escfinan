@@ -32,8 +32,11 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, fi
         return false;
       }
 
-      if (filters.movement && filters.movement !== "todas" && t.type !== filters.movement) {
-        return false;
+      if (filters.movement && filters.movement !== "todas") {
+        const movementType = filters.movement === "receitas" ? "income" : filters.movement === "despesas" ? "expense" : null;
+        if (movementType && t.type !== movementType) {
+          return false;
+        }
       }
 
       if (filters.minValue && t.amount < parseFloat(filters.minValue)) {

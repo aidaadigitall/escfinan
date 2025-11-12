@@ -9,21 +9,18 @@ import { EstatisticasTab } from "@/components/fluxo-caixa/EstatisticasTab";
 import { DemonstrativoTab } from "@/components/fluxo-caixa/DemonstrativoTab";
 import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import { PeriodSelector } from "@/components/fluxo-caixa/PeriodSelector";
-import { useFluxoCaixaData } from "@/hooks/useFluxoCaixaData";
 import { toast } from "sonner";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 const FluxoDeCaixa = () => {
-  const [filters, setFilters] = useState({});
   const today = new Date();
   const [activeTab, setActiveTab] = useState("saldo");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [filters, setFilters] = useState({});
   const [selectedPeriod, setSelectedPeriod] = useState({
     start: startOfMonth(today),
     end: endOfMonth(today),
   });
-
-  const fluxoData = useFluxoCaixaData(selectedPeriod, filters);
 
   const handleExport = () => {
     toast.success("Exportando dados...");

@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RecurringBillDialog } from "@/components/RecurringBillDialog";
-import { RecurringBillSearchDialog } from "@/components/RecurringBillSearchDialog";
+import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import { EditRecurringChoiceDialog } from "@/components/EditRecurringChoiceDialog";
 import { TransactionDialog } from "@/components/TransactionDialog";
 
@@ -302,10 +302,17 @@ const ContasFixas = () => {
         }}
       />
 
-      <RecurringBillSearchDialog
+      <AdvancedSearchDialog
         open={searchOpen}
         onOpenChange={setSearchOpen}
-        onSearch={handleSearch}
+        onSearch={(newFilters) => {
+          setSearchFilters(newFilters);
+          toast.success("Filtros aplicados com sucesso!");
+        }}
+        onClear={() => {
+          setSearchFilters({});
+          toast.info("Filtros removidos.");
+        }}
       />
     </div>
   );

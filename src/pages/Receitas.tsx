@@ -20,11 +20,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet, FileText, Settings } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet, FileText, Settings, Check, X, ArrowRightLeft, Upload, Download, Group, Trash } from "lucide-react";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
 import { DailyTransactionDialog } from "@/components/DailyTransactionDialog";
+import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -39,6 +47,8 @@ const Receitas = () => {
   const [partialPaymentDialogOpen, setPartialPaymentDialogOpen] = useState(false);
   const [transactionForPartialPayment, setTransactionForPartialPayment] = useState<Transaction | null>(null);
   const [dailyDialogOpen, setDailyDialogOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filters, setFilters] = useState({});
 
   const summaryData = useMemo(() => {
     const today = new Date();
@@ -186,15 +196,48 @@ const Receitas = () => {
             <span className="hidden sm:inline">Contas fixas</span>
             <span className="sm:hidden">Fixas</span>
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => {/* TODO: Implement actions menu */}}
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Mais ações</span>
-            <span className="sm:hidden">Ações</span>
-          </Button>
-          <Button variant="outline">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Mais ações</span>
+                <span className="sm:hidden">Ações</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Check className="h-4 w-4 mr-2" /> Confirmar recebimentos
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <X className="h-4 w-4 mr-2" /> Cancelar recebimentos
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/contas-fixas")}>
+                <FileText className="h-4 w-4 mr-2" /> Contas fixas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/transferencias")}>
+                <ArrowRightLeft className="h-4 w-4 mr-2" /> Transferências entre contas
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Upload className="h-4 w-4 mr-2" /> Importar extrato
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Upload className="h-4 w-4 mr-2" /> Importar planilha
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Download className="h-4 w-4 mr-2" /> Exportar recebimentos
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Group className="h-4 w-4 mr-2" /> Agrupar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Trash className="h-4 w-4 mr-2" /> Excluir recebimentos
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="outline" onClick={() => setSearchOpen(true)}>
             <Search className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Busca avançada</span>
             <span className="sm:hidden">Buscar</span>
@@ -401,6 +444,19 @@ const Receitas = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdvancedSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSearch={(newFilters) => {
+          setFilters(newFilters);
+          toast.success("Filtros aplicados com sucesso!");
+        }}
+        onClear={() => {
+          setFilters({});
+          toast.info("Filtros removidos.");
+        }}
+      />
     </div>
   );
 };
