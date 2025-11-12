@@ -20,12 +20,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet, FileText, Settings, Check, X, List, ArrowRightLeft, Upload, Download, Group, Trash } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Copy, ExternalLink, Wallet, FileText, Settings, Check, X, List, ArrowRightLeft, Upload, Download, Group, Trash } from "lucide-react";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
 import { DailyTransactionDialog } from "@/components/DailyTransactionDialog";
-import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +35,6 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const Despesas = () => {
-  const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("expense", filters);
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
@@ -46,8 +44,8 @@ const Despesas = () => {
   const [partialPaymentDialogOpen, setPartialPaymentDialogOpen] = useState(false);
   const [transactionForPartialPayment, setTransactionForPartialPayment] = useState<Transaction | null>(null);
   const [dailyDialogOpen, setDailyDialogOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [filters, setFilters] = useState({});
+  
+  const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("expense");
 
   const summaryData = useMemo(() => {
     const today = new Date();
@@ -236,11 +234,6 @@ const Despesas = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" onClick={() => setSearchOpen(true)}>
-            <Search className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Busca avançada</span>
-            <span className="sm:hidden">Buscar</span>
-          </Button>
           <Button variant="outline" onClick={() => setDailyDialogOpen(true)}>
             <Wallet className="h-4 w-4 mr-2" />
             <span className="hidden md:inline">Lançamento Diário</span>
@@ -443,19 +436,6 @@ const Despesas = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <AdvancedSearchDialog
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
-        onSearch={(newFilters) => {
-          setFilters(newFilters);
-          // toast.success("Busca avançada aplicada!");
-        }}
-        onClear={() => {
-          setFilters({});
-          // toast.info("Filtros removidos.");
-        }}
-      />
     </div>
   );
 };

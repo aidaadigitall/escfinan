@@ -11,7 +11,6 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, fi
 
     const filteredTransactions = transactions.filter(t => {
       const dueDate = new Date(t.due_date);
-      const competenceDate = t.competence_date ? new Date(t.competence_date) : null;
 
       // 1. Filtro por Período (Data de Vencimento)
       if (!(dueDate >= start && dueDate <= end)) {
@@ -26,13 +25,6 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, fi
       }
 
       if (filters.client && !t.client?.toLowerCase().includes(filters.client.toLowerCase())) {
-        return false;
-      }
-
-      if (filters.competenceStartDate && competenceDate && competenceDate < new Date(filters.competenceStartDate)) {
-        return false;
-      }
-      if (filters.competenceEndDate && competenceDate && competenceDate > new Date(filters.competenceEndDate)) {
         return false;
       }
 
@@ -59,11 +51,7 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, fi
         return false;
       }
 
-      if (filters.costCenter && filters.costCenter !== "todos" && t.cost_center !== filters.costCenter) {
-        return false;
-      }
-
-      if (filters.bank && filters.bank !== "todos" && t.bank_account !== filters.bank) {
+      if (filters.bank && filters.bank !== "todos" && t.bank_account_id !== filters.bank) {
         return false;
       }
 

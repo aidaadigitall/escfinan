@@ -23,7 +23,7 @@ const FluxoDeCaixa = () => {
     end: endOfMonth(today),
   });
 
-  const { transactions, isLoading } = useFluxoCaixaData(selectedPeriod, filters); // Usar o hook com os filtros
+  const fluxoData = useFluxoCaixaData(selectedPeriod, filters);
 
   const handleExport = () => {
     toast.success("Exportando dados...");
