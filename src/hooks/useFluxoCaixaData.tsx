@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { startOfMonth, endOfMonth, format, eachDayOfInterval, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) => {
+export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, filters: any = {}) => {
   const { transactions, isLoading } = useTransactions();
 
   const fluxoData = useMemo(() => {
@@ -11,7 +11,70 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
 
     const filteredTransactions = transactions.filter(t => {
       const dueDate = new Date(t.due_date);
-      return dueDate >= start && dueDate <= end;
+      const competenceDate = t.competence_date ? new Date(t.competence_date) : null;
+
+      // 1. Filtro por Período (Data de Vencimento)
+      if (!(dueDate >= start && dueDate <= end)) {
+        return false;
+      }
+
+      // 2. Filtros da Busca Avançada
+      if (filters.entity && filters.entity !== "todos") {
+        // A lógica de entidade precisa ser implementada com base na estrutura de dados de 't'
+        // Assumindo que 't' tem um campo 'entity_type' ou similar
+        // Por enquanto, vamos ignorar este filtro, pois a estrutura de dados não é clara.
+      }
+
+      if (filters.client && !t.client?.toLowerCase().includes(filters.client.toLowerCase())) {
+        return false;
+      }
+
+      if (filters.competenceStartDate && competenceDate && competenceDate < new Date(filters.competenceStartDate)) {
+        return false;
+      }
+      if (filters.competenceEndDate && competenceDate && competenceDate > new Date(filters.competenceEndDate)) {
+        return false;
+      }
+
+      if (filters.description && !t.description?.toLowerCase().includes(filters.description.toLowerCase())) {
+        return false;
+      }
+
+      if (filters.movement && filters.movement !== "todas" && t.type !== filters.movement) {
+        return false;
+      }
+
+      if (filters.minValue && t.amount < parseFloat(filters.minValue)) {
+        return false;
+      }
+      if (filters.maxValue && t.amount > parseFloat(filters.maxValue)) {
+        return false;
+      }
+
+      if (filters.account && filters.account !== "todos" && t.account !== filters.account) {
+        return false;
+      }
+
+      if (filters.status && filters.status !== "todos" && t.status !== filters.status) {
+        return false;
+      }
+
+      if (filters.costCenter && filters.costCenter !== "todos" && t.cost_center !== filters.costCenter) {
+        return false;
+      }
+
+      if (filters.bank && filters.bank !== "todos" && t.bank_account !== filters.bank) {
+        return false;
+      }
+
+      if (filters.payment && filters.payment !== "todos" && t.payment_method !== filters.payment) {
+        return false;
+      }
+
+      // Os filtros showPrevious e showTransfers são mais complexos e dependem de como o dado é exibido.
+      // Por enquanto, vamos ignorá-los para focar nos filtros principais.
+
+      return true;
     });
 
     // Resumo - incluindo pagamentos parciais
@@ -158,7 +221,7 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }) =>
       dailyFlow: dailyFlowAccumulated,
       categoryData,
     };
-  }, [transactions, selectedPeriod]);
+  }, [transactions, selectedPeriod, filters]);
 
   return { ...fluxoData, isLoading };
 };

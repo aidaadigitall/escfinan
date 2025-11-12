@@ -9,10 +9,12 @@ import { EstatisticasTab } from "@/components/fluxo-caixa/EstatisticasTab";
 import { DemonstrativoTab } from "@/components/fluxo-caixa/DemonstrativoTab";
 import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import { PeriodSelector } from "@/components/fluxo-caixa/PeriodSelector";
+import { useFluxoCaixaData } from "@/hooks/useFluxoCaixaData";
 import { toast } from "sonner";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 const FluxoDeCaixa = () => {
+  const [filters, setFilters] = useState({});
   const today = new Date();
   const [activeTab, setActiveTab] = useState("saldo");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -20,6 +22,8 @@ const FluxoDeCaixa = () => {
     start: startOfMonth(today),
     end: endOfMonth(today),
   });
+
+  const { transactions, isLoading } = useFluxoCaixaData(selectedPeriod, filters); // Usar o hook com os filtros
 
   const handleExport = () => {
     toast.success("Exportando dados...");
@@ -76,7 +80,18 @@ const FluxoDeCaixa = () => {
         </TabsContent>
       </Tabs>
 
-      <AdvancedSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      <AdvancedSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSearch={(newFilters) => {
+          setFilters(newFilters);
+          toast.success("Busca avançada aplicada!");
+        }}
+        onClear={() => {
+          setFilters({});
+          toast.info("Filtros removidos.");
+        }}
+      />
     </div>
   );
 };

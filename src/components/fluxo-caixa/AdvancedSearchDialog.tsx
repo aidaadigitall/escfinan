@@ -16,21 +16,89 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useState, useCallback } from "react";
 
 interface AdvancedSearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSearch: (filters: any) => void; // Adicionar prop para a função de busca
+  onClear: () => void; // Adicionar prop para a função de limpar
 }
 
-export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialogProps) => {
+interface SearchFilters {
+  entity: string;
+  client: string;
+  startDate: string;
+  endDate: string;
+  competenceStartDate: string;
+  competenceEndDate: string;
+  description: string;
+  movement: string;
+  minValue: number | string;
+  maxValue: number | string;
+  account: string;
+  status: string;
+  costCenter: string;
+  bank: string;
+  payment: string;
+  showPrevious: boolean;
+  showTransfers: boolean;
+}
+
+export const AdvancedSearchDialog = ({ open, onOpenChange, onSearch, onClear }: AdvancedSearchDialogProps) => {
+  const [filters, setFilters] = useState<SearchFilters>({
+    entity: "todos",
+    client: "",
+    startDate: "2025-11-01", // Valores default para o período
+    endDate: "2025-11-30",
+    competenceStartDate: "",
+    competenceEndDate: "",
+    description: "",
+    movement: "todas",
+    minValue: "",
+    maxValue: "",
+    account: "todos",
+    status: "todos",
+    costCenter: "todos",
+    bank: "todos",
+    payment: "todos",
+    showPrevious: false,
+    showTransfers: true,
+  });
+
+  const handleFilterChange = useCallback((key: keyof SearchFilters, value: any) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
   const handleSearch = () => {
-    toast.success("Pesquisa realizada com sucesso");
+    onSearch(filters);
     onOpenChange(false);
   };
 
   const handleClear = () => {
-    toast.info("Filtros limpos");
+    setFilters({
+      entity: "todos",
+      client: "",
+      startDate: "",
+      endDate: "",
+      competenceStartDate: "",
+      competenceEndDate: "",
+      description: "",
+      movement: "todas",
+      minValue: "",
+      maxValue: "",
+      account: "todos",
+      status: "todos",
+      costCenter: "todos",
+      bank: "todos",
+      payment: "todos",
+      showPrevious: false,
+      showTransfers: true,
+    });
+    onClear();
+    onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,9 +111,9 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           {/* Entidade */}
           <div className="space-y-2">
             <Label htmlFor="entity">Entidade</Label>
-            <Select>
+            <Select value={filters.entity} onValueChange={(value) => handleFilterChange("entity", value)}>
               <SelectTrigger id="entity">
-                <SelectValue placeholder="Cliente" />
+                <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="cliente">Cliente</SelectItem>
@@ -58,16 +126,16 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           {/* Cliente */}
           <div className="space-y-2">
             <Label htmlFor="client">Cliente</Label>
-            <Input id="client" placeholder="Digite para buscar" />
+            <Input id="client" placeholder="Digite para buscar" value={filters.client} onChange={(e) => handleFilterChange("client", e.target.value)} />
           </div>
 
           {/* Período */}
           <div className="space-y-2">
             <Label>Período</Label>
             <div className="flex gap-2 items-center">
-              <Input type="date" defaultValue="2025-11-01" />
+              <Input type="date" value={filters.startDate} onChange={(e) => handleFilterChange("startDate", e.target.value)} />
               <span>a</span>
-              <Input type="date" defaultValue="2025-11-30" />
+              <Input type="date" value={filters.endDate} onChange={(e) => handleFilterChange("endDate", e.target.value)} />
             </div>
           </div>
 
@@ -75,22 +143,22 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           <div className="space-y-2">
             <Label>Data de competência</Label>
             <div className="flex gap-2 items-center">
-              <Input type="date" placeholder="Data inicial" />
+              <Input type="date" placeholder="Data inicial" value={filters.competenceStartDate} onChange={(e) => handleFilterChange("competenceStartDate", e.target.value)} />
               <span>a</span>
-              <Input type="date" placeholder="Data final" />
+              <Input type="date" placeholder="Data final" value={filters.competenceEndDate} onChange={(e) => handleFilterChange("competenceEndDate", e.target.value)} />
             </div>
           </div>
 
           {/* Descrição */}
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
-            <Input id="description" />
+            <Input id="description" value={filters.description} onChange={(e) => handleFilterChange("description", e.target.value)} />
           </div>
 
           {/* Movimentação */}
           <div className="space-y-2">
             <Label htmlFor="movement">Movimentação</Label>
-            <Select>
+            <Select value={filters.movement} onValueChange={(value) => handleFilterChange("movement", value)}>
               <SelectTrigger id="movement">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
@@ -106,16 +174,16 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           <div className="space-y-2">
             <Label>Valor</Label>
             <div className="flex gap-2 items-center">
-              <Input type="number" placeholder="Mínimo" />
+              <Input type="number" placeholder="Mínimo" value={filters.minValue} onChange={(e) => handleFilterChange("minValue", e.target.value)} />
               <span>a</span>
-              <Input type="number" placeholder="Máximo" />
+              <Input type="number" placeholder="Máximo" value={filters.maxValue} onChange={(e) => handleFilterChange("maxValue", e.target.value)} />
             </div>
           </div>
 
           {/* Plano de contas */}
           <div className="space-y-2">
             <Label htmlFor="account">Plano de contas</Label>
-            <Select>
+            <Select value={filters.account} onValueChange={(value) => handleFilterChange("account", value)}>
               <SelectTrigger id="account">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -131,7 +199,7 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           {/* Situação */}
           <div className="space-y-2">
             <Label htmlFor="status">Situação</Label>
-            <Select>
+            <Select value={filters.status} onValueChange={(value) => handleFilterChange("status", value)}>
               <SelectTrigger id="status">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -147,7 +215,7 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           {/* Centro de custo */}
           <div className="space-y-2">
             <Label htmlFor="cost-center">Centro de custo</Label>
-            <Select>
+            <Select value={filters.costCenter} onValueChange={(value) => handleFilterChange("costCenter", value)}>
               <SelectTrigger id="cost-center">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -162,7 +230,7 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           {/* Conta bancária */}
           <div className="space-y-2">
             <Label htmlFor="bank">Conta bancária</Label>
-            <Select>
+            <Select value={filters.bank} onValueChange={(value) => handleFilterChange("bank", value)}>
               <SelectTrigger id="bank">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -177,7 +245,7 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
           {/* Forma de pagamento */}
           <div className="space-y-2">
             <Label htmlFor="payment">Forma de pagamento</Label>
-            <Select>
+            <Select value={filters.payment} onValueChange={(value) => handleFilterChange("payment", value)}>
               <SelectTrigger id="payment">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -194,13 +262,13 @@ export const AdvancedSearchDialog = ({ open, onOpenChange }: AdvancedSearchDialo
         {/* Checkboxes */}
         <div className="flex gap-6">
           <div className="flex items-center space-x-2">
-            <Checkbox id="show-previous" />
+            <Checkbox id="show-previous" checked={filters.showPrevious} onCheckedChange={(checked) => handleFilterChange("showPrevious", checked)} />
             <Label htmlFor="show-previous" className="cursor-pointer">
               Mostrar saldo anterior
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox id="show-transfers" defaultChecked />
+            <Checkbox id="show-transfers" checked={filters.showTransfers} onCheckedChange={(checked) => handleFilterChange("showTransfers", checked)} />
             <Label htmlFor="show-transfers" className="cursor-pointer">
               Exibir transferências
             </Label>
