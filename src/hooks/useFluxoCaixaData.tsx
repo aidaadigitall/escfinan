@@ -13,8 +13,27 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, fi
       const dueDate = new Date(t.due_date);
 
       // 1. Filtro por Período (Data de Vencimento)
+      // O filtro de período no Fluxo de Caixa deve ser aplicado à data de vencimento (due_date)
+      // e o período selecionado já está ajustado para o início e fim do dia.
       if (!(dueDate >= start && dueDate <= end)) {
         return false;
+      }
+      
+      // 1.1. Filtro de Data de Competência (competence_date)
+      // Este filtro só deve ser aplicado se estiver presente na busca avançada
+      if (filters.competenceStartDate || filters.competenceEndDate) {
+        const competenceDate = new Date(t.competence_date);
+        
+        if (filters.competenceStartDate) {
+          const startComp = new Date(filters.competenceStartDate + 'T00:00:00');
+          if (competenceDate < startComp) return false;
+        }
+        
+        if (filters.competenceEndDate) {
+          const endComp = new Date(filters.competenceEndDate + 'T00:00:00');
+          endComp.setDate(endComp.getDate() + 1); // Inclui o dia final
+          if (competenceDate >= endComp) return false;
+        }
       }
 
       // 2. Filtros da Busca Avançada

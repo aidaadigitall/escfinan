@@ -37,6 +37,7 @@
 		} from "@/components/ui/dropdown-menu";
 		import { useNavigate } from "react-router-dom";
 		import { toast } from "sonner";
+import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 	
 		const Despesas = () => {
 		  const navigate = useNavigate();
@@ -53,6 +54,8 @@
 		  const [sortKey, setSortKey] = useState<string>("due_date");
 		  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 		  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
+  const [isChangeStatusOpen, setIsChangeStatusOpen] = useState(false);
+  const [transactionToChangeStatus, setTransactionToChangeStatus] = useState<any>(null);
 		  
 		  const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("expense");
 		
@@ -117,29 +120,34 @@
 		    // 2) Filtros da busca avançada
 		    if (filters && Object.keys(filters).length > 0) {
 		      base = base.filter((t) => {
-		        // Período (due_date)
-		        if (filters.startDate) {
-		          const start = new Date(filters.startDate);
-		          if (!isNaN(start.getTime()) && new Date(t.due_date) < start) return false;
-		        }
-		        if (filters.endDate) {
-		          const end = new Date(filters.endDate);
-		          // Adiciona 1 dia para incluir o dia final no filtro
-		          end.setDate(end.getDate() + 1);
-		          if (!isNaN(end.getTime()) && new Date(t.due_date) >= end) return false;
-		        }
+        // Período (due_date)
+        if (filters.startDate) {
+          const start = new Date(filters.startDate + 'T00:00:00');
+          const transactionDate = new Date(t.due_date + 'T00:00:00');
+          if (!isNaN(start.getTime()) && transactionDate < start) return false;
+        }
+        if (filters.endDate) {
+          const end = new Date(filters.endDate + 'T00:00:00');
+          const transactionDate = new Date(t.due_date + 'T00:00:00');
+          // Adiciona 1 dia para incluir o dia final no filtro
+          end.setDate(end.getDate() + 1);
+          if (!isNaN(end.getTime()) && transactionDate >= end) return false;
+        }
 		
 		        // Data de competência (competence_date)
-		        if (filters.competenceStartDate) {
-		          const start = new Date(filters.competenceStartDate);
-		          if (!isNaN(start.getTime()) && new Date(t.competence_date) < start) return false;
-		        }
-		        if (filters.competenceEndDate) {
-		          const end = new Date(filters.competenceEndDate);
-		          // Adiciona 1 dia para incluir o dia final no filtro
-		          end.setDate(end.getDate() + 1);
-		          if (!isNaN(end.getTime()) && new Date(t.competence_date) >= end) return false;
-		        }
+          // Data de competência (competence_date)
+          if (filters.competenceStartDate) {
+            const start = new Date(filters.competenceStartDate + 'T00:00:00'); // Garante que a data seja interpretada corretamente
+            const transactionDate = new Date(t.competence_date + 'T00:00:00');
+            if (!isNaN(start.getTime()) && transactionDate < start) return false;
+          }
+          if (filters.competenceEndDate) {
+            const end = new Date(filters.competenceEndDate + 'T00:00:00');
+            const transactionDate = new Date(t.competence_date + 'T00:00:00');
+            // Adiciona 1 dia para incluir o dia final no filtro
+            end.setDate(end.getDate() + 1);
+            if (!isNaN(end.getTime()) && transactionDate >= end) return false;
+          }
 		
 		        if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
 		        if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
@@ -267,7 +275,14 @@
 		    }
 		  };
 	
-		  const handleBatchAction = (action: "confirm" | "cancel" | "delete") => {
+		  const handleChangeStatus = (transactionId: string, newTransactionData: any) => {
+    // Lógica para atualizar o status da transação (simulação)
+    console.log(`Atualizando transação ${transactionId} com dados:`, newTransactionData);
+    toast.success(`Transação ${transactionId} atualizada para ${newTransactionData.status}`);
+    // Aqui você chamaria a API para persistir a mudança
+  };
+
+  const handleBatchAction = (action: "confirm" | "cancel" | "delete") => {
 		    if (action === "delete") {
 		      // Lógica para deletar em lote
 		      selectedTransactions.forEach(id => deleteTransaction(id));
@@ -444,11 +459,18 @@
 		                  <TableCell>{new Date(transaction.due_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</TableCell>
 		                  <TableCell>{transaction.description}</TableCell>
 		                  <TableCell>{parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</TableCell>
-		                  <TableCell>
-		                    <Badge variant={transaction.status === 'paid' ? 'success' : transaction.status === 'pending' ? 'warning' : 'destructive'}>
-		                      {transaction.status === 'paid' ? 'Pago' : transaction.status === 'pending' ? 'Pendente' : 'Vencido'}
-		                    </Badge>
-		                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      className="cursor-pointer"
+                      variant={transaction.status === 'paid' ? 'success' : transaction.status === 'pending' ? 'warning' : 'destructive'}
+                      onClick={() => {
+                        setTransactionToChangeStatus(transaction);
+                        setIsChangeStatusOpen(true);
+                      }}
+                    >
+                      {transaction.status === 'paid' ? 'Pago' : transaction.status === 'pending' ? 'Pendente' : 'Vencido'}
+                    </Badge>
+                  </TableCell>
 		                  <TableCell>
 		                    <DropdownMenu>
 		                      <DropdownMenuTrigger asChild>
@@ -491,12 +513,20 @@
 		        type="expense"
 		      />
 	
-		      <AdvancedSearchDialog
-		        open={searchOpen}
-		        onOpenChange={setSearchOpen}
-		        onSearch={setFilters}
-		        type="expense"
-		      />
+      <AdvancedSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSearch={setFilters}
+        type="expense"
+      />
+      {transactionToChangeStatus && (
+        <ChangeStatusDialog
+          open={isChangeStatusOpen}
+          onOpenChange={setIsChangeStatusOpen}
+          transaction={transactionToChangeStatus}
+          onStatusChange={handleChangeStatus}
+        />
+      )}
 	
 		      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 		        <AlertDialogContent>
