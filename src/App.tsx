@@ -21,6 +21,8 @@ import CartoesCredito from "./pages/CartoesCredito";
 import CentrosCustos from "./pages/CentrosCustos";
 import Perfil from "./pages/Perfil";
 import Configuracoes from "./pages/Configuracoes";
+import EditTransactionPage from "./pages/transactions/EditTransactionPage";
+import ViewTransactionPage from "./pages/transactions/ViewTransactionPage";
 import RelatorioRecorrencias from "./pages/RelatorioRecorrencias";
 import CalendarioFinanceiro from "./pages/CalendarioFinanceiro";
 
@@ -45,6 +47,8 @@ const App = () => (
           <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
           <Route path="/receitas" element={<ProtectedRoute><Layout><Receitas /></Layout></ProtectedRoute>} />
           <Route path="/despesas" element={<ProtectedRoute><Layout><Despesas /></Layout></ProtectedRoute>} />
+          <Route path="/transactions/:type/edit/:id" element={<ProtectedRoute><Layout><EditTransactionPage /></Layout></ProtectedRoute>} />
+          <Route path="/transactions/:type/view/:id" element={<ProtectedRoute><Layout><ViewTransactionPage /></Layout></ProtectedRoute>} />
            <Route path="/fluxo-de-caixa" element={<ProtectedRoute><Layout><FluxoDeCaixa /></Layout></ProtectedRoute>} />
            <Route path="/transferencias" element={<ProtectedRoute><Layout><Transferencias /></Layout></ProtectedRoute>} />
            <Route path="/caixa" element={<ProtectedRoute><Layout><Caixa /></Layout></ProtectedRoute>} />

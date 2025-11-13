@@ -26,11 +26,12 @@ interface Transaction {
   description: string;
   due_date: string;
   type: "income" | "expense";
-  // Adicione outros campos necessários para o formulário
+// Adicione outros campos necessários para o formulário
 }
 
-const statusOptions = [
-  { value: "em_aberto", label: "Em aberto" },
+import { useBankAccounts } from "@/hooks/useBankAccounts";
+
+const statusOptions = [ { value: "em_aberto", label: "Em aberto" },
   { value: "confirmado", label: "Confirmado" },
   { value: "permuta", label: "Permuta" },
   { value: "em_protesto", label: "Em protesto" },
@@ -44,9 +45,7 @@ const paymentMethods = [
   "PIX", "Boleto", "Cartão de Crédito", "Transferência", "Dinheiro", "Outro"
 ];
 
-const bankAccounts = [
-  "Cora", "Banco do Brasil", "Itaú", "Santander", "Caixa"
-];
+
 
 interface ChangeStatusDialogProps {
   open: boolean;
@@ -56,10 +55,11 @@ interface ChangeStatusDialogProps {
 }
 
 export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusChange }: ChangeStatusDialogProps) => {
+  const { accounts: bankAccounts } = useBankAccounts();
   const [currentStatus, setCurrentStatus] = useState(transaction?.status || "em_aberto");
   const [description, setDescription] = useState(transaction?.description || ""); // Descrição editável
   const [valueReceived, setValueReceived] = useState(transaction?.amount.toString() || "");
-  const [compensationDate, setCompensationDate] = useState<Date | undefined>(new Date());
+  const [compensationDate, setCompensationDate] = useState<Date | undefined>(undefined); // Inicializa como undefined
   const [paymentMethod, setPaymentMethod] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [observation, setObservation] = useState("");
@@ -73,8 +73,8 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
       setCurrentStatus(initialStatus || "em_aberto");
       setDescription(transaction.description || "");
       setValueReceived(transaction.amount.toString() || "");
-      // Carregar dados reais da transação (simulação)
-      // setCompensationDate(transaction.compensation_date ? new Date(transaction.compensation_date) : new Date());
+      // Inicializa a data de compensação com a data atual se não houver uma
+      setCompensationDate(new Date());
       // setPaymentMethod(transaction.payment_method || "");
       // setBankAccount(transaction.bank_account_id || "");
     }
@@ -200,8 +200,8 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
                     </SelectTrigger>
                     <SelectContent>
                       {bankAccounts.map(account => (
-                        <SelectItem key={account} value={account}>
-                          {account}
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
