@@ -317,15 +317,17 @@ const Receitas = () => {
             <FileText className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Contas fixas</span>
             <span className="sm:hidden">Fixas</span>
-    	          <DropdownMenu>
-	            <DropdownMenuTrigger asChild>
-	              <Button variant="outline" disabled={selectedTransactions.length === 0}>
-	                <Settings className="h-4 w-4 mr-2" />
-	                <span className="hidden sm:inline">Ações em Lote ({selectedTransactions.length})</span>
-	                <span className="sm:hidden">Ações ({selectedTransactions.length})</span>
-	              </Button>
-	            </DropdownMenuTrigger>
-	            <DropdownMenuContent align="end">
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={selectedTransactions.length === 0}>
+                <Settings className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Ações em Lote ({selectedTransactions.length})</span>
+                <span className="sm:hidden">Ações ({selectedTransactions.length})</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => handleBatchAction("confirm")}>
                 <Check className="h-4 w-4 mr-2" /> Confirmar recebimentos
               </DropdownMenuItem>
@@ -335,15 +337,15 @@ const Receitas = () => {
               <DropdownMenuItem onClick={() => handleBatchAction("delete")}>
                 <Trash className="h-4 w-4 mr-2" /> Excluir em lote
               </DropdownMenuItem>
-	              <DropdownMenuSeparator />
-	              <DropdownMenuItem onClick={() => navigate("/contas-fixas")}>
-	                <FileText className="h-4 w-4 mr-2" /> Contas fixas
-	              </DropdownMenuItem>
-	              <DropdownMenuItem onClick={() => navigate("/transferencias")}>
-	                <ArrowRightLeft className="h-4 w-4 mr-2" /> Transferências entre contas
-	              </DropdownMenuItem>
-	            </DropdownMenuContent>
-	          </DropdownMenu>tem onClick={() => toast.info("Função em desenvolvimento")}>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/contas-fixas")}>
+                <FileText className="h-4 w-4 mr-2" /> Contas fixas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/transferencias")}>
+                <ArrowRightLeft className="h-4 w-4 mr-2" /> Transferências entre contas
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
                 <Upload className="h-4 w-4 mr-2" /> Importar extrato
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
