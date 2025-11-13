@@ -4,6 +4,7 @@ import { CashFlowChart } from "@/components/dashboard/CashFlowChart";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { UpcomingRecurringBills } from "@/components/dashboard/UpcomingRecurringBills";
 import { BankAccountsCard } from "@/components/dashboard/BankAccountsCard";
+import { FinancialInsightsWidget } from "@/components/FinancialInsightsWidget";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -77,6 +78,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <BankAccountsCard />
         <UpcomingRecurringBills />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <FinancialInsightsWidget />
       </div>
     </div>
   );

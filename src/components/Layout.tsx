@@ -3,6 +3,8 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AIAssistant } from "./AIAssistant";
+import { useAIAssistant } from "@/hooks/useAIAssistant";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,6 +14,8 @@ export const Layout = ({ children }: LayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { analyzeSystemData } = useAIAssistant();
+  const systemData = analyzeSystemData();
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,6 +52,9 @@ export const Layout = ({ children }: LayoutProps) => {
           {children}
         </main>
       </div>
+
+      {/* AI Assistant */}
+      <AIAssistant systemData={systemData} />
     </div>
   );
 };
