@@ -412,7 +412,7 @@ const Receitas = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredTransactions.map((transaction) => {
+              filteredAndSortedTransactions.map((transaction) => {
                 const statusBadge = getStatusBadge(transaction.status);
                 return (
                   <TableRow key={transaction.id}>
@@ -545,20 +545,18 @@ const Receitas = () => {
 	        </AlertDialogContent>
 	      </AlertDialog>
 	
-	      <AdvancedSearchDialog
-	        open={searchOpen}
-	        onOpenChange={setSearchOpen}
-	        onSearch={(newFilters) => {
-	          setFilters(newFilters);
-	          toast.success("Filtros aplicados com sucesso!");
-	        }}
-	        onClear={() => {
-	          setFilters({});
-	          toast.info("Filtros removidos.");
-	        }}
-	        initialFilters={filters}
-	        type="income"
-	      />
+      <AdvancedSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSearch={(newFilters) => {
+          setFilters(newFilters);
+          toast.success("Filtros aplicados com sucesso!");
+        }}
+        onClear={() => {
+          setFilters({});
+          toast.info("Filtros removidos.");
+        }}
+      />
 	    </div>
 	  );
 	};

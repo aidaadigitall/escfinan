@@ -84,19 +84,19 @@ import { toast } from "sonner";
 	    const upcomingTotal = upcoming.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 	    const paidTotal = paid.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 	
-	    return {
-	      cards: [
-	        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "expense" as const, count: overdue.length },
-	        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const, count: dueToday.length },
-	        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "pending" as const, count: upcoming.length },
-	        { key: "paid", label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "income" as const, count: paid.length },
-	        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length },
-	      ],
-	      overdue,
-	      dueToday,
-	      upcoming,
-	      paid,
-	    };
+    return {
+      cards: [
+        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "destructive" as const, count: overdue.length },
+        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "secondary" as const, count: dueToday.length },
+        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "outline" as const, count: upcoming.length },
+        { key: "paid", label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: paid.length },
+        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "secondary" as const, count: transactions.length },
+      ],
+      overdue,
+      dueToday,
+      upcoming,
+      paid,
+    };
 	  }, [transactions]);
 	
   const handleSort = (key: string) => {
@@ -125,7 +125,7 @@ import { toast } from "sonner";
           if (!isNaN(end.getTime()) && new Date(t.due_date) > end) return false;
         }
 
-        if (filters.supplier && !t.supplier?.toLowerCase().includes(String(filters.supplier).toLowerCase())) return false;
+        if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
         if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
 
         if (filters.minValue && parseFloat(String(t.amount)) < parseFloat(String(filters.minValue))) return false;
@@ -250,245 +250,244 @@ import { toast } from "sonner";
 	    return statusMap[status] || { label: status, className: "bg-muted text-muted-foreground" };
 	  };
 	
-	  if (isLoading) {
-	    return (
-	      <div className=\"flex items-center justify-center h-96\">
-	        <div className=\"animate-spin rounded-full h-12 w-12 border-b-2 border-primary\"></div>
-	      </div>
-	    );
-	  }
-	
-	  return (
-	    <div className=\"space-y-6\">
-	      <div className=\"flex justify-between items-center\">
-		        <h1 className=\"text-2xl font-bold\">Contas a Pagar</h1>
-		        <div className=\"flex gap-2\">
-		          <Button variant=\"outline\" onClick={() => setSearchOpen(true)}>
-		            <Search className=\"h-4 w-4 mr-2\" />
-		            <span className=\"hidden sm:inline\">Busca avançada</span>
-		            <span className=\"sm:hidden\">Buscar</span>
-		          </Button>
-	          <Button 
-	            variant=\"outline\"
-	            onClick={() => navigate(\"/contas-fixas\")}
-	            className=\"bg-primary/10 hover:bg-primary/20 border-primary\"
-	          >
-	            <FileText className=\"h-4 w-4 mr-2\" />
-	            <span className=\"hidden sm:inline\">Contas fixas</span>
-	            <span className=\"sm:hidden\">Fixas</span>
-	          </Button>
-	          <DropdownMenu>
-	            <DropdownMenuTrigger asChild>
-	              <Button variant=\"outline\">
-	                <Settings className=\"h-4 w-4 mr-2\" />
-	                <span className=\"hidden sm:inline\">Mais ações</span>
-	                <span className=\"sm:hidden\">Ações</span>
-	              </Button>
-	            </DropdownMenuTrigger>
-	            <DropdownMenuContent align=\"end\">
-		              <DropdownMenuItem onClick={() => toast.info(\"Função em desenvolvimento\")}>
-		                <Check className=\"h-4 w-4 mr-2\" /> Confirmar pagamentos
-		              </DropdownMenuItem>
-		              <DropdownMenuItem onClick={() => toast.info(\"Função em desenvolvimento\")}>
-		                <X className=\"h-4 w-4 mr-2\" /> Cancelar pagamentos
-	              </DropdownMenuItem>
-	              <DropdownMenuSeparator />
-	              <DropdownMenuItem onClick={() => navigate(\"/contas-fixas\")}>
-	                <FileText className=\"h-4 w-4 mr-2\" /> Contas fixas
-	              </DropdownMenuItem>
-	              <DropdownMenuItem onClick={() => navigate(\"/transferencias\")}>
-	                <ArrowRightLeft className=\"h-4 w-4 mr-2\" /> Transferências entre contas
-	              </DropdownMenuItem>
-	              <DropdownMenuSeparator />
-		              <DropdownMenuItem onClick={() => toast.info(\"Função em desenvolvimento\")}>
-		                <Upload className=\"h-4 w-4 mr-2\" /> Importar extrato
-		              </DropdownMenuItem>
-		              <DropdownMenuItem onClick={() => toast.info(\"Função em desenvolvimento\")}>
-		                <Upload className=\"h-4 w-4 mr-2\" /> Importar planilha
-		              </DropdownMenuItem>
-		              <DropdownMenuItem onClick={() => toast.info(\"Função em desenvolvimento\")}>
-		                <Download className=\"h-4 w-4 mr-2\" /> Exportar pagamentos
-		              </DropdownMenuItem>
-		              <DropdownMenuSeparator />
-		              <DropdownMenuItem onClick={() => toast.info(\"Função em desenvolvimento\")}>
-		                <Group className=\"h-4 w-4 mr-2\" /> Agrupar
-		              </DropdownMenuItem>
-		              <DropdownMenuItem onClick={() => toast.info(\"Função em desenvolvimento\")}>
-		                <Trash className=\"h-4 w-4 mr-2\" /> Excluir pagamentos
-		              </DropdownMenuItem>
-	            </DropdownMenuContent>
-	          </DropdownMenu>
-	          <Button variant=\"outline\" onClick={() => setDailyDialogOpen(true)}>
-	            <Wallet className=\"h-4 w-4 mr-2\" />
-	            <span className=\"hidden md:inline\">Lançamento Diário</span>
-	            <span className=\"md:hidden\">Diário</span>
-	          </Button>
-	          <Button onClick={handleAdd}>
-	            <Plus className=\"h-4 w-4 mr-2\" />
-	            <span className=\"hidden sm:inline\">Adicionar</span>
-	            <span className=\"sm:hidden\">+</span>
-	          </Button>
-	        </div>
-	      </div>
-	
-	      <div className=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4\">
-	        {summaryData.cards.map((item) => (
-	          <Card 
-	            key={item.key} 
-	            className={`p-4 transition-all hover:shadow-lg cursor-pointer ${
-	              activeFilter === item.key
-	                ? 'ring-2 ring-primary'
-	                : 'hover:bg-muted/50'
-	            }`}
-	            onClick={() => handleCardAction(item.key)}
-	          >
-	            <div className=\"flex justify-between items-center\">
-	              <div className=\"text-sm text-muted-foreground\">{item.label}</div>
-	              <Badge variant={item.variant}>{item.count}</Badge>
-	            </div>
-	            <div className=\"text-2xl font-bold\">R$ {item.value}</div>
-	          </Card>
-	        ))}
-	      </div>
-	
-	      <Card>
-	        <Table>
-	          <TableHeader>
-	            <TableRow>
-	              <TableSortHeader
-	                label="Vencimento"
-	                columnKey="due_date"
-	                sortKey={sortKey}
-	                sortDirection={sortDirection}
-	                onSort={handleSort}
-	              />
-	              <TableSortHeader
-	                label="Descrição"
-	                columnKey="description"
-	                sortKey={sortKey}
-	                sortDirection={sortDirection}
-	                onSort={handleSort}
-	              />
-	              <TableSortHeader
-	                label="Valor"
-	                columnKey="amount"
-	                sortKey={sortKey}
-	                sortDirection={sortDirection}
-	                onSort={handleSort}
-	                className="text-right"
-	              />
-	              <TableSortHeader
-	                label="Status"
-	                columnKey="status"
-	                sortKey={sortKey}
-	                sortDirection={sortDirection}
-	                onSort={handleSort}
-	              />
-	              <TableHead>Ações</TableHead>
-	            </TableRow>
-	          </TableHeader>
-	          <TableBody>
-	            {filteredAndSortedTransactions.map((transaction) => (
-	              <TableRow key={transaction.id}>
-	                <TableCell>{new Date(transaction.due_date).toLocaleDateString('pt-BR')}</TableCell>
-	                <TableCell>{transaction.description}</TableCell>
-	                <TableCell>R$ {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-	                <TableCell>
-	                  <Badge className={getStatusBadge(transaction.status).className}>
-	                    {getStatusBadge(transaction.status).label}
-	                  </Badge>
-	                </TableCell>
-	                <TableCell>
-	                  <DropdownMenu>
-	                    <DropdownMenuTrigger asChild>
-	                      <Button variant=\"ghost\" size=\"sm\">
-	                        <Eye className=\"h-4 w-4\" />
-	                      </Button>
-	                    </DropdownMenuTrigger>
-	                    <DropdownMenuContent>
-	                      <DropdownMenuItem onClick={() => handleEdit(transaction)}>
-	                        <Edit className=\"h-4 w-4 mr-2\" /> Editar
-	                      </DropdownMenuItem>
-	                      <DropdownMenuItem onClick={() => handleDelete(transaction.id)}>
-	                        <Trash2 className=\"h-4 w-4 mr-2\" /> Excluir
-	                      </DropdownMenuItem>
-	                      <DropdownMenuItem onClick={() => handleCopy(transaction)}>
-	                        <Copy className=\"h-4 w-4 mr-2\" /> Duplicar
-	                      </DropdownMenuItem>
-	                      <DropdownMenuItem onClick={() => handlePartialPayment(transaction)}>
-	                        <Wallet className=\"h-4 w-4 mr-2\" /> Pagamento Parcial
-	                      </DropdownMenuItem>
-	                      <DropdownMenuItem onClick={() => window.open(`/transactions/${transaction.id}`, '_blank')}>
-	                        <ExternalLink className=\"h-4 w-4 mr-2\" /> Detalhes
-	                      </DropdownMenuItem>
-	                    </DropdownMenuContent>
-	                  </DropdownMenu>
-	                </TableCell>
-	              </TableRow>
-	            ))}
-	          </TableBody>
-	        </Table>
-	      </Card>
-	
-	      <TransactionDialog
-	        open={dialogOpen}
-	        onOpenChange={setDialogOpen}
-	        transaction={selectedTransaction}
-	        onSave={(data) => {
-	          if (selectedTransaction) {
-	            updateTransaction({ ...selectedTransaction, ...data });
-	          } else {
-	            createTransaction(data);
-	          }
-	          setDialogOpen(false);
-	        }}
-	        type=\"expense\"
-	      />
-	
-	      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-	        <AlertDialogContent>
-	          <AlertDialogHeader>
-	            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-	            <AlertDialogDescription>
-	              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
-	            </AlertDialogDescription>
-	          </AlertDialogHeader>
-	          <AlertDialogFooter>
-	            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-	            <AlertDialogAction onClick={confirmDelete}>Excluir</AlertDialogAction>
-	          </AlertDialogFooter>
-	        </AlertDialogContent>
-	      </AlertDialog>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-	      <PartialPaymentDialog
-	        open={partialPaymentDialogOpen}
-	        onOpenChange={setPartialPaymentDialogOpen}
-	        transaction={transactionForPartialPayment}
-	        onSave={(data) => {
-	          console.log(\"Pagamento parcial salvo\", data);
-	          setPartialPaymentDialogOpen(false);
-	        }}
-	      />
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Contas a Pagar</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setSearchOpen(true)}>
+            <Search className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Busca avançada</span>
+            <span className="sm:hidden">Buscar</span>
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/contas-fixas")}
+            className="bg-primary/10 hover:bg-primary/20 border-primary"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Contas fixas</span>
+            <span className="sm:hidden">Fixas</span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Mais ações</span>
+                <span className="sm:hidden">Ações</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Check className="h-4 w-4 mr-2" /> Confirmar pagamentos
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <X className="h-4 w-4 mr-2" /> Cancelar pagamentos
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/contas-fixas")}>
+                <FileText className="h-4 w-4 mr-2" /> Contas fixas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/transferencias")}>
+                <ArrowRightLeft className="h-4 w-4 mr-2" /> Transferências entre contas
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Upload className="h-4 w-4 mr-2" /> Importar extrato
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Upload className="h-4 w-4 mr-2" /> Importar planilha
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Download className="h-4 w-4 mr-2" /> Exportar pagamentos
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Group className="h-4 w-4 mr-2" /> Agrupar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+                <Trash className="h-4 w-4 mr-2" /> Excluir pagamentos
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="outline" onClick={() => setDailyDialogOpen(true)}>
+            <Wallet className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Lançamento Diário</span>
+            <span className="md:hidden">Diário</span>
+          </Button>
+          <Button onClick={handleAdd}>
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Adicionar</span>
+            <span className="sm:hidden">+</span>
+          </Button>
+        </div>
+      </div>
 
-	      <DailyTransactionDialog
-	        open={dailyDialogOpen}
-	        onOpenChange={setDailyDialogOpen}
-	        onSave={(data) => {
-	          console.log(\"Lançamento diário salvo\", data);
-	          setDailyDialogOpen(false);
-	        }}
-	        type=\"expense\"
-	      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {summaryData.cards.map((item) => (
+          <Card 
+            key={item.key} 
+            className={`p-4 transition-all hover:shadow-lg cursor-pointer ${
+              activeFilter === item.key
+                ? 'ring-2 ring-primary'
+                : 'hover:bg-muted/50'
+            }`}
+            onClick={() => handleCardAction(item.key)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">{item.label}</div>
+              <Badge variant={item.variant}>{item.count}</Badge>
+            </div>
+            <div className="text-2xl font-bold">R$ {item.value}</div>
+          </Card>
+        ))}
+      </div>
 
-	      <AdvancedSearchDialog
-	        open={searchOpen}
-	        onOpenChange={setSearchOpen}
-	        onSearch={setFilters}
-	        initialFilters={filters}
-	        type=\"expense\"
-	      />
-	    </div>
-	  );
-	};
-	
-	export default Despesas;
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableSortHeader
+                label="Vencimento"
+                columnKey="due_date"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <TableSortHeader
+                label="Descrição"
+                columnKey="description"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <TableSortHeader
+                label="Valor"
+                columnKey="amount"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+                className="text-right"
+              />
+              <TableSortHeader
+                label="Status"
+                columnKey="status"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <TableHead>Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredAndSortedTransactions.map((transaction) => (
+              <TableRow key={transaction.id}>
+                <TableCell>{new Date(transaction.due_date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell>{transaction.description}</TableCell>
+                <TableCell>R$ {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell>
+                  <Badge className={getStatusBadge(transaction.status).className}>
+                    {getStatusBadge(transaction.status).label}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleEdit(transaction)}>
+                        <Edit className="h-4 w-4 mr-2" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDelete(transaction.id)}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleCopy(transaction)}>
+                        <Copy className="h-4 w-4 mr-2" /> Duplicar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePartialPayment(transaction)}>
+                        <Wallet className="h-4 w-4 mr-2" /> Pagamento Parcial
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => window.open(`/transactions/${transaction.id}`, '_blank')}>
+                        <ExternalLink className="h-4 w-4 mr-2" /> Detalhes
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <TransactionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        transaction={selectedTransaction}
+        onSave={(data) => {
+          if (selectedTransaction) {
+            updateTransaction({ ...selectedTransaction, ...data });
+          } else {
+            createTransaction(data);
+          }
+          setDialogOpen(false);
+        }}
+        type="expense"
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <PartialPaymentDialog
+        open={partialPaymentDialogOpen}
+        onOpenChange={setPartialPaymentDialogOpen}
+        transaction={transactionForPartialPayment}
+        onSave={(data) => {
+          console.log("Pagamento parcial salvo", data);
+          setPartialPaymentDialogOpen(false);
+        }}
+      />
+
+      <DailyTransactionDialog
+        open={dailyDialogOpen}
+        onOpenChange={setDailyDialogOpen}
+        onSave={(data) => {
+          console.log("Lançamento diário salvo", data);
+          setDailyDialogOpen(false);
+        }}
+        type="expense"
+      />
+
+      <AdvancedSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSearch={setFilters}
+        onClear={() => setFilters({})}
+      />
+    </div>
+  );
+};
+
+export default Despesas;
