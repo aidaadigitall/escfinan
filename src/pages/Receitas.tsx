@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet, FileText, Settings, Check, X, ArrowRightLeft, Upload, Download, Group, Trash } from "lucide-react";
+import { TableSortHeader } from "@/components/TableSortHeader";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
@@ -49,6 +50,8 @@ const Receitas = () => {
   const [dailyDialogOpen, setDailyDialogOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [filters, setFilters] = useState<any>({});
+  const [sortKey, setSortKey] = useState<string>("due_date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const summaryData = useMemo(() => {
     const today = new Date();
@@ -95,7 +98,16 @@ const Receitas = () => {
     };
   }, [transactions]);
 
-  const filteredTransactions = useMemo(() => {
+  const handleSort = (key: string) => {
+    if (key === sortKey) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const filteredAndSortedTransactions = useMemo(() => {
     // 1) Começa com todas as transações
     let base = transactions;
 
@@ -130,36 +142,65 @@ const Receitas = () => {
     }
 
     // 3) Filtro rápido pelos cards
-    if (!activeFilter) return base;
+    let filtered = activeFilter ? base.filter(t => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+      switch (activeFilter) {
+        case "overdue":
+          const dueDateOverdue = new Date(t.due_date);
+          dueDateOverdue.setHours(0, 0, 0, 0);
+          return dueDateOverdue < today && t.status !== "received" && t.status !== "paid";
+        case "dueToday":
+          const dueDateToday = new Date(t.due_date);
+          dueDateToday.setHours(0, 0, 0, 0);
+          return dueDateToday.getTime() === today.getTime() && t.status !== "received" && t.status !== "paid";
+        case "upcoming":
+          const dueDateUpcoming = new Date(t.due_date);
+          dueDateUpcoming.setHours(0, 0, 0, 0);
+          return dueDateUpcoming > today && t.status !== "received" && t.status !== "paid";
+        case "received":
+          return t.status === "received" || t.status === "paid";
+        default:
+          return true;
+      }
+    }) : base;
 
-    switch (activeFilter) {
-      case "overdue":
-        return base.filter(t => {
-          const dueDate = new Date(t.due_date);
-          dueDate.setHours(0, 0, 0, 0);
-          return dueDate < today && t.status !== "received" && t.status !== "paid";
-        });
-      case "dueToday":
-        return base.filter(t => {
-          const dueDate = new Date(t.due_date);
-          dueDate.setHours(0, 0, 0, 0);
-          return dueDate.getTime() === today.getTime() && t.status !== "received" && t.status !== "paid";
-        });
-      case "upcoming":
-        return base.filter(t => {
-          const dueDate = new Date(t.due_date);
-          dueDate.setHours(0, 0, 0, 0);
-          return dueDate > today && t.status !== "received" && t.status !== "paid";
-        });
-      case "received":
-        return base.filter(t => t.status === "received" || t.status === "paid");
-      default:
-        return base;
-    }
-  }, [transactions, activeFilter, filters]);
+    // 4) Ordenação
+    return filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortKey) {
+        case "due_date":
+          aValue = new Date(a.due_date).getTime();
+          bValue = new Date(b.due_date).getTime();
+          break;
+        case "description":
+          aValue = a.description.toLowerCase();
+          bValue = b.description.toLowerCase();
+          break;
+        case "amount":
+          aValue = parseFloat(a.amount.toString());
+          bValue = parseFloat(b.amount.toString());
+          break;
+        case "status":
+          aValue = a.status.toLowerCase();
+          bValue = b.status.toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortDirection === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [transactions, activeFilter, filters, sortKey, sortDirection]);
 
   const handleAdd = () => {
     setSelectedTransaction(undefined);
@@ -328,18 +369,43 @@ const Receitas = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Entidade</TableHead>
-              <TableHead>Conta</TableHead>
-              <TableHead>Pagamento</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead>Situação</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTransactions.length === 0 ? (
+	              <TableSortHeader
+	                label="Descrição"
+	                columnKey="description"
+	                sortKey={sortKey}
+	                sortDirection={sortDirection}
+	                onSort={handleSort}
+	              />
+	              <TableHead>Entidade</TableHead>
+	              <TableHead>Conta</TableHead>
+	              <TableHead>Pagamento</TableHead>
+	              <TableSortHeader
+	                label="Data"
+	                columnKey="due_date"
+	                sortKey={sortKey}
+	                sortDirection={sortDirection}
+	                onSort={handleSort}
+	              />
+	              <TableSortHeader
+	                label="Situação"
+	                columnKey="status"
+	                sortKey={sortKey}
+	                sortDirection={sortDirection}
+	                onSort={handleSort}
+	              />
+	              <TableSortHeader
+	                label="Valor"
+	                columnKey="amount"
+	                sortKey={sortKey}
+	                sortDirection={sortDirection}
+	                onSort={handleSort}
+	                className="text-right"
+	              />
+	              <TableHead>Ações</TableHead>
+	            </TableRow>
+	          </TableHeader>
+	          <TableBody>
+	            {filteredAndSortedTransactions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {activeFilter ? "Nenhum lançamento encontrado para este filtro" : "Nenhuma conta a receber cadastrada"}
@@ -455,44 +521,46 @@ const Receitas = () => {
         onSave={updateTransaction}
       />
 
-      <DailyTransactionDialog
-        open={dailyDialogOpen}
-        onOpenChange={setDailyDialogOpen}
-        type="income"
-        onSave={createTransaction}
-      />
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir esta conta a receber? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AdvancedSearchDialog
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
-        onSearch={(newFilters) => {
-          setFilters(newFilters);
-          toast.success("Filtros aplicados com sucesso!");
-        }}
-        onClear={() => {
-          setFilters({});
-          toast.info("Filtros removidos.");
-        }}
-      />
-    </div>
-  );
-};
-
-export default Receitas;
+	      <DailyTransactionDialog
+	        open={dailyDialogOpen}
+	        onOpenChange={setDailyDialogOpen}
+	        type="income"
+	        onSave={createTransaction}
+	      />
+	
+	      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+	        <AlertDialogContent>
+	          <AlertDialogHeader>
+	            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+	            <AlertDialogDescription>
+	              Tem certeza que deseja excluir esta conta a receber? Esta ação não pode ser desfeita.
+	            </AlertDialogDescription>
+	          </AlertDialogHeader>
+	          <AlertDialogFooter>
+	            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+	            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+	              Excluir
+	            </AlertDialogAction>
+	          </AlertDialogFooter>
+	        </AlertDialogContent>
+	      </AlertDialog>
+	
+	      <AdvancedSearchDialog
+	        open={searchOpen}
+	        onOpenChange={setSearchOpen}
+	        onSearch={(newFilters) => {
+	          setFilters(newFilters);
+	          toast.success("Filtros aplicados com sucesso!");
+	        }}
+	        onClear={() => {
+	          setFilters({});
+	          toast.info("Filtros removidos.");
+	        }}
+	        initialFilters={filters}
+	        type="income"
+	      />
+	    </div>
+	  );
+	};
+	
+	export default Receitas;
