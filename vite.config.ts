@@ -12,6 +12,13 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       clientPort: 8080,
     },
+    proxy: {
+      "/api": {
+        target: "https://apifinanbk.escsistemas.com",
+        changeOrigin: true,
+        rewrite: (path) => path,
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
