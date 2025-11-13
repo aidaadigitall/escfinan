@@ -265,7 +265,7 @@ const Auth = () => {
                     <Input
                       id="signin-email"
                       type="email"
-                      placeholder="financeiro@escinformaticago.com.br"
+                      placeholder="seu@email.com"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
