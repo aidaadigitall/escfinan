@@ -49,6 +49,7 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		  const [partialPaymentDialogOpen, setPartialPaymentDialogOpen] = useState(false);
 		  const [transactionForPartialPayment, setTransactionForPartialPayment] = useState<Transaction | null>(null);
 		  const [dailyDialogOpen, setDailyDialogOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 		  const [searchOpen, setSearchOpen] = useState(false);
 		  const [filters, setFilters] = useState<any>({});
 		  const [sortKey, setSortKey] = useState<string>("due_date");
@@ -92,9 +93,9 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		    return {
 		      cards: [
 		        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "destructive" as const, count: overdue.length, color: "text-destructive", bandClass: "bg-destructive" },
-		        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const, count: dueToday.length, color: "text-warning", bandClass: "bg-warning" },
+		        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "secondary" as const, count: dueToday.length, color: "text-warning", bandClass: "bg-warning" },
 		        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "outline" as const, count: upcoming.length, color: "text-foreground", bandClass: "bg-gray-400" },
-		        { key: "paid", label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "success" as const, count: paid.length, color: "text-success", bandClass: "bg-success" },
+		        { key: "paid", label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: paid.length, color: "text-success", bandClass: "bg-success" },
 		        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length, color: "text-black", bandClass: "bg-black" },
 		      ],
 		      overdue,
@@ -122,34 +123,48 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
       base = base.filter((t) => {
         // Data de vencimento
         if (filters.startDate) {
-          const start = new Date(filters.startDate + 'T00:00:00');
-          const transactionDate = new Date(t.due_date + 'T00:00:00');
+          const start = new Date(filters.startDate);
+          const transactionDate = new Date(t.due_date);
           if (!isNaN(start.getTime()) && transactionDate < start) return false;
         }
-        if (filters.endDate) {
-          const end = new Date(filters.endDate + 'T00:00:00');
-          const transactionDate = new Date(t.due_date + 'T00:00:00');
-          // Adiciona 1 dia para incluir o dia final no filtro
-          end.setDate(end.getDate() + 1);
-          if (!isNaN(end.getTime()) && transactionDate >= end) return false;
-        }
-
-        if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
-        if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
-
-        if (filters.minValue && parseFloat(String(t.amount)) < parseFloat(String(filters.minValue))) return false;
-        if (filters.maxValue && parseFloat(String(t.amount)) > parseFloat(String(filters.maxValue))) return false;
-
-        if (filters.account && filters.account !== "todos" && t.account !== filters.account) return false;
-        if (filters.payment && filters.payment !== "todos" && t.payment_method !== filters.payment) return false;
-        if (filters.status && filters.status !== "todos" && t.status !== filters.status) return false;
-        if (filters.bank && filters.bank !== "todos" && t.bank_account_id !== filters.bank) return false;
-
-        // Movimento: esta página é apenas de despesas; se o usuário escolher "receitas", não mostrará nada
-        if (filters.movement && filters.movement === "receitas") return false;
-        return true;
-      });
-    }
+	        if (filters.endDate) {
+	          const end = new Date(filters.endDate);
+	          const transactionDate = new Date(t.due_date);
+	          // Adiciona 1 dia para incluir o dia final no filtro
+	          end.setDate(end.getDate() + 1);
+	          if (!isNaN(end.getTime()) && transactionDate >= end) return false;
+	        }
+	
+	        // Data de competência (competence_date)
+	          if (filters.competenceStartDate) {
+	            const start = new Date(filters.competenceStartDate);
+	            const transactionDate = new Date(t.competence_date);
+	            if (!isNaN(start.getTime()) && transactionDate < start) return false;
+	          }
+	          if (filters.competenceEndDate) {
+	            const end = new Date(filters.competenceEndDate);
+	            const transactionDate = new Date(t.competence_date);
+	            // Adiciona 1 dia para incluir o dia final no filtro
+	            end.setDate(end.getDate() + 1);
+	            if (!isNaN(end.getTime()) && transactionDate >= end) return false;
+	          }
+	
+	        if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
+	        if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
+	
+	        if (filters.minValue && parseFloat(String(t.amount)) < parseFloat(String(filters.minValue))) return false;
+	        if (filters.maxValue && parseFloat(String(t.amount)) > parseFloat(String(filters.maxValue))) return false;
+	
+	        if (filters.account && filters.account !== "todos" && t.account !== filters.account) return false;
+	        if (filters.payment && filters.payment !== "todos" && t.payment_method !== filters.payment) return false;
+	        if (filters.status && filters.status !== "todos" && t.status !== filters.status) return false;
+	        if (filters.bank && filters.bank !== "todos" && t.bank_account_id !== filters.bank) return false;
+	
+	        // Movimento: esta página é apenas de despesas; se o usuário escolher "receitas", não mostrará nada
+	        if (filters.movement && filters.movement === "receitas") return false;
+	        return true;
+	      });
+	    }
 		
 		    // 3) Filtro rápido pelos cards
 		    let filtered = activeFilter ? base.filter(t => {
@@ -359,15 +374,23 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		          </Button>
 		
           {/* Adicionar */}
-          <Button variant="default" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Adicionar</span>
-            <span className="sm:hidden">Add</span>
+  <Button variant="default" onClick={() => setIsAdding(!isAdding)}>          <Plus className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">{isAdding ? 'Cancelar' : 'Adicionar'}</span>
+            <span className="sm:hidden">{isAdding ? 'Canc.' : 'Add'}</span>
           </Button>
 		        </div>
 		      </div>
 	
-		      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+		      {isAdding && (
+        <Card className="mb-4 p-4">
+          <h3 className="text-lg font-semibold mb-4">Novo Lançamento de Despesa</h3>
+          {/* Aqui será o formulário de adição */}
+          <p>Formulário de adição de despesa será implementado aqui.</p>
+          <Button onClick={() => setIsAdding(false)} className="mt-4">Salvar</Button>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
 		        {summaryData.cards.map((card) => (
 		          <Card 
 		            key={card.key}
@@ -457,6 +480,7 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
                       {transaction.status === 'paid' ? 'Pago' : transaction.status === 'pending' ? 'Pendente' : 'Vencido'}
                     </Badge>
                   </TableCell>
+<<<<<<< HEAD
                   <TableCell className="text-center">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>
                       <Edit className="h-4 w-4 text-orange-500" />
@@ -467,6 +491,26 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
                   </TableCell>
 		                </TableRow>
 		              ))
+=======
+			                  <TableCell className="text-center space-x-2">
+			                    <Button variant="ghost" size="icon" onClick={() => handleView(transaction)}>
+			                     <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="ghost" size="icon" onClick={() => toast.info("Função em desenvolvimento")}>
+                        <Eye className="h-4 w-4 text-blue-500" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>
+                        <Edit className="h-4 w-4 text-orange-500" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handlePartialPayment(transaction)}>
+                        <Copy className="h-4 w-4 text-green-500" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </TableCell>    ))
+>>>>>>> 2293cf3 (feat: Implementa menu de ações completo e botão 'Adicionar' inline em Despesas e Receitas)
 		            )}
 		          </TableBody>
 		        </Table>
