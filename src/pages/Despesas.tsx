@@ -124,7 +124,21 @@ import { toast } from "sonner";
         }
         if (filters.endDate) {
           const end = new Date(filters.endDate);
-          if (!isNaN(end.getTime()) && new Date(t.due_date) > end) return false;
+          // Adiciona 1 dia para incluir o dia final no filtro
+          end.setDate(end.getDate() + 1);
+          if (!isNaN(end.getTime()) && new Date(t.due_date) >= end) return false;
+        }
+
+        // Data de competência (competence_date)
+        if (filters.competenceStartDate) {
+          const start = new Date(filters.competenceStartDate);
+          if (!isNaN(start.getTime()) && new Date(t.competence_date) < start) return false;
+        }
+        if (filters.competenceEndDate) {
+          const end = new Date(filters.competenceEndDate);
+          // Adiciona 1 dia para incluir o dia final no filtro
+          end.setDate(end.getDate() + 1);
+          if (!isNaN(end.getTime()) && new Date(t.competence_date) >= end) return false;
         }
 
         if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
