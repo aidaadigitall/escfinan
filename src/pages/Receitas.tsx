@@ -373,21 +373,16 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		            <span className="sm:hidden">Buscar</span>
 		          </Button>
 		
-<<<<<<< HEAD
-          {/* Adicionar */}
-          <Button variant="default" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Adicionar</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
-=======
+
+
+
 		          {/* Adicionar */}
 		          <Button variant="default" onClick={() => setIsAdding(!isAdding)}>
 		            <Plus className="h-4 w-4 mr-2" />
 		            <span className="hidden sm:inline">{isAdding ? 'Cancelar' : 'Adicionar'}</span>
 		            <span className="sm:hidden">{isAdding ? 'Canc.' : 'Add'}</span>
 		          </Button>
->>>>>>> 2293cf3 (feat: Implementa menu de ações completo e botão 'Adicionar' inline em Despesas e Receitas)
+
 		        </div>
 		      </div>
 	
@@ -489,23 +484,9 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
                     >
                       {transaction.status === 'received' ? 'Recebido' : transaction.status === 'pending' ? 'Pendente' : 'Vencido'}
                     </Badge>
-<<<<<<< HEAD
+
                   </TableCell>
-                  <TableCell className="text-center">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>
-                      <Edit className="h-4 w-4 text-orange-500" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
-                      <Trash className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </TableCell>
-		                </TableRow>
-		              ))
-=======
-		                  </TableCell>
-			                  <TableCell className="text-center space-x-2">
-			                    <Button variant="ghost" size="icon" onClick={() => handleView(transaction)}>
-			           <TableCell className="text-right">
+                  <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
                       <Button variant="ghost" size="icon" onClick={() => toast.info("Função em desenvolvimento")}>
                         <Eye className="h-4 w-4 text-blue-500" />
@@ -520,8 +501,9 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
-                  </TableCell>              ))
->>>>>>> 2293cf3 (feat: Implementa menu de ações completo e botão 'Adicionar' inline em Despesas e Receitas)
+                  </TableCell>
+			                </TableRow>
+			              ))
 		            )}
 		          </TableBody>
 		        </Table>
