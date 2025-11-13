@@ -92,7 +92,7 @@
 		        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const, count: dueToday.length, color: "text-warning", bandClass: "bg-warning" },
 		        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "outline" as const, count: upcoming.length, color: "text-foreground", bandClass: "bg-gray-400" },
 		        { key: "received", label: "Recebidos", value: receivedTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "success" as const, count: received.length, color: "text-success", bandClass: "bg-success" },
-		        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length, color: "text-white", bandClass: "bg-black" },
+		        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length, color: "text-black", bandClass: "bg-black" },
 		      ],
 		      overdue,
 		      dueToday,
@@ -286,7 +286,7 @@
 		
 		  return (
 		    <div className="space-y-6">
-		      <div className="flex justify-between items-center">
+		      <div className="flex justify-between items-center sticky top-0 bg-background z-10 py-4">
 		        <h1 className="text-2xl font-bold">Contas a Receber</h1>
 		        <div className="flex gap-2">
 		
