@@ -399,48 +399,42 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		            </div>
 		          </Card>
 		        ))}
-		      </div>
-	
-		      <Card>
-		        <Table>
-		          <TableHeader>
-		            <TableRow>
-		              <TableHead className="w-12">
-		                <Checkbox 
-		                  checked={selectedTransactions.length === filteredAndSortedTransactions.length && filteredAndSortedTransactions.length > 0}
-		                  onCheckedChange={handleSelectAll}
-		                />
-		              </TableHead>
-		              <TableSortHeader
-		                label="Vencimento"
-		                sortKey="due_date"
-		                currentSortKey={sortKey}
-		                sortDirection={sortDirection}
-		                onSort={handleSort}
-		              />
-		              <TableSortHeader
-		                label="Descrição"
-		                sortKey="description"
-		                currentSortKey={sortKey}
-		                sortDirection={sortDirection}
-		                onSort={handleSort}
-		              />
-		              <TableSortHeader
-		                label="Valor"
-		                sortKey="amount"
-		                currentSortKey={sortKey}
-		                sortDirection={sortDirection}
-		                onSort={handleSort}
-		              />
-		              <TableSortHeader
-		                label="Status"
-		                sortKey="status"
-		                currentSortKey={sortKey}
-		                sortDirection={sortDirection}
-		                onSort={handleSort}
-		              />
-		              <TableHead>Ações</TableHead>
-		            </TableRow>
+		      </div			              <TableHead className="w-12">
+			                <Checkbox 
+			                  checked={selectedTransactions.length === filteredAndSortedTransactions.length && filteredAndSortedTransactions.length > 0}
+			                  onCheckedChange={handleSelectAll}
+			                />
+			              </TableHead>
+			              <TableSortHeader
+			                label="Vencimento"
+			                sortKey="due_date"
+			                currentSortKey={sortKey}
+			                sortDirection={sortDirection}
+			                onSort={handleSort}
+			              />
+			              <TableSortHeader
+			                label="Descrição"
+			                sortKey="description"
+			                currentSortKey={sortKey}
+			                sortDirection={sortDirection}
+			                onSort={handleSort}
+			              />
+			              <TableSortHeader
+			                label="Valor"
+			                sortKey="amount"
+			                currentSortKey={sortKey}
+			                sortDirection={sortDirection}
+			                onSort={handleSort}
+			                className="text-right"
+			              />
+			              <TableSortHeader
+			                label="Status"
+			                sortKey="status"
+			                currentSortKey={sortKey}
+			                sortDirection={sortDirection}
+			                onSort={handleSort}
+			              />
+			              <TableHead className="text-center">Ações</TableHead>  </TableRow>
 		          </TableHeader>
 		          <TableBody>
 		            {isLoading ? (
@@ -471,22 +465,17 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
                       {transaction.status === 'received' ? 'Recebido' : transaction.status === 'pending' ? 'Pendente' : 'Vencido'}
                     </Badge>
 		                  </TableCell>
-		                  <TableCell>
-		                    <DropdownMenu>
-		                      <DropdownMenuTrigger asChild>
-		                        <Button variant="ghost" size="icon">
-		                          <Settings className="h-4 w-4" />
-		                        </Button>
-		                      </DropdownMenuTrigger>
-		                      <DropdownMenuContent align="end">
-		                        <DropdownMenuItem onClick={() => handleEdit(transaction)}><Edit className="h-4 w-4 mr-2" /> Editar</DropdownMenuItem>
-		                        <DropdownMenuItem onClick={() => handleCopy(transaction)}><Copy className="h-4 w-4 mr-2" /> Duplicar</DropdownMenuItem>
-		                        <DropdownMenuItem onClick={() => handlePartialPayment(transaction)}><Wallet className="h-4 w-4 mr-2" /> Recebimento Parcial</DropdownMenuItem>
-		                        <DropdownMenuSeparator />
-		                        <DropdownMenuItem onClick={() => handleDelete(transaction.id)}><Trash2 className="h-4 w-4 mr-2" /> Excluir</DropdownMenuItem>
-		                      </DropdownMenuContent>
-		                    </DropdownMenu>
-		                  </TableCell>
+			                  <TableCell className="text-center space-x-2">
+			                    <Button variant="ghost" size="icon" onClick={() => handleView(transaction)}>
+			                      <Eye className="h-4 w-4 text-blue-500" />
+			                    </Button>
+			                    <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>
+			                      <Edit className="h-4 w-4 text-orange-500" />
+			                    </Button>
+			                    <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
+			                      <Trash className="h-4 w-4 text-red-500" />
+			                    </Button>
+			                  </TableCell>
 		                </TableRow>
 		              ))
 		            )}

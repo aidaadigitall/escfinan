@@ -15,6 +15,7 @@ import DreGerencial from "./pages/DreGerencial";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ContasFixas from "./pages/ContasFixas";
+import PaymentMethods from "./pages/PaymentMethods";
 import ContasBancarias from "./pages/ContasBancarias";
 import CartoesCredito from "./pages/CartoesCredito";
 import CentrosCustos from "./pages/CentrosCustos";
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/auxiliares/caixas" element={<ProtectedRoute><Layout><Caixa /></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/contas-bancarias" element={<ProtectedRoute><Layout><ContasBancarias /></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/cartoes-credito" element={<ProtectedRoute><Layout><CartoesCredito /></Layout></ProtectedRoute>} />
+          <Route path="/auxiliares/formas-de-pagamento" element={<ProtectedRoute><Layout><PaymentMethods /></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/centros-custos" element={<ProtectedRoute><Layout><CentrosCustos /></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/conciliacao" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Conciliação Bancária</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/auxiliares/transferencias" element={<ProtectedRoute><Layout><Transferencias /></Layout></ProtectedRoute>} />
