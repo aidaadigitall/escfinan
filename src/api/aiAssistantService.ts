@@ -23,6 +23,16 @@ interface AIAssistantResponse {
   creditsRemaining?: number;
 }
 
+// Get the API base URL - use absolute URL in production
+const getApiBaseUrl = () => {
+  // In production (Lovable), use the backend API directly
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://apifinanbk.escsistemas.com';
+  }
+  // In development, use relative path (proxy will handle it)
+  return '';
+};
+
 /**
  * Chama o assistente de IA através do backend
  * O backend é responsável por chamar a OpenAI com segurança
@@ -31,7 +41,8 @@ export const callAIAssistant = async (
   request: AIAssistantRequest
 ): Promise<AIAssistantResponse> => {
   try {
-    const response = await fetch("/api/ai-assistant", {
+    const apiUrl = getApiBaseUrl();
+    const response = await fetch(`${apiUrl}/api/ai-assistant`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -67,7 +78,8 @@ export const generateFinancialInsights = async (
   }
 ): Promise<string> => {
   try {
-    const response = await fetch("/api/ai-insights", {
+    const apiUrl = getApiBaseUrl();
+    const response = await fetch(`${apiUrl}/api/ai-insights`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -97,7 +109,8 @@ export const getUserAICredits = async (): Promise<{
   plan_type: string;
 }> => {
   try {
-    const response = await fetch("/api/user/ai-credits", {
+    const apiUrl = getApiBaseUrl();
+    const response = await fetch(`${apiUrl}/api/user/ai-credits`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
