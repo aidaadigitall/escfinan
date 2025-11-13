@@ -33,6 +33,24 @@ const getApiBaseUrl = () => {
   return '';
 };
 
+// Helper function to fetch with timeout
+const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 60000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
 /**
  * Chama o assistente de IA através do backend
  * O backend é responsável por chamar a OpenAI com segurança
@@ -42,14 +60,19 @@ export const callAIAssistant = async (
 ): Promise<AIAssistantResponse> => {
   try {
     const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/api/ai-assistant`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+    // Increase timeout to 90 seconds for AI responses (OpenAI can be slow)
+    const response = await fetchWithTimeout(
+      `${apiUrl}/api/ai-assistant`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify(request),
       },
-      body: JSON.stringify(request),
-    });
+      90000
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -79,14 +102,19 @@ export const generateFinancialInsights = async (
 ): Promise<string> => {
   try {
     const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/api/ai-insights`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+    // Increase timeout to 90 seconds for insights (OpenAI can be slow)
+    const response = await fetchWithTimeout(
+      `${apiUrl}/api/ai-insights`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify({ analysis }),
       },
-      body: JSON.stringify({ analysis }),
-    });
+      90000
+    );
 
     if (!response.ok) {
       throw new Error("Erro ao gerar insights");
@@ -110,11 +138,15 @@ export const getUserAICredits = async (): Promise<{
 }> => {
   try {
     const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/api/user/ai-credits`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+    const response = await fetchWithTimeout(
+      `${apiUrl}/api/user/ai-credits`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
       },
-    });
+      10000
+    );
 
     if (!response.ok) {
       throw new Error("Erro ao buscar créditos");
