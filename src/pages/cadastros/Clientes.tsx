@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,14 +22,14 @@ import { toast } from "sonner";
 
 interface Cliente {
   id: string;
-  nome: string;
   cnpj: string;
+  nome: string;
   email: string;
   telefone: string;
+  cep: string;
   endereco: string;
   cidade: string;
   estado: string;
-  cep: string;
   ativo: boolean;
 }
 
@@ -40,14 +40,14 @@ const Clientes = () => {
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [formData, setFormData] = useState({
-    nome: "",
     cnpj: "",
+    nome: "",
     email: "",
     telefone: "",
+    cep: "",
     endereco: "",
     cidade: "",
     estado: "",
-    cep: "",
     ativo: true,
   });
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,27 +126,27 @@ const Clientes = () => {
     if (cliente) {
       setEditingId(cliente.id);
       setFormData({
-        nome: cliente.nome,
         cnpj: cliente.cnpj,
+        nome: cliente.nome,
         email: cliente.email,
         telefone: cliente.telefone,
+        cep: cliente.cep,
         endereco: cliente.endereco,
         cidade: cliente.cidade,
         estado: cliente.estado,
-        cep: cliente.cep,
         ativo: cliente.ativo,
       });
     } else {
       setEditingId(null);
       setFormData({
-        nome: "",
         cnpj: "",
+        nome: "",
         email: "",
         telefone: "",
+        cep: "",
         endereco: "",
         cidade: "",
         estado: "",
-        cep: "",
         ativo: true,
       });
     }
@@ -154,7 +154,7 @@ const Clientes = () => {
   };
 
   const handleSave = () => {
-    if (!formData.nome || !formData.cnpj) {
+    if (!formData.cnpj || !formData.nome) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }

@@ -11,6 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { BankAccount } from "@/hooks/useBankAccounts";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface BankAccountDialogProps {
   open: boolean;
@@ -32,8 +41,12 @@ export const BankAccountDialog = ({
       setValue("name", account.name);
       setValue("initial_balance", account.initial_balance);
       setValue("current_balance", account.current_balance);
+      if (account.balance_date) {
+        setValue("balance_date", account.balance_date);
+      }
     } else {
       reset();
+      setValue("balance_date", format(new Date(), "yyyy-MM-dd"));
     }
   }, [account, setValue, reset]);
 
@@ -60,15 +73,25 @@ export const BankAccountDialog = ({
               placeholder="Ex: Banco do Brasil"
             />
           </div>
-          <div>
-            <Label htmlFor="initial_balance">Saldo Inicial</Label>
-            <Input
-              id="initial_balance"
-              type="number"
-              step="0.01"
-              {...register("initial_balance")}
-              placeholder="0,00"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="initial_balance">Saldo Inicial</Label>
+              <Input
+                id="initial_balance"
+                type="number"
+                step="0.01"
+                {...register("initial_balance")}
+                placeholder="0,00"
+              />
+            </div>
+            <div>
+              <Label htmlFor="balance_date">Data do Saldo</Label>
+              <Input
+                id="balance_date"
+                type="date"
+                {...register("balance_date")}
+              />
+            </div>
           </div>
           {account && (
             <div>

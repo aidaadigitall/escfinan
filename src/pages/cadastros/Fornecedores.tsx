@@ -22,14 +22,14 @@ import { toast } from "sonner";
 
 interface Fornecedor {
   id: string;
-  nome: string;
   cnpj: string;
+  nome: string;
   email: string;
   telefone: string;
+  cep: string;
   endereco: string;
   cidade: string;
   estado: string;
-  cep: string;
   ativo: boolean;
 }
 
@@ -40,14 +40,14 @@ const Fornecedores = () => {
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [formData, setFormData] = useState({
-    nome: "",
     cnpj: "",
+    nome: "",
     email: "",
     telefone: "",
+    cep: "",
     endereco: "",
     cidade: "",
     estado: "",
-    cep: "",
     ativo: true,
   });
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,27 +126,27 @@ const Fornecedores = () => {
     if (fornecedor) {
       setEditingId(fornecedor.id);
       setFormData({
-        nome: fornecedor.nome,
         cnpj: fornecedor.cnpj,
+        nome: fornecedor.nome,
         email: fornecedor.email,
         telefone: fornecedor.telefone,
+        cep: fornecedor.cep,
         endereco: fornecedor.endereco,
         cidade: fornecedor.cidade,
         estado: fornecedor.estado,
-        cep: fornecedor.cep,
         ativo: fornecedor.ativo,
       });
     } else {
       setEditingId(null);
       setFormData({
-        nome: "",
         cnpj: "",
+        nome: "",
         email: "",
         telefone: "",
+        cep: "",
         endereco: "",
         cidade: "",
         estado: "",
-        cep: "",
         ativo: true,
       });
     }
@@ -154,7 +154,7 @@ const Fornecedores = () => {
   };
 
   const handleSave = () => {
-    if (!formData.nome || !formData.cnpj) {
+    if (!formData.cnpj || !formData.nome) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }
