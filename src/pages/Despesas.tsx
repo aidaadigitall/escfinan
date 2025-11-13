@@ -117,10 +117,10 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		    // 1) Começa com todas as transações
 		    let base = transactions;
 		
-		    // 2) Filtros da busca avançada
-		    if (filters && Object.keys(filters).length > 0) {
-		      base = base.filter((t) => {
-        // Período (due_date)
+    // 2) Filtros da busca avançada
+    if (filters && Object.keys(filters).length > 0) {
+      base = base.filter((t) => {
+        // Data de vencimento
         if (filters.startDate) {
           const start = new Date(filters.startDate + 'T00:00:00');
           const transactionDate = new Date(t.due_date + 'T00:00:00');
@@ -133,38 +133,23 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
           end.setDate(end.getDate() + 1);
           if (!isNaN(end.getTime()) && transactionDate >= end) return false;
         }
-		
-		        // Data de competência (competence_date)
-          // Data de competência (competence_date)
-          if (filters.competenceStartDate) {
-            const start = new Date(filters.competenceStartDate + 'T00:00:00'); // Garante que a data seja interpretada corretamente
-            const transactionDate = new Date(t.competence_date + 'T00:00:00');
-            if (!isNaN(start.getTime()) && transactionDate < start) return false;
-          }
-          if (filters.competenceEndDate) {
-            const end = new Date(filters.competenceEndDate + 'T00:00:00');
-            const transactionDate = new Date(t.competence_date + 'T00:00:00');
-            // Adiciona 1 dia para incluir o dia final no filtro
-            end.setDate(end.getDate() + 1);
-            if (!isNaN(end.getTime()) && transactionDate >= end) return false;
-          }
-		
-		        if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
-		        if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
-		
-		        if (filters.minValue && parseFloat(String(t.amount)) < parseFloat(String(filters.minValue))) return false;
-		        if (filters.maxValue && parseFloat(String(t.amount)) > parseFloat(String(filters.maxValue))) return false;
-		
-		        if (filters.account && filters.account !== "todos" && t.account !== filters.account) return false;
-		        if (filters.payment && filters.payment !== "todos" && t.payment_method !== filters.payment) return false;
-		        if (filters.status && filters.status !== "todos" && t.status !== filters.status) return false;
-		        if (filters.bank && filters.bank !== "todos" && t.bank_account_id !== filters.bank) return false;
-		
-		        // Movimento: esta página é apenas de despesas; se o usuário escolher "receitas", não mostrará nada
-		        if (filters.movement && filters.movement === "receitas") return false;
-		        return true;
-		      });
-		    }
+
+        if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
+        if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
+
+        if (filters.minValue && parseFloat(String(t.amount)) < parseFloat(String(filters.minValue))) return false;
+        if (filters.maxValue && parseFloat(String(t.amount)) > parseFloat(String(filters.maxValue))) return false;
+
+        if (filters.account && filters.account !== "todos" && t.account !== filters.account) return false;
+        if (filters.payment && filters.payment !== "todos" && t.payment_method !== filters.payment) return false;
+        if (filters.status && filters.status !== "todos" && t.status !== filters.status) return false;
+        if (filters.bank && filters.bank !== "todos" && t.bank_account_id !== filters.bank) return false;
+
+        // Movimento: esta página é apenas de despesas; se o usuário escolher "receitas", não mostrará nada
+        if (filters.movement && filters.movement === "receitas") return false;
+        return true;
+      });
+    }
 		
 		    // 3) Filtro rápido pelos cards
 		    let filtered = activeFilter ? base.filter(t => {
@@ -373,12 +358,12 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		            <span className="sm:hidden">Buscar</span>
 		          </Button>
 		
-		          {/* Adicionar */}
-		          <Button variant="default" onClick={() => setTransactionDialogOpen(true)}>
-		            <Plus className="h-4 w-4 mr-2" />
-		            <span className="hidden sm:inline">Adicionar</span>
-		            <span className="sm:hidden">Add</span>
-		          </Button>
+          {/* Adicionar */}
+          <Button variant="default" onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Adicionar</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
 		        </div>
 		      </div>
 	
@@ -400,45 +385,50 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		          </Card>
 		        ))}
 		      </div>
-	
-		      <Card>
-		        <Table>
-		          <TableHeade			              <TableHead className="w-12">
-			                <Checkbox 
-			                  checked={selectedTransactions.length === filteredAndSortedTransactions.length && filteredAndSortedTransactions.length > 0}
-			                  onCheckedChange={handleSelectAll}
-			                />
-			              </TableHead>
-			              <TableSortHeader
-			                label="Vencimento"
-			                sortKey="due_date"
-			                currentSortKey={sortKey}
-			                sortDirection={sortDirection}
-			                onSort={handleSort}
-			              />
-			              <TableSortHeader
-			                label="Descrição"
-			                sortKey="description"
-			                currentSortKey={sortKey}
-			                sortDirection={sortDirection}
-			                onSort={handleSort}
-			              />
-			              <TableSortHeader
-			                label="Valor"
-			                sortKey="amount"
-			                currentSortKey={sortKey}
-			                sortDirection={sortDirection}
-			                onSort={handleSort}
-			                className="text-right"
-			              />
-			              <TableSortHeader
-			                label="Status"
-			                sortKey="status"
-			                currentSortKey={sortKey}
-			                sortDirection={sortDirection}
-			                onSort={handleSort}
-			              />
-			              <TableHead className="text-center">Ações</TableHead>ody>
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12">
+                <Checkbox 
+                  checked={selectedTransactions.length === filteredAndSortedTransactions.length && filteredAndSortedTransactions.length > 0}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
+              <TableSortHeader
+                label="Vencimento"
+                columnKey="due_date"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <TableSortHeader
+                label="Descrição"
+                columnKey="description"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <TableSortHeader
+                label="Valor"
+                columnKey="amount"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+                className="text-right"
+              />
+              <TableSortHeader
+                label="Status"
+                columnKey="status"
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <TableHead className="text-center">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
 		            {isLoading ? (
 		              <TableRow>
 		                <TableCell colSpan={6} className="text-center">Carregando...</TableCell>
@@ -458,7 +448,7 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
                   <TableCell>
                     <Badge 
                       className="cursor-pointer"
-                      variant={transaction.status === 'paid' ? 'success' : transaction.status === 'pending' ? 'warning' : 'destructive'}
+                      variant={transaction.status === 'paid' ? 'default' : transaction.status === 'pending' ? 'outline' : 'destructive'}
                       onClick={() => {
                         setTransactionToChangeStatus(transaction);
                         setIsChangeStatusOpen(true);
@@ -467,17 +457,14 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
                       {transaction.status === 'paid' ? 'Pago' : transaction.status === 'pending' ? 'Pendente' : 'Vencido'}
                     </Badge>
                   </TableCell>
-			                  <TableCell className="text-center space-x-2">
-			                    <Button variant="ghost" size="icon" onClick={() => handleView(transaction)}>
-			                      <Eye className="h-4 w-4 text-blue-500" />
-			                    </Button>
-			                    <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>
-			                      <Edit className="h-4 w-4 text-orange-500" />
-			                    </Button>
-			                    <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
-			                      <Trash className="h-4 w-4 text-red-500" />
-			                    </Button>
-			                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>
+                      <Edit className="h-4 w-4 text-orange-500" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
+                      <Trash className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
 		                </TableRow>
 		              ))
 		            )}
@@ -485,30 +472,33 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 		        </Table>
 		      </Card>
 	
-		      <TransactionDialog
-		        open={dialogOpen}
-		        onOpenChange={setDialogOpen}
-		        transaction={selectedTransaction}
-		        type="expense"
-		      />
-	
-		      <PartialPaymentDialog
-		        open={partialPaymentDialogOpen}
-		        onOpenChange={setPartialPaymentDialogOpen}
-		        transaction={transactionForPartialPayment}
-		      />
-	
-		      <DailyTransactionDialog
-		        open={dailyDialogOpen}
-		        onOpenChange={setDailyDialogOpen}
-		        type="expense"
-		      />
-	
+      <TransactionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        transaction={selectedTransaction}
+        type="expense"
+        onSave={() => {}}
+      />
+
+      <PartialPaymentDialog
+        open={partialPaymentDialogOpen}
+        onOpenChange={setPartialPaymentDialogOpen}
+        transaction={transactionForPartialPayment}
+        onSave={() => {}}
+      />
+
+      <DailyTransactionDialog
+        open={dailyDialogOpen}
+        onOpenChange={setDailyDialogOpen}
+        type="expense"
+        onSave={() => {}}
+      />
+
       <AdvancedSearchDialog
         open={searchOpen}
         onOpenChange={setSearchOpen}
         onSearch={setFilters}
-        type="expense"
+        onClear={() => setFilters({})}
       />
       {transactionToChangeStatus && (
         <ChangeStatusDialog

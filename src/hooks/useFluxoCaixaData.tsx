@@ -19,8 +19,9 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, fi
         return false;
       }
       
-      // 1.1. Filtro de Data de Competência (competence_date)
-      // Este filtro só deve ser aplicado se estiver presente na busca avançada
+      // 1.1. Filtro de Data de Competência (se existir no schema)
+      // Este filtro está comentado pois competence_date não existe no schema atual
+      /*
       if (filters.competenceStartDate || filters.competenceEndDate) {
         const competenceDate = new Date(t.competence_date);
         
@@ -31,10 +32,11 @@ export const useFluxoCaixaData = (selectedPeriod: { start: Date; end: Date }, fi
         
         if (filters.competenceEndDate) {
           const endComp = new Date(filters.competenceEndDate + 'T00:00:00');
-          endComp.setDate(endComp.getDate() + 1); // Inclui o dia final
+          endComp.setDate(endComp.getDate() + 1);
           if (competenceDate >= endComp) return false;
         }
       }
+      */
 
       // 2. Filtros da Busca Avançada
       if (filters.entity && filters.entity !== "todos") {

@@ -255,13 +255,13 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
 	                  <tr className="border-t">
 	                    <td className="p-2">01/11/2025 11:05:17</td>
 	                    <td className="p-2">Observação de teste</td>
-	                    <td className="p-2"><Badge variant="success">Confirmado</Badge></td>
-	                    <td className="p-2">Funcionário 1</td>
-	                  </tr>
-	                  <tr className="border-t">
-	                    <td className="p-2">31/10/2025 10:12:12</td>
-	                    <td className="p-2"></td>
-	                    <td className="p-2"><Badge variant="warning">Em aberto</Badge></td>
+                    <td className="p-2"><Badge variant="default">Confirmado</Badge></td>
+                    <td className="p-2">Funcionário 1</td>
+                  </tr>
+                  <tr className="border-t">
+                    <td className="p-2">31/10/2025 10:12:12</td>
+                    <td className="p-2"></td>
+                    <td className="p-2"><Badge variant="outline">Em aberto</Badge></td>
 	                    <td className="p-2">Funcionário 2</td>
 	                  </tr>
 	                </tbody>
