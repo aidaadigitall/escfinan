@@ -21,6 +21,10 @@ import {
   Table,
   FileBarChart,
   ChevronLeft,
+  Users,
+  User,
+  Package,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -54,6 +58,17 @@ const menuItems: MenuItem[] = [
   { icon: ArrowRightLeft, label: "Transferências", path: "/transferencias" },
   { icon: Wallet, label: "Caixa", path: "/caixa" },
   { icon: Target, label: "Calendário Financeiro", path: "/calendario-financeiro" },
+  {
+    icon: Users,
+    label: "Cadastros",
+    submenu: [
+      { icon: User, label: "Usuários", path: "/cadastros/usuarios" },
+      { icon: Briefcase, label: "Clientes", path: "/cadastros/clientes" },
+      { icon: Building2, label: "Fornecedores", path: "/cadastros/fornecedores" },
+      { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
+      { icon: Users, label: "Funcionários", path: "/cadastros/funcionarios" },
+    ],
+  },
   {
     icon: Settings,
     label: "Configurações Avançadas",

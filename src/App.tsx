@@ -25,6 +25,11 @@ import EditTransactionPage from "./pages/transactions/EditTransactionPage";
 import ViewTransactionPage from "./pages/transactions/ViewTransactionPage";
 import RelatorioRecorrencias from "./pages/RelatorioRecorrencias";
 import CalendarioFinanceiro from "./pages/CalendarioFinanceiro";
+import Usuarios from "./pages/cadastros/Usuarios";
+import Clientes from "./pages/cadastros/Clientes";
+import Fornecedores from "./pages/cadastros/Fornecedores";
+import Funcionarios from "./pages/cadastros/Funcionarios";
+import Produtos from "./pages/cadastros/Produtos";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +77,11 @@ const App = () => (
           <Route path="/relatorio-recorrencias" element={<ProtectedRoute><Layout><RelatorioRecorrencias /></Layout></ProtectedRoute>} />
           <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
           <Route path="/configuracoes" element={<ProtectedRoute><Layout><Configuracoes /></Layout></ProtectedRoute>} />
+          <Route path="/cadastros/usuarios" element={<ProtectedRoute><Layout><Usuarios /></Layout></ProtectedRoute>} />
+          <Route path="/cadastros/clientes" element={<ProtectedRoute><Layout><Clientes /></Layout></ProtectedRoute>} />
+          <Route path="/cadastros/fornecedores" element={<ProtectedRoute><Layout><Fornecedores /></Layout></ProtectedRoute>} />
+          <Route path="/cadastros/funcionarios" element={<ProtectedRoute><Layout><Funcionarios /></Layout></ProtectedRoute>} />
+          <Route path="/cadastros/produtos" element={<ProtectedRoute><Layout><Produtos /></Layout></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
