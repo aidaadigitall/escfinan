@@ -86,14 +86,14 @@ import { toast } from "sonner";
 	    const upcomingTotal = upcoming.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 	    const paidTotal = paid.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 	
-    return {
-      cards: [
-        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "destructive" as const, count: overdue.length },
-        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "secondary" as const, count: dueToday.length },
-        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "outline" as const, count: upcoming.length },
-        { key: "paid", label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: paid.length },
-        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "secondary" as const, count: transactions.length },
-      ],
+	    return {
+	      cards: [
+	        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "destructive" as const, count: overdue.length, color: "text-destructive", bandClass: "bg-destructive" },
+	        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const, count: dueToday.length, color: "text-warning", bandClass: "bg-warning" },
+	        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "outline" as const, count: upcoming.length, color: "text-foreground", bandClass: "bg-gray-400" },
+	        { key: "paid", label: "Pagos", value: paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "success" as const, count: paid.length, color: "text-success", bandClass: "bg-success" },
+	        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length, color: "text-white", bandClass: "bg-black" },
+	      ],
       overdue,
       dueToday,
       upcoming,
@@ -398,21 +398,26 @@ import { toast } from "sonner";
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {summaryData.cards.map((item) => (
-          <Card 
-            key={item.key} 
-            className={`p-4 transition-all hover:shadow-lg cursor-pointer ${
-              activeFilter === item.key
-                ? 'ring-2 ring-primary'
-                : 'hover:bg-muted/50'
-            }`}
-            onClick={() => handleCardAction(item.key)}
-          >
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">{item.label}</div>
-              <Badge variant={item.variant}>{item.count}</Badge>
-            </div>
-            <div className="text-2xl font-bold">R$ {item.value}</div>
-          </Card>
+	          <Card
+	            key={item.key}
+	            className={`p-0 cursor-pointer transition-all duration-200 overflow-hidden ${
+	              activeFilter === item.key
+	                ? 'ring-2 ring-primary'
+	                : 'hover:shadow-lg'
+	            }`}
+	            onClick={() => handleCardAction(item.key)}
+	          >
+	            <div className={`flex justify-between items-center p-2 ${item.bandClass} text-white`}>
+	              <div className="text-sm font-medium">{item.label}</div>
+	              <Badge className="bg-white text-black hover:bg-white">{item.count}</Badge>
+	            </div>
+	            <div className="p-4">
+	              <div className="flex justify-between items-center">
+	                <div className="text-sm text-muted-foreground">Valor</div>
+	              </div>
+	              <div className={`text-2xl font-bold ${item.color}`}>R$ {item.value}</div>
+	            </div>
+	          </Card>
         ))}
       </div>
 

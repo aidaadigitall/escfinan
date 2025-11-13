@@ -85,14 +85,14 @@ const Receitas = () => {
     const upcomingTotal = upcoming.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     const receivedTotal = received.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-    return {
-      cards: [
-        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "expense" as const, count: overdue.length },
-        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const, count: dueToday.length },
-        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "pending" as const, count: upcoming.length },
-        { key: "received", label: "Recebidos", value: receivedTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "income" as const, count: received.length },
-        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length },
-      ],
+	    return {
+	      cards: [
+	        { key: "overdue", label: "Vencidos", value: overdueTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "destructive" as const, count: overdue.length, color: "text-destructive", bandClass: "bg-destructive" },
+	        { key: "dueToday", label: "Vencem hoje", value: dueTodayTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "warning" as const, count: dueToday.length, color: "text-warning", bandClass: "bg-warning" },
+	        { key: "upcoming", label: "A vencer", value: upcomingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "outline" as const, count: upcoming.length, color: "text-foreground", bandClass: "bg-gray-400" },
+	        { key: "received", label: "Recebidos", value: receivedTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "success" as const, count: received.length, color: "text-success", bandClass: "bg-success" },
+	        { key: "total", label: "Total", value: total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }), variant: "default" as const, count: transactions.length, color: "text-white", bandClass: "bg-black" },
+	      ],
       overdue,
       dueToday,
       upcoming,
@@ -397,36 +397,26 @@ const Receitas = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {summaryData.cards.map((item) => (
-          <Card 
-            key={item.key} 
-            className={`p-4 transition-all hover:shadow-lg cursor-pointer ${
-              activeFilter === item.key ? "ring-2 ring-primary" : ""
-            }`}
-            onClick={() => handleCardAction(item.key)}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-1">{item.label}</p>
-                <p className={`text-2xl font-bold ${
-                  item.variant === "income" ? "text-income" :
-                  item.variant === "expense" ? "text-expense" :
-                  item.variant === "warning" ? "text-warning" :
-                  item.variant === "pending" ? "text-pending" :
-                  "text-foreground"
-                }`}>
-                  {item.value}
-                </p>
-                {activeFilter === item.key && (
-                  <p className="text-xs text-primary mt-1">
-                    Mostrando {item.count} lançamento(s)
-                  </p>
-                )}
-              </div>
-              {item.key !== "total" && (
-                <ExternalLink className="h-4 w-4 text-muted-foreground" />
-              )}
-            </div>
-          </Card>
+	          <Card
+	            key={item.key}
+	            className={`p-0 cursor-pointer transition-all duration-200 overflow-hidden ${
+	              activeFilter === item.key
+	                ? 'ring-2 ring-primary'
+	                : 'hover:shadow-lg'
+	            }`}
+	            onClick={() => handleCardAction(item.key)}
+	          >
+	            <div className={`flex justify-between items-center p-2 ${item.bandClass} text-white`}>
+	              <div className="text-sm font-medium">{item.label}</div>
+	              <Badge className="bg-white text-black hover:bg-white">{item.count}</Badge>
+	            </div>
+	            <div className="p-4">
+	              <div className="flex justify-between items-center">
+	                <div className="text-sm text-muted-foreground">Valor</div>
+	              </div>
+	              <div className={`text-2xl font-bold ${item.color}`}>R$ {item.value}</div>
+	            </div>
+	          </Card>
         ))}
       </div>
 
