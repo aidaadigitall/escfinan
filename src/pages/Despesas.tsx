@@ -21,6 +21,7 @@
 	  AlertDialogTitle,
 	} from "@/components/ui/alert-dialog";
 	import { Plus, Search, Eye, Edit, Trash2, Copy, ExternalLink, Wallet, FileText, Settings, Check, X, ArrowRightLeft, Upload, Download, Group, Trash } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableSortHeader } from "@/components/TableSortHeader";
 	import { useTransactions, Transaction } from "@/hooks/useTransactions";
 	import { TransactionDialog } from "@/components/TransactionDialog";
@@ -51,6 +52,7 @@ import { toast } from "sonner";
   const [filters, setFilters] = useState<any>({});
   const [sortKey, setSortKey] = useState<string>("due_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
 	  
 	  const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("expense");
 	
@@ -236,9 +238,54 @@ import { toast } from "sonner";
 	    setPartialPaymentDialogOpen(true);
 	  };
 	
-	  const handleCardAction = (filterKey: string) => {
-	    setActiveFilter(activeFilter === filterKey ? null : filterKey);
-	  };
+  const handleCardAction = (filterKey: string) => {
+    setActiveFilter(activeFilter === filterKey ? null : filterKey);
+  };
+
+  const handleBatchAction = async (action: "confirm" | "cancel" | "delete") => {
+    if (selectedTransactions.length === 0) {
+      toast.error("Nenhuma transação selecionada.");
+      return;
+    }
+
+    const transactionsToUpdate = filteredAndSortedTransactions.filter(t => selectedTransactions.includes(t.id));
+    let successCount = 0;
+
+    for (const transaction of transactionsToUpdate) {
+      try {
+        if (action === "confirm") {
+          await updateTransaction({ ...transaction, status: "paid" });
+        } else if (action === "cancel") {
+          await updateTransaction({ ...transaction, status: "pending" });
+        } else if (action === "delete") {
+          await deleteTransaction(transaction.id);
+        }
+        successCount++;
+      } catch (error) {
+        console.error(`Erro ao processar transação ${transaction.id} para ${action}:`, error);
+      }
+    }
+
+    setSelectedTransactions([]);
+    toast.success(`${successCount} transação(ões) de despesa ${action === "confirm" ? "confirmada(s)" : action === "cancel" ? "cancelada(s)" : "excluída(s)"} com sucesso.`);
+  };
+
+  const toggleTransactionSelection = (id: string) => {
+    setSelectedTransactions(prev =>
+      prev.includes(id) ? prev.filter(tid => tid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTransactions.length === filteredAndSortedTransactions.length) {
+      setSelectedTransactions([]);
+    } else {
+      setSelectedTransactions(filteredAndSortedTransactions.map(t => t.id));
+    }
+  };
+
+  const isAllSelected = selectedTransactions.length === filteredAndSortedTransactions.length && filteredAndSortedTransactions.length > 0;
+  const isIndeterminate = selectedTransactions.length > 0 && selectedTransactions.length < filteredAndSortedTransactions.length;
 	
 	  const getStatusBadge = (status: string) => {
 	    const statusMap: Record<string, { label: string; className: string }> = {
@@ -276,31 +323,33 @@ import { toast } from "sonner";
             <FileText className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Contas fixas</span>
             <span className="sm:hidden">Fixas</span>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Mais ações</span>
-                <span className="sm:hidden">Ações</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+       		          <DropdownMenu>
+		            <DropdownMenuTrigger asChild>
+		              <Button variant="outline" disabled={selectedTransactions.length === 0}>
+		                <Settings className="h-4 w-4 mr-2" />
+		                <span className="hidden sm:inline">Ações em Lote ({selectedTransactions.length})</span>
+		                <span className="sm:hidden">Ações ({selectedTransactions.length})</span>
+		              </Button>
+		            </DropdownMenuTrigger>
+		            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleBatchAction("confirm")}>
                 <Check className="h-4 w-4 mr-2" /> Confirmar pagamentos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+              <DropdownMenuItem onClick={() => handleBatchAction("cancel")}>
                 <X className="h-4 w-4 mr-2" /> Cancelar pagamentos
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/contas-fixas")}>
-                <FileText className="h-4 w-4 mr-2" /> Contas fixas
+              <DropdownMenuItem onClick={() => handleBatchAction("delete")}>
+                <Trash className="h-4 w-4 mr-2" /> Excluir em lote
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/transferencias")}>
-                <ArrowRightLeft className="h-4 w-4 mr-2" /> Transferências entre contas
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
+		              <DropdownMenuSeparator />
+		              <DropdownMenuItem onClick={() => navigate("/contas-fixas")}>
+		                <FileText className="h-4 w-4 mr-2" /> Contas fixas
+		              </DropdownMenuItem>
+		              <DropdownMenuItem onClick={() => navigate("/transferencias")}>
+		                <ArrowRightLeft className="h-4 w-4 mr-2" /> Transferências entre contas
+		              </DropdownMenuItem>
+		            </DropdownMenuContent>
+		          </DropdownMenu>fo("Função em desenvolvimento")}>
                 <Upload className="h-4 w-4 mr-2" /> Importar extrato
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => toast.info("Função em desenvolvimento")}>
@@ -353,9 +402,17 @@ import { toast } from "sonner";
 
       <Card>
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableSortHeader
+		          <TableHeader>
+		            <TableRow>
+		              <TableHead className="w-[50px]">
+		                <Checkbox
+		                  checked={isAllSelected}
+		                  onCheckedChange={toggleSelectAll}
+		                  aria-label="Selecionar todos"
+		                  className={isIndeterminate ? "indeterminate" : ""}
+		                />
+		              </TableHead>
+		              <TableSortHeader
                 label="Vencimento"
                 columnKey="due_date"
                 sortKey={sortKey}
@@ -384,13 +441,20 @@ import { toast } from "sonner";
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAndSortedTransactions.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell>{new Date(transaction.due_date).toLocaleDateString('pt-BR')}</TableCell>
+		              <TableHead>Ações</TableHead>
+		            </TableRow>
+		          </TableHeader>
+		          <TableBody>
+		            {filteredAndSortedTransactions.map((transaction) => (
+		              <TableRow key={transaction.id}>
+		                <TableCell>
+		                  <Checkbox
+		                    checked={selectedTransactions.includes(transaction.id)}
+		                    onCheckedChange={() => toggleTransactionSelection(transaction.id)}
+		                    aria-label="Selecionar linha"
+		                  />
+		                </TableCell>
+		                <TableCell>{new Date(transaction.due_date).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell>{transaction.description}</TableCell>
                 <TableCell>R$ {parseFloat(transaction.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                 <TableCell>
