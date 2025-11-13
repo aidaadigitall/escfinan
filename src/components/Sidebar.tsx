@@ -43,6 +43,17 @@ interface SidebarProps {
 
 const menuItems: MenuItem[] = [
   { icon: Home, label: "Dashboard", path: "/" },
+  {
+    icon: Users,
+    label: "Cadastros",
+    submenu: [
+      { icon: Briefcase, label: "Clientes", path: "/cadastros/clientes" },
+      { icon: User, label: "Usuários", path: "/cadastros/usuarios" },
+      { icon: Building2, label: "Fornecedores", path: "/cadastros/fornecedores" },
+      { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
+      { icon: Users, label: "Funcionários", path: "/cadastros/funcionarios" },
+    ],
+  },
   { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
   {
     icon: CreditCard,
@@ -58,17 +69,6 @@ const menuItems: MenuItem[] = [
   { icon: ArrowRightLeft, label: "Transferências", path: "/transferencias" },
   { icon: Wallet, label: "Caixa", path: "/caixa" },
   { icon: Target, label: "Calendário Financeiro", path: "/calendario-financeiro" },
-  {
-    icon: Users,
-    label: "Cadastros",
-    submenu: [
-      { icon: User, label: "Usuários", path: "/cadastros/usuarios" },
-      { icon: Briefcase, label: "Clientes", path: "/cadastros/clientes" },
-      { icon: Building2, label: "Fornecedores", path: "/cadastros/fornecedores" },
-      { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
-      { icon: Users, label: "Funcionários", path: "/cadastros/funcionarios" },
-    ],
-  },
   {
     icon: Settings,
     label: "Configurações Avançadas",
