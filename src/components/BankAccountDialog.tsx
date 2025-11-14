@@ -41,7 +41,9 @@ export const BankAccountDialog = ({
       setValue("name", account.name);
       setValue("initial_balance", account.initial_balance);
       setValue("current_balance", account.current_balance);
-      // balance_date field removed - not in database
+      if (account.balance_date) {
+        setValue("balance_date", account.balance_date);
+      }
     } else {
       reset();
       setValue("balance_date", format(new Date(), "yyyy-MM-dd"));

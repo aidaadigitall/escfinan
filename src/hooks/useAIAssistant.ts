@@ -47,7 +47,7 @@ export const useAIAssistant = () => {
     const expenseByCategory: { [key: string]: number } = {};
 
     transactions.forEach((t) => {
-      const category = "Geral"; // Category field doesn't exist in database
+      const category = t.category || "Sem categoria";
       const amount = t.paid_amount || t.amount;
 
       if (t.type === "income") {

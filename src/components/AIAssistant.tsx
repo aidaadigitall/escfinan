@@ -59,12 +59,23 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
   const callAIAssistant = async (userMessage: string) => {
     setIsLoading(true);
     try {
-      const { callAIAssistant: callService } = await import("@/api/aiAssistantService");
-      const data = await callService({
-        message: userMessage,
-        systemData,
-        conversationHistory: messages.map(m => ({ role: m.role, content: m.content })),
+      const response = await fetch("/api/ai-assistant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          systemData,
+          conversationHistory: messages,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error("Erro ao conectar com o assistente");
+      }
+
+      const data = await response.json();
 
       const assistantMessage: Message = {
         id: Date.now().toString(),
