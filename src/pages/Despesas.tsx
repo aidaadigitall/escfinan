@@ -125,17 +125,7 @@ const Despesas = () => {
           if (!isNaN(end.getTime()) && transactionDate >= end) return false;
         }
 
-        if (filters.competenceStartDate) {
-            const start = new Date(filters.competenceStartDate);
-            const transactionDate = new Date(t.competence_date);
-            if (!isNaN(start.getTime()) && transactionDate < start) return false;
-          }
-          if (filters.competenceEndDate) {
-            const end = new Date(filters.competenceEndDate);
-            const transactionDate = new Date(t.competence_date);
-            end.setDate(end.getDate() + 1);
-            if (!isNaN(end.getTime()) && transactionDate >= end) return false;
-          }
+        // Competence date filters removed - field not in database
 
         if (filters.entity && !t.entity?.toLowerCase().includes(String(filters.entity).toLowerCase())) return false;
         if (filters.description && !t.description?.toLowerCase().includes(String(filters.description).toLowerCase())) return false;
@@ -323,29 +313,29 @@ const Despesas = () => {
               </TableHead>
               <TableSortHeader
                 label="Vencimento"
-                sortKey="due_date"
-                currentSortKey={sortKey}
+                columnKey="due_date"
+                sortKey={sortKey}
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
               <TableSortHeader
                 label="Descrição"
-                sortKey="description"
-                currentSortKey={sortKey}
+                columnKey="description"
+                sortKey={sortKey}
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
               <TableSortHeader
                 label="Valor"
-                sortKey="amount"
-                currentSortKey={sortKey}
+                columnKey="amount"
+                sortKey={sortKey}
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
               <TableSortHeader
                 label="Status"
-                sortKey="status"
-                currentSortKey={sortKey}
+                columnKey="status"
+                sortKey={sortKey}
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
@@ -429,7 +419,7 @@ const Despesas = () => {
           setFilters(newFilters);
           setSearchOpen(false);
         }}
-        initialFilters={filters}
+        onClear={() => setFilters({})}
       />
 
       {transactionToChangeStatus && (
@@ -437,8 +427,8 @@ const Despesas = () => {
           open={isChangeStatusOpen}
           onOpenChange={setIsChangeStatusOpen}
           transaction={transactionToChangeStatus}
-          onSave={(updatedTransaction) => {
-            updateTransaction(updatedTransaction);
+          onStatusChange={(id, data) => {
+            updateTransaction({ ...transactionToChangeStatus, ...data, id });
             setIsChangeStatusOpen(false);
           }}
         />
