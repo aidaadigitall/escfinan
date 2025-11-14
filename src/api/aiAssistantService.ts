@@ -1,6 +1,6 @@
 // Este arquivo contém apenas a lógica de chamada para o backend
 // A OpenAI é chamada apenas no servidor (seguro)
-
+import { supabase } from "@/integrations/supabase/client";
 interface AIAssistantRequest {
   message: string;
   systemData?: {
