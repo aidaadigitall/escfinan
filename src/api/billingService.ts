@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // URL base do seu backend (apifinanbk.escsistemas.com)
 // Esta URL deve ser configurada no seu ambiente Lovable
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://apifinanbk.escsistemas.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://apifinanbk.escsistemas.com';
 
 /**
  * Inicia o processo de checkout do Stripe.
