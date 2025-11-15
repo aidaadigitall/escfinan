@@ -67,7 +67,7 @@ export const callAIAssistant = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
         body: JSON.stringify(request),
       },
@@ -109,7 +109,7 @@ export const generateFinancialInsights = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
         body: JSON.stringify({ analysis }),
       },
@@ -142,7 +142,7 @@ export const getUserAICredits = async (): Promise<{
       `${apiUrl}/api/user/ai-credits`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       },
       10000
