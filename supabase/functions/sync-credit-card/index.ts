@@ -16,16 +16,37 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify authentication
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      throw new Error("Authorization header missing");
+    }
+
+    // Get authenticated user
+    const supabaseClient = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { authorization: authHeader } } }
+    );
+    
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      throw new Error("Unauthorized");
+    }
+
     const { cardId } = await req.json();
 
-    // Get card details
+    // Get card details with ownership verification
     const { data: card, error: cardError } = await supabase
       .from("credit_cards")
       .select("*")
       .eq("id", cardId)
+      .eq("user_id", user.id)  // Verify user owns this card
       .single();
 
-    if (cardError) throw cardError;
+    if (cardError || !card) {
+      throw new Error("Card not found or access denied");
+    }
 
     if (!card.sync_enabled || !card.operator_integration || card.operator_integration === "manual") {
       throw new Error("Card sync is not enabled or operator not configured");
