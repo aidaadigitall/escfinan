@@ -59,6 +59,12 @@ export const callAIAssistant = async (
   request: AIAssistantRequest
 ): Promise<AIAssistantResponse> => {
   try {
+    // Get Supabase session token for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("Usuário não autenticado");
+    }
+
     const apiUrl = getApiBaseUrl();
     // Increase timeout to 90 seconds for AI responses (OpenAI can be slow)
     const response = await fetchWithTimeout(
@@ -67,7 +73,7 @@ export const callAIAssistant = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(request),
       },
@@ -101,6 +107,12 @@ export const generateFinancialInsights = async (
   }
 ): Promise<string> => {
   try {
+    // Get Supabase session token for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("Usuário não autenticado");
+    }
+
     const apiUrl = getApiBaseUrl();
     // Increase timeout to 90 seconds for insights (OpenAI can be slow)
     const response = await fetchWithTimeout(
@@ -109,7 +121,7 @@ export const generateFinancialInsights = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ analysis }),
       },
@@ -137,12 +149,18 @@ export const getUserAICredits = async (): Promise<{
   plan_type: string;
 }> => {
   try {
+    // Get Supabase session token for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("Usuário não autenticado");
+    }
+
     const apiUrl = getApiBaseUrl();
     const response = await fetchWithTimeout(
       `${apiUrl}/api/user/ai-credits`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       },
       10000
