@@ -25,6 +25,7 @@ import {
   User,
   Package,
   Briefcase,
+  PieChart,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -63,6 +64,7 @@ const menuItems: MenuItem[] = [
       { icon: FileText, label: "Despesas", path: "/despesas" },
       { icon: FileText, label: "Despesas Fixas", path: "/contas-fixas" },
       { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
+      { icon: PieChart, label: "Relatórios Gerenciais", path: "/relatorios-gerenciais" },
       { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },
       { icon: ArrowRightLeft, label: "Transferências", path: "/transferencias" },
       { icon: Wallet, label: "Caixa", path: "/caixa" },
