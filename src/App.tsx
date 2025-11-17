@@ -12,6 +12,7 @@ import FluxoDeCaixa from "./pages/FluxoDeCaixa";
 import Transferencias from "./pages/Transferencias";
 import Caixa from "./pages/Caixa";
 import DreGerencial from "./pages/DreGerencial";
+import RelatoriosGerenciais from "./pages/RelatoriosGerenciais";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ContasFixas from "./pages/ContasFixas";
@@ -54,6 +55,7 @@ const App = () => (
            <Route path="/transferencias" element={<ProtectedRoute><Layout><Transferencias /></Layout></ProtectedRoute>} />
            <Route path="/caixa" element={<ProtectedRoute><Layout><Caixa /></Layout></ProtectedRoute>} />
           <Route path="/dre-gerencial" element={<ProtectedRoute><Layout><DreGerencial /></Layout></ProtectedRoute>} />
+          <Route path="/relatorios-gerenciais" element={<ProtectedRoute><Layout><RelatoriosGerenciais /></Layout></ProtectedRoute>} />
           <Route path="/calendario-financeiro" element={<ProtectedRoute><Layout><CalendarioFinanceiro /></Layout></ProtectedRoute>} />
           <Route path="/boletos" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Boletos Bancários</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
           <Route path="/boletos/gerar" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Gerar Boletos</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
