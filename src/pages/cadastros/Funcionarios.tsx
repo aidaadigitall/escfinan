@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEmployees, Employee } from "@/hooks/useEmployees";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,26 +18,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Loader } from "lucide-react";
 import { toast } from "sonner";
 
-interface Funcionario {
-  id: string;
-  nome: string;
-  cpf: string;
-  email: string;
-  telefone: string;
-  cargo: string;
-  departamento: string;
-  dataAdmissao: string;
-  salario: number;
-  ativo: boolean;
-}
-
 const Funcionarios = () => {
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const { employees, isLoading, createEmployee, updateEmployee, deleteEmployee } = useEmployees();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState({
     nome: "",
     cpf: "",
@@ -50,28 +38,28 @@ const Funcionarios = () => {
   });
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredFuncionarios = funcionarios.filter(
+  const filteredEmployees = employees.filter(
     (f) =>
       f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.cpf.includes(searchTerm)
   );
 
-  const handleOpenDialog = (funcionario?: Funcionario) => {
-    if (funcionario) {
-      setEditingId(funcionario.id);
+  const handleOpenDialog = (employee?: Employee) => {
+    if (employee) {
+      setEditingEmployee(employee);
       setFormData({
-        nome: funcionario.nome,
-        cpf: funcionario.cpf,
-        email: funcionario.email,
-        telefone: funcionario.telefone,
-        cargo: funcionario.cargo,
-        departamento: funcionario.departamento,
-        dataAdmissao: funcionario.dataAdmissao,
-        salario: funcionario.salario,
-        ativo: funcionario.ativo,
+        nome: employee.nome,
+        cpf: employee.cpf,
+        email: employee.email,
+        telefone: employee.telefone,
+        cargo: employee.cargo,
+        departamento: employee.departamento,
+        dataAdmissao: employee.dataAdmissao,
+        salario: employee.salario,
+        ativo: employee.ativo,
       });
     } else {
-      setEditingId(null);
+      setEditingEmployee(null);
       setFormData({
         nome: "",
         cpf: "",
@@ -93,27 +81,30 @@ const Funcionarios = () => {
       return;
     }
 
-    if (editingId) {
-      setFuncionarios(
-        funcionarios.map((f) =>
-          f.id === editingId ? { ...f, ...formData } : f
-        )
-      );
-      toast.success("Funcionário atualizado com sucesso");
+    const dataToSave = {
+      nome: formData.nome,
+      cpf: formData.cpf,
+      email: formData.email,
+      telefone: formData.telefone,
+      cargo: formData.cargo,
+      departamento: formData.departamento,
+      dataAdmissao: formData.dataAdmissao,
+      salario: formData.salario,
+      ativo: formData.ativo,
+    };
+
+    if (editingEmployee) {
+      updateEmployee({ id: editingEmployee.id, ...dataToSave });
     } else {
-      const newFuncionario: Funcionario = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setFuncionarios([...funcionarios, newFuncionario]);
-      toast.success("Funcionário criado com sucesso");
+      createEmployee(dataToSave);
     }
     setDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
-    setFuncionarios(funcionarios.filter((f) => f.id !== id));
-    toast.success("Funcionário deletado com sucesso");
+    if (window.confirm("Tem certeza que deseja excluir este funcionário?")) {
+      deleteEmployee(id);
+    }
   };
 
   return (
@@ -151,7 +142,13 @@ const Funcionarios = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFuncionarios.map((funcionario) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center">
+                  <Loader className="h-6 w-6 animate-spin mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : filteredEmployees.map((funcionario) => (
               <TableRow key={funcionario.id}>
                 <TableCell>{funcionario.nome}</TableCell>
                 <TableCell>{funcionario.cpf}</TableCell>
@@ -200,7 +197,7 @@ const Funcionarios = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Editar Funcionário" : "Novo Funcionário"}
+              {editingEmployee ? "Editar Funcionário" : "Novo Funcionário"}
             </DialogTitle>
           </DialogHeader>
 

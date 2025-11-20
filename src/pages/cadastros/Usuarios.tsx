@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useUsers, UserProfile } from "@/hooks/useUsers";
+import { Loader } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,26 +22,25 @@ import {
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 
-interface Usuario {
-  id: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  papel: string;
-  ativo: boolean;
-}
-
 const Usuarios = () => {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([
-    {
-      id: "1",
-      nome: "João Silva",
-      email: "joao@example.com",
-      telefone: "(11) 98765-4321",
-      papel: "Administrador",
-      ativo: true,
-    },
-  ]);
+  const { users, isLoading, createUser, updateUser, deleteUser } = useUsers();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    is_active: boolean;
+    password?: string; // Adicionado campo de senha
+  }>({
+    name: "",
+    email: "",
+    phone: "",
+    role: "Usuário",
+    is_active: true,
+    password: "",
+  });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -51,62 +52,68 @@ const Usuarios = () => {
   });
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsuarios = usuarios.filter(
+  const filteredUsers = users.filter(
     (u) =>
-      u.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleOpenDialog = (usuario?: Usuario) => {
-    if (usuario) {
-      setEditingId(usuario.id);
+  const handleOpenDialog = (user?: UserProfile) => {
+    if (user) {
+      setEditingUser(user);
       setFormData({
-        nome: usuario.nome,
-        email: usuario.email,
-        telefone: usuario.telefone,
-        papel: usuario.papel,
-        ativo: usuario.ativo,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+        role: user.role,
+        is_active: user.is_active,
+        password: "", // Senha sempre vazia ao editar
       });
     } else {
-      setEditingId(null);
+      setEditingUser(null);
       setFormData({
-        nome: "",
+        name: "",
         email: "",
-        telefone: "",
-        papel: "Usuário",
-        ativo: true,
+        phone: "",
+        role: "Usuário",
+        is_active: true,
+        password: "",
       });
     }
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    if (!formData.nome || !formData.email) {
+    if (!formData.name || !formData.email) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }
 
-    if (editingId) {
-      setUsuarios(
-        usuarios.map((u) =>
-          u.id === editingId ? { ...u, ...formData } : u
-        )
-      );
-      toast.success("Usuário atualizado com sucesso");
+    if (!editingUser && !formData.password) {
+        toast.error("A senha é obrigatória para um novo usuário.");
+        return;
+    }
+
+    const dataToSave = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        is_active: formData.is_active,
+    };
+
+    if (editingUser) {
+      updateUser({ id: editingUser.id, ...dataToSave });
     } else {
-      const newUsuario: Usuario = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setUsuarios([...usuarios, newUsuario]);
-      toast.success("Usuário criado com sucesso");
+      createUser({ ...dataToSave, password: formData.password! });
     }
     setDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
-    setUsuarios(usuarios.filter((u) => u.id !== id));
-    toast.success("Usuário deletado com sucesso");
+    if (window.confirm("Tem certeza que deseja excluir este usuário?")) {
+        deleteUser(id);
+    }
   };
 
   return (
@@ -142,21 +149,27 @@ const Usuarios = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsuarios.map((usuario) => (
+            {isLoading ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                        <Loader className="h-6 w-6 animate-spin mx-auto" />
+                    </TableCell>
+                </TableRow>
+            ) : filteredUsers.map((usuario) => (
               <TableRow key={usuario.id}>
-                <TableCell>{usuario.nome}</TableCell>
+                <TableCell>{usuario.name}</TableCell>
                 <TableCell>{usuario.email}</TableCell>
-                <TableCell>{usuario.telefone}</TableCell>
-                <TableCell>{usuario.papel}</TableCell>
+                <TableCell>{usuario.phone}</TableCell>
+                <TableCell>{usuario.role}</TableCell>
                 <TableCell>
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      usuario.ativo
+                      usuario.is_active
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {usuario.ativo ? "Ativo" : "Inativo"}
+                    {usuario.is_active ? "Ativo" : "Inativo"}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -187,7 +200,7 @@ const Usuarios = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Editar Usuário" : "Novo Usuário"}
+              {editingUser ? "Editar Usuário" : "Novo Usuário"}
             </DialogTitle>
           </DialogHeader>
 
@@ -195,9 +208,9 @@ const Usuarios = () => {
             <div>
               <label className="text-sm font-medium">Nome *</label>
               <Input
-                value={formData.nome}
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, nome: e.target.value })
+                  setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="Nome do usuário"
               />
@@ -214,13 +227,27 @@ const Usuarios = () => {
                 placeholder="email@example.com"
               />
             </div>
+            
+            {!editingUser && (
+                <div>
+                    <label className="text-sm font-medium">Senha *</label>
+                    <Input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) =>
+                            setFormData({ ...formData, password: e.target.value })
+                        }
+                        placeholder="Mínimo 6 caracteres"
+                    />
+                </div>
+            )}
 
             <div>
               <label className="text-sm font-medium">Telefone</label>
               <Input
-                value={formData.telefone}
+                value={formData.phone}
                 onChange={(e) =>
-                  setFormData({ ...formData, telefone: e.target.value })
+                  setFormData({ ...formData, phone: e.target.value })
                 }
                 placeholder="(11) 98765-4321"
               />
@@ -229,9 +256,9 @@ const Usuarios = () => {
             <div>
               <label className="text-sm font-medium">Papel</label>
               <select
-                value={formData.papel}
+                value={formData.role}
                 onChange={(e) =>
-                  setFormData({ ...formData, papel: e.target.value })
+                  setFormData({ ...formData, role: e.target.value as any })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
@@ -244,13 +271,13 @@ const Usuarios = () => {
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={formData.ativo}
+                checked={formData.is_active}
                 onChange={(e) =>
-                  setFormData({ ...formData, ativo: e.target.checked })
+                  setFormData({ ...formData, is_active: e.target.checked })
                 }
-                id="ativo"
+                id="is_active"
               />
-              <label htmlFor="ativo" className="text-sm font-medium">
+              <label htmlFor="is_active" className="text-sm font-medium">
                 Ativo
               </label>
             </div>

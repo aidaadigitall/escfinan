@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSuppliers, Supplier } from "@/hooks/useSuppliers";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,48 +21,34 @@ import {
 import { Plus, Edit, Trash2, Search, Loader } from "lucide-react";
 import { toast } from "sonner";
 
-interface Fornecedor {
-  id: string;
-  cnpj: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  cep: string;
-  endereco: string;
-  cidade: string;
-  estado: string;
-  ativo: boolean;
-}
-
 const Fornecedores = () => {
-  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const { suppliers, isLoading, createSupplier, updateSupplier, deleteSupplier } = useSuppliers();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [formData, setFormData] = useState({
     cnpj: "",
-    nome: "",
+    name: "",
     email: "",
-    telefone: "",
-    cep: "",
-    endereco: "",
-    cidade: "",
-    estado: "",
-    ativo: true,
+    phone: "",
+    zip_code: "",
+    address: "",
+    city: "",
+    state: "",
+    is_active: true,
   });
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredFornecedores = fornecedores.filter(
+  const filteredSuppliers = suppliers.filter(
     (f) =>
-      f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.cnpj.includes(searchTerm)
   );
 
-  // Buscar dados do CEP automaticamente
   const handleCepChange = async (value: string) => {
     const cepNumbers = value.replace(/\D/g, "");
-    setFormData({ ...formData, cep: value });
+    setFormData({ ...formData, zip_code: value });
 
     if (cepNumbers.length === 8) {
       setLoadingCep(true);
@@ -74,9 +61,9 @@ const Fornecedores = () => {
         if (!data.erro) {
           setFormData((prev) => ({
             ...prev,
-            endereco: data.logradouro,
-            cidade: data.localidade,
-            estado: data.uf,
+            address: data.logradouro,
+            city: data.localidade,
+            state: data.uf,
           }));
           toast.success("CEP encontrado com sucesso");
         } else {
@@ -90,7 +77,6 @@ const Fornecedores = () => {
     }
   };
 
-  // Buscar dados do CNPJ automaticamente
   const handleCnpjChange = async (value: string) => {
     const cnpjNumbers = value.replace(/\D/g, "");
     setFormData({ ...formData, cnpj: value });
@@ -103,16 +89,19 @@ const Fornecedores = () => {
         );
         const data = await response.json();
 
-        if (data.name) {
+        if (data.razao_social) {
           setFormData((prev) => ({
             ...prev,
-            nome: data.name,
-            endereco: `${data.street}, ${data.number}`,
-            cidade: data.city,
-            estado: data.state,
-            cep: data.zip_code,
+            name: data.razao_social,
+            address: `${data.logradouro}, ${data.numero}`,
+            city: data.municipio,
+            state: data.uf,
+            zip_code: data.cep,
+            phone: data.ddd_telefone_1 || ''
           }));
           toast.success("CNPJ encontrado com sucesso");
+        } else {
+          toast.error("CNPJ não encontrado");
         }
       } catch (error) {
         toast.error("Erro ao buscar CNPJ");
@@ -122,64 +111,67 @@ const Fornecedores = () => {
     }
   };
 
-  const handleOpenDialog = (fornecedor?: Fornecedor) => {
-    if (fornecedor) {
-      setEditingId(fornecedor.id);
+  const handleOpenDialog = (supplier?: Supplier) => {
+    if (supplier) {
+      setEditingSupplier(supplier);
       setFormData({
-        cnpj: fornecedor.cnpj,
-        nome: fornecedor.nome,
-        email: fornecedor.email,
-        telefone: fornecedor.telefone,
-        cep: fornecedor.cep,
-        endereco: fornecedor.endereco,
-        cidade: fornecedor.cidade,
-        estado: fornecedor.estado,
-        ativo: fornecedor.ativo,
+        cnpj: supplier.cnpj,
+        name: supplier.name,
+        email: supplier.email,
+        phone: supplier.phone || "",
+        zip_code: supplier.zip_code || "",
+        address: supplier.address || "",
+        city: supplier.city || "",
+        state: supplier.state || "",
+        is_active: supplier.is_active,
       });
     } else {
-      setEditingId(null);
+      setEditingSupplier(null);
       setFormData({
         cnpj: "",
-        nome: "",
+        name: "",
         email: "",
-        telefone: "",
-        cep: "",
-        endereco: "",
-        cidade: "",
-        estado: "",
-        ativo: true,
+        phone: "",
+        zip_code: "",
+        address: "",
+        city: "",
+        state: "",
+        is_active: true,
       });
     }
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    if (!formData.cnpj || !formData.nome) {
+    if (!formData.cnpj || !formData.name) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }
 
-    if (editingId) {
-      setFornecedores(
-        fornecedores.map((f) =>
-          f.id === editingId ? { ...f, ...formData } : f
-        )
-      );
-      toast.success("Fornecedor atualizado com sucesso");
+    const dataToSave = {
+      cnpj: formData.cnpj,
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      zip_code: formData.zip_code,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      is_active: formData.is_active,
+    };
+
+    if (editingSupplier) {
+      updateSupplier({ id: editingSupplier.id, ...dataToSave });
     } else {
-      const newFornecedor: Fornecedor = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setFornecedores([...fornecedores, newFornecedor]);
-      toast.success("Fornecedor criado com sucesso");
+      createSupplier(dataToSave);
     }
     setDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
-    setFornecedores(fornecedores.filter((f) => f.id !== id));
-    toast.success("Fornecedor deletado com sucesso");
+    if (window.confirm("Tem certeza que deseja excluir este fornecedor?")) {
+      deleteSupplier(id);
+    }
   };
 
   return (
@@ -216,22 +208,28 @@ const Fornecedores = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFornecedores.map((fornecedor) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center">
+                  <Loader className="h-6 w-6 animate-spin mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : filteredSuppliers.map((fornecedor) => (
               <TableRow key={fornecedor.id}>
-                <TableCell>{fornecedor.nome}</TableCell>
+                <TableCell>{fornecedor.name}</TableCell>
                 <TableCell>{fornecedor.cnpj}</TableCell>
                 <TableCell>{fornecedor.email}</TableCell>
-                <TableCell>{fornecedor.telefone}</TableCell>
-                <TableCell>{fornecedor.cidade}</TableCell>
+                <TableCell>{fornecedor.phone}</TableCell>
+                <TableCell>{fornecedor.city}</TableCell>
                 <TableCell>
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      fornecedor.ativo
+                      fornecedor.is_active
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {fornecedor.ativo ? "Ativo" : "Inativo"}
+                    {fornecedor.is_active ? "Ativo" : "Inativo"}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -262,7 +260,7 @@ const Fornecedores = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Editar Fornecedor" : "Novo Fornecedor"}
+              {editingSupplier ? "Editar Fornecedor" : "Novo Fornecedor"}
             </DialogTitle>
           </DialogHeader>
 
@@ -283,9 +281,9 @@ const Fornecedores = () => {
               <div>
                 <label className="text-sm font-medium">Nome *</label>
                 <Input
-                  value={formData.nome}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, nome: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Nome da empresa"
                 />
@@ -308,9 +306,9 @@ const Fornecedores = () => {
               <div>
                 <label className="text-sm font-medium">Telefone</label>
                 <Input
-                  value={formData.telefone}
+                  value={formData.phone}
                   onChange={(e) =>
-                    setFormData({ ...formData, telefone: e.target.value })
+                    setFormData({ ...formData, phone: e.target.value })
                   }
                   placeholder="(11) 98765-4321"
                 />
@@ -322,7 +320,7 @@ const Fornecedores = () => {
                 <label className="text-sm font-medium">CEP</label>
                 <div className="flex gap-2">
                   <Input
-                    value={formData.cep}
+                    value={formData.zip_code}
                     onChange={(e) => handleCepChange(e.target.value)}
                     placeholder="00000-000"
                   />
@@ -333,9 +331,9 @@ const Fornecedores = () => {
               <div>
                 <label className="text-sm font-medium">Endereço</label>
                 <Input
-                  value={formData.endereco}
+                  value={formData.address}
                   onChange={(e) =>
-                    setFormData({ ...formData, endereco: e.target.value })
+                    setFormData({ ...formData, address: e.target.value })
                   }
                   placeholder="Rua..."
                 />
@@ -346,9 +344,9 @@ const Fornecedores = () => {
               <div>
                 <label className="text-sm font-medium">Cidade</label>
                 <Input
-                  value={formData.cidade}
+                  value={formData.city}
                   onChange={(e) =>
-                    setFormData({ ...formData, cidade: e.target.value })
+                    setFormData({ ...formData, city: e.target.value })
                   }
                   placeholder="Cidade"
                 />
@@ -357,9 +355,9 @@ const Fornecedores = () => {
               <div>
                 <label className="text-sm font-medium">Estado</label>
                 <Input
-                  value={formData.estado}
+                  value={formData.state}
                   onChange={(e) =>
-                    setFormData({ ...formData, estado: e.target.value })
+                    setFormData({ ...formData, state: e.target.value })
                   }
                   placeholder="SP"
                   maxLength={2}
@@ -370,13 +368,13 @@ const Fornecedores = () => {
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={formData.ativo}
+                checked={formData.is_active}
                 onChange={(e) =>
-                  setFormData({ ...formData, ativo: e.target.checked })
+                  setFormData({ ...formData, is_active: e.target.checked })
                 }
-                id="ativo"
+                id="is_active"
               />
-              <label htmlFor="ativo" className="text-sm font-medium">
+              <label htmlFor="is_active" className="text-sm font-medium">
                 Ativo
               </label>
             </div>
