@@ -279,14 +279,7 @@ const Receitas = () => {
   };
 
   const handleBulkChangeDueDate = () => {
-    const newDueDate = prompt("Digite a nova data de vencimento (AAAA-MM-DD):");
-    if (newDueDate) {
-      if (window.confirm(`Tem certeza que deseja alterar o vencimento de ${selectedTransactions.length} transações para ${newDueDate}?`)) {
-        selectedTransactions.forEach(id => updateTransaction({ id, due_date: newDueDate }));
-        setSelectedTransactions([]);
-        toast.success(`${selectedTransactions.length} vencimentos alterados com sucesso!`);
-      }
-    }
+    toast.info("Função de Alterar Vencimento em Lote em desenvolvimento.");
   };
 
   const handleBulkDelete = () => {

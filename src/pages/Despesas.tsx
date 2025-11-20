@@ -257,9 +257,24 @@ const Despesas = () => {
     setIsChangeStatusOpen(true);
   };
 
+  const handleBulkMarkAsPaid = () => {
+    if (window.confirm(`Tem certeza que deseja marcar ${selectedTransactions.length} transações como Pagas?`)) {
+      selectedTransactions.forEach(id => updateTransaction({ id, status: "paid", paid_date: new Date().toISOString() }));
+      setSelectedTransactions([]);
+      toast.success(`${selectedTransactions.length} transações marcadas como Pagas com sucesso!`);
+    }
+  };
+
+  const handleBulkChangeDueDate = () => {
+    toast.info("Função de Alterar Vencimento em Lote em desenvolvimento.");
+  };
+
   const handleBulkDelete = () => {
-    // Lógica para exclusão em massa
-    toast.info("Função de exclusão em massa em desenvolvimento.");
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedTransactions.length} transações?`)) {
+      selectedTransactions.forEach(id => deleteTransaction(id));
+      setSelectedTransactions([]);
+      toast.success(`${selectedTransactions.length} transações excluídas com sucesso!`);
+    }
   };
 
   if (isLoading) {
@@ -276,7 +291,25 @@ const Despesas = () => {
             setEditingTransaction(null);
             setTransactionDialogOpen(true);
           }}>Lançamento Diário</Button>
-          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Ações em Lote (0)</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={selectedTransactions.length === 0}>
+                Ações em Lote ({selectedTransactions.length})
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={handleBulkMarkAsPaid}>
+                Marcar como Pago
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleBulkChangeDueDate}>
+                Alterar Vencimento
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleBulkDelete} className="text-red-600">
+                Excluir Selecionados
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" onClick={() => setSearchOpen(true)}>
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
