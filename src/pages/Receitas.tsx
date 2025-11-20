@@ -272,7 +272,7 @@ const Receitas = () => {
 
   const handleBulkMarkAsReceived = () => {
     if (window.confirm(`Tem certeza que deseja marcar ${selectedTransactions.length} transações como Recebidas?`)) {
-      selectedTransactions.forEach(id => updateTransaction({ id, status: "received", received_date: new Date().toISOString() }));
+      selectedTransactions.forEach(id => updateTransaction({ id, status: "received", paid_date: new Date().toISOString() }));
       setSelectedTransactions([]);
       toast.success(`${selectedTransactions.length} transações marcadas como Recebidas com sucesso!`);
     }

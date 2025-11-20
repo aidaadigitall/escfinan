@@ -7,12 +7,10 @@ export type Employee = {
   name: string;
   cpf: string;
   email: string;
-  telefone: string;
-  cargo: string;
-  departamento: string;
-  dataAdmissao: string;
-  salario: number;
-  ativo: boolean;
+  phone: string | null;
+  position: string | null;
+  salary: number;
+  is_active: boolean;
 };
 
 export const useEmployees = () => {

@@ -26,21 +26,19 @@ const Funcionarios = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState({
-    nome: "",
+    name: "",
     cpf: "",
     email: "",
-    telefone: "",
-    cargo: "",
-    departamento: "",
-    dataAdmissao: "",
-    salario: 0,
-    ativo: true,
+    phone: "",
+    position: "",
+    salary: 0,
+    is_active: true,
   });
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredEmployees = employees.filter(
     (f) =>
-      f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.cpf.includes(searchTerm)
   );
 
@@ -48,49 +46,43 @@ const Funcionarios = () => {
     if (employee) {
       setEditingEmployee(employee);
       setFormData({
-        nome: employee.nome,
+        name: employee.name,
         cpf: employee.cpf,
         email: employee.email,
-        telefone: employee.telefone,
-        cargo: employee.cargo,
-        departamento: employee.departamento,
-        dataAdmissao: employee.dataAdmissao,
-        salario: employee.salario,
-        ativo: employee.ativo,
+        phone: employee.phone || "",
+        position: employee.position || "",
+        salary: employee.salary,
+        is_active: employee.is_active,
       });
     } else {
       setEditingEmployee(null);
       setFormData({
-        nome: "",
+        name: "",
         cpf: "",
         email: "",
-        telefone: "",
-        cargo: "",
-        departamento: "",
-        dataAdmissao: "",
-        salario: 0,
-        ativo: true,
+        phone: "",
+        position: "",
+        salary: 0,
+        is_active: true,
       });
     }
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    if (!formData.nome || !formData.cpf) {
+    if (!formData.name || !formData.cpf) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }
 
     const dataToSave = {
-      nome: formData.nome,
+      name: formData.name,
       cpf: formData.cpf,
       email: formData.email,
-      telefone: formData.telefone,
-      cargo: formData.cargo,
-      departamento: formData.departamento,
-      dataAdmissao: formData.dataAdmissao,
-      salario: formData.salario,
-      ativo: formData.ativo,
+      phone: formData.phone,
+      position: formData.position,
+      salary: formData.salary,
+      is_active: formData.is_active,
     };
 
     if (editingEmployee) {
@@ -134,9 +126,8 @@ const Funcionarios = () => {
               <TableHead>Nome</TableHead>
               <TableHead>CPF</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Telefone</TableHead>
               <TableHead>Cargo</TableHead>
-              <TableHead>Departamento</TableHead>
-              <TableHead>Data Admissão</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
@@ -144,29 +135,26 @@ const Funcionarios = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   <Loader className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
             ) : filteredEmployees.map((funcionario) => (
               <TableRow key={funcionario.id}>
-                <TableCell>{funcionario.nome}</TableCell>
+                <TableCell>{funcionario.name}</TableCell>
                 <TableCell>{funcionario.cpf}</TableCell>
                 <TableCell>{funcionario.email}</TableCell>
-                <TableCell>{funcionario.cargo}</TableCell>
-                <TableCell>{funcionario.departamento}</TableCell>
-                <TableCell>
-                  {new Date(funcionario.dataAdmissao).toLocaleDateString()}
-                </TableCell>
+                <TableCell>{funcionario.phone}</TableCell>
+                <TableCell>{funcionario.position}</TableCell>
                 <TableCell>
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      funcionario.ativo
+                      funcionario.is_active
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {funcionario.ativo ? "Ativo" : "Inativo"}
+                    {funcionario.is_active ? "Ativo" : "Inativo"}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -206,9 +194,9 @@ const Funcionarios = () => {
               <div>
                 <label className="text-sm font-medium">Nome *</label>
                 <Input
-                  value={formData.nome}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, nome: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Nome completo"
                 />
@@ -242,9 +230,9 @@ const Funcionarios = () => {
               <div>
                 <label className="text-sm font-medium">Telefone</label>
                 <Input
-                  value={formData.telefone}
+                  value={formData.phone}
                   onChange={(e) =>
-                    setFormData({ ...formData, telefone: e.target.value })
+                    setFormData({ ...formData, phone: e.target.value })
                   }
                   placeholder="(11) 98765-4321"
                 />
@@ -255,35 +243,11 @@ const Funcionarios = () => {
               <div>
                 <label className="text-sm font-medium">Cargo</label>
                 <Input
-                  value={formData.cargo}
+                  value={formData.position}
                   onChange={(e) =>
-                    setFormData({ ...formData, cargo: e.target.value })
+                    setFormData({ ...formData, position: e.target.value })
                   }
-                  placeholder="Cargo"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Departamento</label>
-                <Input
-                  value={formData.departamento}
-                  onChange={(e) =>
-                    setFormData({ ...formData, departamento: e.target.value })
-                  }
-                  placeholder="Departamento"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Data de Admissão</label>
-                <Input
-                  type="date"
-                  value={formData.dataAdmissao}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dataAdmissao: e.target.value })
-                  }
+                  placeholder="Cargo do funcionário"
                 />
               </div>
 
@@ -291,15 +255,15 @@ const Funcionarios = () => {
                 <label className="text-sm font-medium">Salário</label>
                 <Input
                   type="number"
-                  value={formData.salario}
+                  step="0.01"
+                  value={formData.salary}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      salario: parseFloat(e.target.value),
+                      salary: parseFloat(e.target.value) || 0,
                     })
                   }
                   placeholder="0.00"
-                  step="0.01"
                 />
               </div>
             </div>
@@ -307,13 +271,13 @@ const Funcionarios = () => {
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={formData.ativo}
+                checked={formData.is_active}
                 onChange={(e) =>
-                  setFormData({ ...formData, ativo: e.target.checked })
+                  setFormData({ ...formData, is_active: e.target.checked })
                 }
-                id="ativo"
+                id="is_active"
               />
-              <label htmlFor="ativo" className="text-sm font-medium">
+              <label htmlFor="is_active" className="text-sm font-medium">
                 Ativo
               </label>
             </div>
