@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TableSortHeader } from "@/components/TableSortHeader";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
+import { TransactionDialog } from "@/components/TransactionDialog";
 import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import {
   DropdownMenu,
@@ -38,6 +39,8 @@ import { toast } from "sonner";
 import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 
 const Receitas = () => {
+  const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
+  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | undefined>(undefined);
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
@@ -53,6 +56,19 @@ const Receitas = () => {
   const [transactionToChangeStatus, setTransactionToChangeStatus] = useState<any>(null);
   
   const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("income");
+
+  const handleOpenTransactionDialog = (transaction?: Transaction) => {
+    setTransactionToEdit(transaction);
+    setTransactionDialogOpen(true);
+  };
+
+  const handleSaveTransaction = (data: any) => {
+    if (data.id) {
+      updateTransaction(data);
+    } else {
+      createTransaction(data);
+    }
+  };
 
   const summaryData = useMemo(() => {
     const today = new Date();
@@ -203,11 +219,12 @@ const Receitas = () => {
   }, [transactions, activeFilter, filters, sortKey, sortDirection]);
 
   const handleEdit = (transaction: Transaction) => {
-    navigate(`/transactions/income/edit/${transaction.id}`);
+    handleOpenTransactionDialog(transaction);
   };
 
   const handleView = (transaction: Transaction) => {
-    navigate(`/transactions/income/view/${transaction.id}`);
+    // Por enquanto, apenas abre o modal em modo de visualização/edição
+    handleOpenTransactionDialog(transaction);
   };
 
   const handleDelete = (id: string) => {
@@ -267,14 +284,14 @@ const Receitas = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Contas a Receber</h2>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Receitas Fixas</Button>
-          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Lançamento Diário</Button>
-          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Ações em Lote (0)</Button>
+                <Button variant="outline" onClick={() => navigate("/contas-fixas")}>Receitas Fixas</Button>
+          <Button variant="outline" onClick={() => handleOpenTransactionDialog()}>Lançamento Diário</Button>
+          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Ações em Lote ({selectedTransactions.length})</Button>/Button>
           <Button variant="outline" onClick={() => setSearchOpen(true)}>
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
           </Button>
-          <Button variant="default" onClick={() => navigate("/transactions/income/edit/new")}>
+          <Button variant="default" onClick={() => handleOpenTransactionDialog()}>
             <Plus className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Adicionar</span>
             <span className="sm:hidden">Add</span>
@@ -420,6 +437,14 @@ const Receitas = () => {
           setSearchOpen(false);
         }}
         onClear={() => setFilters({})}
+      />
+
+      <TransactionDialog
+        open={transactionDialogOpen}
+        onOpenChange={setTransactionDialogOpen}
+        type="income"
+        transaction={transactionToEdit}
+        onSave={handleSaveTransaction}
       />
 
       {transactionToChangeStatus && (

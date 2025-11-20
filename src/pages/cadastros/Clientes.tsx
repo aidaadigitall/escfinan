@@ -1,4 +1,6 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
+import { useClients, Client } from "@/hooks/useClients";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,48 +22,42 @@ import {
 import { Plus, Edit, Trash2, Search, Loader } from "lucide-react";
 import { toast } from "sonner";
 
-interface Cliente {
-  id: string;
-  cnpj: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  cep: string;
-  endereco: string;
-  cidade: string;
-  estado: string;
-  ativo: boolean;
-}
-
 const Clientes = () => {
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const { clients, isLoading, createClient, updateClient, deleteClient } = useClients();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
-  const [formData, setFormData] = useState({
-    cnpj: "",
-    nome: "",
-    email: "",
-    telefone: "",
-    cep: "",
-    endereco: "",
-    cidade: "",
-    estado: "",
-    ativo: true,
-  });
+  const [formData, setFormData] = useState<Partial<Client>>({});
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredClientes = clientes.filter(
+  const filteredClients = clients.filter(
     (c) =>
-      c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.cnpj.includes(searchTerm)
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.cnpj && c.cnpj.includes(searchTerm))
   );
 
-  // Buscar dados do CEP automaticamente
+  useEffect(() => {
+    if (editingClient) {
+      setFormData(editingClient);
+    } else {
+      setFormData({
+        name: "",
+        cnpj: "",
+        email: "",
+        phone: "",
+        zipcode: "",
+        address: "",
+        city: "",
+        state: "",
+        is_active: true,
+      });
+    }
+  }, [editingClient]);
+
   const handleCepChange = async (value: string) => {
     const cepNumbers = value.replace(/\D/g, "");
-    setFormData({ ...formData, cep: value });
+    setFormData({ ...formData, zipcode: value });
 
     if (cepNumbers.length === 8) {
       setLoadingCep(true);
@@ -74,9 +70,9 @@ const Clientes = () => {
         if (!data.erro) {
           setFormData((prev) => ({
             ...prev,
-            endereco: data.logradouro,
-            cidade: data.localidade,
-            estado: data.uf,
+            address: data.logradouro,
+            city: data.localidade,
+            state: data.uf,
           }));
           toast.success("CEP encontrado com sucesso");
         } else {
@@ -90,7 +86,6 @@ const Clientes = () => {
     }
   };
 
-  // Buscar dados do CNPJ automaticamente
   const handleCnpjChange = async (value: string) => {
     const cnpjNumbers = value.replace(/\D/g, "");
     setFormData({ ...formData, cnpj: value });
@@ -103,16 +98,19 @@ const Clientes = () => {
         );
         const data = await response.json();
 
-        if (data.name) {
+        if (data.razao_social) {
           setFormData((prev) => ({
             ...prev,
-            nome: data.name,
-            endereco: `${data.street}, ${data.number}`,
-            cidade: data.city,
-            estado: data.state,
-            cep: data.zip_code,
+            name: data.razao_social,
+            address: `${data.logradouro}, ${data.numero}`,
+            city: data.municipio,
+            state: data.uf,
+            zipcode: data.cep,
+            phone: data.ddd_telefone_1,
           }));
           toast.success("CNPJ encontrado com sucesso");
+        } else {
+            toast.error("CNPJ não encontrado ou inválido");
         }
       } catch (error) {
         toast.error("Erro ao buscar CNPJ");
@@ -122,64 +120,29 @@ const Clientes = () => {
     }
   };
 
-  const handleOpenDialog = (cliente?: Cliente) => {
-    if (cliente) {
-      setEditingId(cliente.id);
-      setFormData({
-        cnpj: cliente.cnpj,
-        nome: cliente.nome,
-        email: cliente.email,
-        telefone: cliente.telefone,
-        cep: cliente.cep,
-        endereco: cliente.endereco,
-        cidade: cliente.cidade,
-        estado: cliente.estado,
-        ativo: cliente.ativo,
-      });
-    } else {
-      setEditingId(null);
-      setFormData({
-        cnpj: "",
-        nome: "",
-        email: "",
-        telefone: "",
-        cep: "",
-        endereco: "",
-        cidade: "",
-        estado: "",
-        ativo: true,
-      });
-    }
+  const handleOpenDialog = (cliente?: Client) => {
+    setEditingClient(cliente || null);
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    if (!formData.cnpj || !formData.nome) {
-      toast.error("Preencha os campos obrigatórios");
+    if (!formData.name || !formData.cnpj) {
+      toast.error("Preencha os campos obrigatórios (Nome e CNPJ)");
       return;
     }
 
-    if (editingId) {
-      setClientes(
-        clientes.map((c) =>
-          c.id === editingId ? { ...c, ...formData } : c
-        )
-      );
-      toast.success("Cliente atualizado com sucesso");
+    if (editingClient) {
+      updateClient({ id: editingClient.id, ...formData });
     } else {
-      const newCliente: Cliente = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setClientes([...clientes, newCliente]);
-      toast.success("Cliente criado com sucesso");
+      createClient(formData as Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>);
     }
     setDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
-    setClientes(clientes.filter((c) => c.id !== id));
-    toast.success("Cliente deletado com sucesso");
+    if (window.confirm("Tem certeza que deseja excluir este cliente?")) {
+        deleteClient(id);
+    }
   };
 
   return (
@@ -216,22 +179,28 @@ const Clientes = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredClientes.map((cliente) => (
+            {isLoading ? (
+                <TableRow>
+                    <TableCell colSpan={7} className="text-center">
+                        <Loader className="h-6 w-6 animate-spin mx-auto" />
+                    </TableCell>
+                </TableRow>
+            ) : filteredClients.map((cliente) => (
               <TableRow key={cliente.id}>
-                <TableCell>{cliente.nome}</TableCell>
+                <TableCell>{cliente.name}</TableCell>
                 <TableCell>{cliente.cnpj}</TableCell>
                 <TableCell>{cliente.email}</TableCell>
-                <TableCell>{cliente.telefone}</TableCell>
-                <TableCell>{cliente.cidade}</TableCell>
+                <TableCell>{cliente.phone}</TableCell>
+                <TableCell>{cliente.city}</TableCell>
                 <TableCell>
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      cliente.ativo
+                      cliente.is_active
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {cliente.ativo ? "Ativo" : "Inativo"}
+                    {cliente.is_active ? "Ativo" : "Inativo"}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -262,17 +231,17 @@ const Clientes = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Editar Cliente" : "Novo Cliente"}
+              {editingClient ? "Editar Cliente" : "Novo Cliente"}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">CNPJ *</label>
                 <div className="flex gap-2">
                   <Input
-                    value={formData.cnpj}
+                    value={formData.cnpj || ''}
                     onChange={(e) => handleCnpjChange(e.target.value)}
                     placeholder="00.000.000/0000-00"
                   />
@@ -283,9 +252,9 @@ const Clientes = () => {
               <div>
                 <label className="text-sm font-medium">Nome *</label>
                 <Input
-                  value={formData.nome}
+                  value={formData.name || ''}
                   onChange={(e) =>
-                    setFormData({ ...formData, nome: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Nome da empresa"
                 />
@@ -297,7 +266,7 @@ const Clientes = () => {
                 <label className="text-sm font-medium">Email</label>
                 <Input
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ''}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
@@ -308,9 +277,9 @@ const Clientes = () => {
               <div>
                 <label className="text-sm font-medium">Telefone</label>
                 <Input
-                  value={formData.telefone}
+                  value={formData.phone || ''}
                   onChange={(e) =>
-                    setFormData({ ...formData, telefone: e.target.value })
+                    setFormData({ ...formData, phone: e.target.value })
                   }
                   placeholder="(11) 98765-4321"
                 />
@@ -322,7 +291,7 @@ const Clientes = () => {
                 <label className="text-sm font-medium">CEP</label>
                 <div className="flex gap-2">
                   <Input
-                    value={formData.cep}
+                    value={formData.zipcode || ''}
                     onChange={(e) => handleCepChange(e.target.value)}
                     placeholder="00000-000"
                   />
@@ -333,9 +302,9 @@ const Clientes = () => {
               <div>
                 <label className="text-sm font-medium">Endereço</label>
                 <Input
-                  value={formData.endereco}
+                  value={formData.address || ''}
                   onChange={(e) =>
-                    setFormData({ ...formData, endereco: e.target.value })
+                    setFormData({ ...formData, address: e.target.value })
                   }
                   placeholder="Rua..."
                 />
@@ -346,9 +315,9 @@ const Clientes = () => {
               <div>
                 <label className="text-sm font-medium">Cidade</label>
                 <Input
-                  value={formData.cidade}
+                  value={formData.city || ''}
                   onChange={(e) =>
-                    setFormData({ ...formData, cidade: e.target.value })
+                    setFormData({ ...formData, city: e.target.value })
                   }
                   placeholder="Cidade"
                 />
@@ -357,9 +326,9 @@ const Clientes = () => {
               <div>
                 <label className="text-sm font-medium">Estado</label>
                 <Input
-                  value={formData.estado}
+                  value={formData.state || ''}
                   onChange={(e) =>
-                    setFormData({ ...formData, estado: e.target.value })
+                    setFormData({ ...formData, state: e.target.value })
                   }
                   placeholder="SP"
                   maxLength={2}
@@ -370,13 +339,13 @@ const Clientes = () => {
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={formData.ativo}
+                checked={formData.is_active}
                 onChange={(e) =>
-                  setFormData({ ...formData, ativo: e.target.checked })
+                  setFormData({ ...formData, is_active: e.target.checked })
                 }
-                id="ativo"
+                id="is_active"
               />
-              <label htmlFor="ativo" className="text-sm font-medium">
+              <label htmlFor="is_active" className="text-sm font-medium">
                 Ativo
               </label>
             </div>
