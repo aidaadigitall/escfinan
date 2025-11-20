@@ -19,12 +19,12 @@ export const useProducts = () => {
     queryKey: ["products"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("products") // Assumindo que a tabela se chama 'products'
+        .from("products" as any)
         .select("*")
-        .order("nome");
+        .order("name");
 
       if (error) throw error;
-      return data as Product[];
+      return data as any as Product[];
     },
   });
 
@@ -32,8 +32,8 @@ export const useProducts = () => {
   const createMutation = useMutation({
     mutationFn: async (productData: Omit<Product, "id">) => {
       const { data, error } = await supabase
-        .from("products")
-        .insert(productData)
+        .from("products" as any)
+        .insert(productData as any)
         .select()
         .single();
 
@@ -55,8 +55,8 @@ export const useProducts = () => {
       const { id, ...updateData } = productData;
       
       const { data, error } = await supabase
-        .from("products")
-        .update(updateData)
+        .from("products" as any)
+        .update(updateData as any)
         .eq("id", id)
         .select()
         .single();
@@ -77,7 +77,7 @@ export const useProducts = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("products")
+        .from("products" as any)
         .delete()
         .eq("id", id);
 
