@@ -271,8 +271,11 @@ const Receitas = () => {
   };
 
   const handleBulkDelete = () => {
-    // Lógica para exclusão em massa
-    toast.info("Função de exclusão em massa em desenvolvimento.");
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedTransactions.length} transações?`)) {
+      selectedTransactions.forEach(id => deleteTransaction(id));
+      setSelectedTransactions([]);
+      toast.success(`${selectedTransactions.length} transações excluídas com sucesso!`);
+    }
   };
 
   if (isLoading) {
@@ -286,7 +289,25 @@ const Receitas = () => {
         <div className="flex items-center space-x-2">
                 <Button variant="outline" onClick={() => navigate("/contas-fixas")}>Receitas Fixas</Button>
           <Button variant="outline" onClick={() => handleOpenTransactionDialog()}>Lançamento Diário</Button>
-          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Ações em Lote ({selectedTransactions.length})</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={selectedTransactions.length === 0}>
+                Ações em Lote ({selectedTransactions.length})
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => toast.info("Função de Marcar como Recebido em Lote em desenvolvimento.")}>
+                Marcar como Recebido
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Função de Alterar Vencimento em Lote em desenvolvimento.")}>
+                Alterar Vencimento
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleBulkDelete} className="text-red-600">
+                Excluir Selecionados
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" onClick={() => setSearchOpen(true)}>
             <Search className="h-4 w-4 mr-2" />
             Busca avançada

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { TransactionDialog } from "@/components/TransactionDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ import { toast } from "sonner";
 import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 
 const Despesas = () => {
+  const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
@@ -51,6 +53,7 @@ const Despesas = () => {
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   const [isChangeStatusOpen, setIsChangeStatusOpen] = useState(false);
   const [transactionToChangeStatus, setTransactionToChangeStatus] = useState<any>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   
   const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions("expense");
 
@@ -203,7 +206,8 @@ const Despesas = () => {
   }, [transactions, activeFilter, filters, sortKey, sortDirection]);
 
   const handleEdit = (transaction: Transaction) => {
-    navigate(`/transactions/expense/edit/${transaction.id}`);
+    setEditingTransaction(transaction);
+    setTransactionDialogOpen(true);
   };
 
   const handleView = (transaction: Transaction) => {
@@ -268,13 +272,19 @@ const Despesas = () => {
         <h2 className="text-2xl font-bold">Contas a Pagar</h2>
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Despesas Fixas</Button>
-          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Lançamento Diário</Button>
+          <Button variant="outline" onClick={() => {
+            setEditingTransaction(null);
+            setTransactionDialogOpen(true);
+          }}>Lançamento Diário</Button>
           <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Ações em Lote (0)</Button>
           <Button variant="outline" onClick={() => setSearchOpen(true)}>
             <Search className="h-4 w-4 mr-2" />
             Busca avançada
           </Button>
-          <Button variant="default" onClick={() => navigate("/transactions/expense/edit/new")}>
+          <Button variant="default" onClick={() => {
+            setEditingTransaction(null);
+            setTransactionDialogOpen(true);
+          }}>
             <Plus className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Adicionar</span>
             <span className="sm:hidden">Add</span>
@@ -388,6 +398,16 @@ const Despesas = () => {
       </Card>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <TransactionDialog
+          open={transactionDialogOpen}
+          onOpenChange={setTransactionDialogOpen}
+          transaction={editingTransaction}
+          type="expense"
+          onSave={() => {
+            setTransactionDialogOpen(false);
+            setEditingTransaction(null);
+          }}
+        />
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
