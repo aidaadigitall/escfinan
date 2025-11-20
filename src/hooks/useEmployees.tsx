@@ -23,12 +23,12 @@ export const useEmployees = () => {
     queryKey: ["employees"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("employees") // Assumindo que a tabela se chama 'employees'
+        .from("employees" as any)
         .select("*")
-        .order("nome");
+        .order("name");
 
       if (error) throw error;
-      return data as Employee[];
+      return data as any as Employee[];
     },
   });
 
@@ -36,8 +36,8 @@ export const useEmployees = () => {
   const createMutation = useMutation({
     mutationFn: async (employeeData: Omit<Employee, "id">) => {
       const { data, error } = await supabase
-        .from("employees")
-        .insert(employeeData)
+        .from("employees" as any)
+        .insert(employeeData as any)
         .select()
         .single();
 
@@ -59,8 +59,8 @@ export const useEmployees = () => {
       const { id, ...updateData } = employeeData;
       
       const { data, error } = await supabase
-        .from("employees")
-        .update(updateData)
+        .from("employees" as any)
+        .update(updateData as any)
         .eq("id", id)
         .select()
         .single();
@@ -81,7 +81,7 @@ export const useEmployees = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("employees")
+        .from("employees" as any)
         .delete()
         .eq("id", id);
 

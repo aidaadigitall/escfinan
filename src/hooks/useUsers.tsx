@@ -26,16 +26,13 @@ export const useUsers = () => {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      // Nota: Em um ambiente real, você buscaria a tabela de perfis (ex: 'user_profiles')
-      // e não a tabela 'users' do auth, que não é acessível diretamente no frontend.
-      // Aqui, vamos simular uma busca na tabela 'user_profiles' que contém os dados de perfil.
       const { data, error } = await supabase
-        .from("user_profiles")
+        .from("system_users" as any)
         .select("*")
         .order("name");
 
       if (error) throw error;
-      return data as UserProfile[];
+      return data as any as UserProfile[];
     },
   });
 
@@ -63,17 +60,17 @@ export const useUsers = () => {
 
       if (authError) throw authError;
 
-      // 2. Criar o perfil do usuário na tabela 'user_profiles'
+      // 2. Criar o perfil do usuário na tabela 'system_users'
       const { data: profileData, error: profileError } = await supabase
-        .from("user_profiles")
+        .from("system_users" as any)
         .insert({
-          id: authData.user?.id, // Usa o ID do usuário criado no Auth
+          user_id: authData.user?.id,
           email,
           name,
           phone,
           role,
           is_active,
-        })
+        } as any)
         .select()
         .single();
 
@@ -94,10 +91,9 @@ export const useUsers = () => {
     mutationFn: async (userData: Partial<UserProfile> & { id: string }) => {
       const { id, ...updateData } = userData;
       
-      // 1. Atualizar o perfil na tabela 'user_profiles'
       const { data, error } = await supabase
-        .from("user_profiles")
-        .update(updateData)
+        .from("system_users" as any)
+        .update(updateData as any)
         .eq("id", id)
         .select()
         .single();
@@ -120,7 +116,7 @@ export const useUsers = () => {
       // Nota: A exclusão da conta Auth (supabase.auth.admin.deleteUser) deve ser feita
       // em uma Edge Function segura. Aqui, vamos apenas deletar o perfil.
       const { error } = await supabase
-        .from("user_profiles")
+        .from("system_users" as any)
         .delete()
         .eq("id", id);
 

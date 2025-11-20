@@ -30,9 +30,9 @@ const Usuarios = () => {
     name: string;
     email: string;
     phone: string;
-    role: string;
+    role: "Administrador" | "Gerente" | "Usuário";
     is_active: boolean;
-    password?: string; // Adicionado campo de senha
+    password?: string;
   }>({
     name: "",
     email: "",
@@ -40,15 +40,6 @@ const Usuarios = () => {
     role: "Usuário",
     is_active: true,
     password: "",
-  });
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    nome: "",
-    email: "",
-    telefone: "",
-    papel: "Usuário",
-    ativo: true,
   });
   const [searchTerm, setSearchTerm] = useState("");
 

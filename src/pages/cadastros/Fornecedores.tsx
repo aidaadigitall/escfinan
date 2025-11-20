@@ -119,7 +119,7 @@ const Fornecedores = () => {
         name: supplier.name,
         email: supplier.email,
         phone: supplier.phone || "",
-        zip_code: supplier.zip_code || "",
+        zip_code: supplier.zipcode || "",
         address: supplier.address || "",
         city: supplier.city || "",
         state: supplier.state || "",
