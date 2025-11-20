@@ -477,7 +477,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         title={`Adicionar Categoria de ${type === "income" ? "Receita" : "Despesa"}`}
         onSave={(name) => {
           createCategory({ name, type });
-          // Não define formData.category_id aqui pois precisamos do ID retornado
+          // Não define formData.category_id aqui, pois o hook useCategories irá invalidar a query e recarregar a lista.
+          // O usuário precisará selecionar o novo item na lista recarregada.
         }}
       />
       
@@ -487,7 +488,10 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         title="Adicionar Fornecedor"
         onSave={(name) => {
           createSupplier({ name });
-          setFormData({ ...formData, entity: name });
+          // Não define formData.entity aqui, pois o hook useSuppliers irá invalidar a query e recarregar a lista.
+          // O usuário precisará selecionar o novo item na lista recarregada.
+          // Para uma melhor UX, o ideal seria que o createSupplier retornasse o ID/Nome e o setFormData fosse chamado.
+          // Como o createSupplier não retorna o objeto completo, vamos apenas fechar o modal.
         }}
       />
       
@@ -497,7 +501,9 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         title="Adicionar Cliente"
         onSave={(name) => {
           createClient({ name });
-          setFormData({ ...formData, client: name });
+          // Não define formData.client aqui, pois o hook useClients irá invalidar a query e recarregar a lista.
+          // O usuário precisará selecionar o novo item na lista recarregada.
+          // Como o createClient não retorna o objeto completo, vamos apenas fechar o modal.
         }}
       />
       
@@ -507,7 +513,8 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         title="Adicionar Forma de Pagamento"
         onSave={(name) => {
           createPaymentMethod(name);
-          setFormData({ ...formData, payment_method: name });
+          // Não define formData.payment_method aqui, pois o hook usePaymentMethods irá invalidar a query e recarregar a lista.
+          // O usuário precisará selecionar o novo item na lista recarregada.
         }}
       />
     </Dialog>
