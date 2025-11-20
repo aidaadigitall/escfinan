@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export type Employee = {
   id: string;
-  nome: string;
+  name: string;
   cpf: string;
   email: string;
   telefone: string;
