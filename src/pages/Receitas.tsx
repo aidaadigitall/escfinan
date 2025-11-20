@@ -270,6 +270,25 @@ const Receitas = () => {
     setIsChangeStatusOpen(true);
   };
 
+  const handleBulkMarkAsReceived = () => {
+    if (window.confirm(`Tem certeza que deseja marcar ${selectedTransactions.length} transações como Recebidas?`)) {
+      selectedTransactions.forEach(id => updateTransaction({ id, status: "received", received_date: new Date().toISOString() }));
+      setSelectedTransactions([]);
+      toast.success(`${selectedTransactions.length} transações marcadas como Recebidas com sucesso!`);
+    }
+  };
+
+  const handleBulkChangeDueDate = () => {
+    const newDueDate = prompt("Digite a nova data de vencimento (AAAA-MM-DD):");
+    if (newDueDate) {
+      if (window.confirm(`Tem certeza que deseja alterar o vencimento de ${selectedTransactions.length} transações para ${newDueDate}?`)) {
+        selectedTransactions.forEach(id => updateTransaction({ id, due_date: newDueDate }));
+        setSelectedTransactions([]);
+        toast.success(`${selectedTransactions.length} vencimentos alterados com sucesso!`);
+      }
+    }
+  };
+
   const handleBulkDelete = () => {
     if (window.confirm(`Tem certeza que deseja excluir ${selectedTransactions.length} transações?`)) {
       selectedTransactions.forEach(id => deleteTransaction(id));
@@ -296,10 +315,10 @@ const Receitas = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => toast.info("Função de Marcar como Recebido em Lote em desenvolvimento.")}>
+              <DropdownMenuItem onClick={handleBulkMarkAsReceived}>
                 Marcar como Recebido
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Função de Alterar Vencimento em Lote em desenvolvimento.")}>
+              <DropdownMenuItem onClick={handleBulkChangeDueDate}>
                 Alterar Vencimento
               </DropdownMenuItem>
               <DropdownMenuSeparator />

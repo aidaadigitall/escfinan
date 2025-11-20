@@ -271,7 +271,7 @@ const Despesas = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Contas a Pagar</h2>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => toast.info("Função em desenvolvimento")}>Despesas Fixas</Button>
+          <Button variant="outline" onClick={() => navigate("/contas-fixas")}>Despesas Fixas</Button>
           <Button variant="outline" onClick={() => {
             setEditingTransaction(null);
             setTransactionDialogOpen(true);
