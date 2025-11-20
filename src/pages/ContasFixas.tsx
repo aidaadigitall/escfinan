@@ -98,10 +98,24 @@ const ContasFixas = () => {
       }
       return true;
     });
-  }, [recurringBills, searchFilters]  const getRecurrenceLabel = (type: string) => {  const handleEdit = (bill: any) => {
+  }, [recurringBills, searchFilters]);
+
+  const getRecurrenceLabel = (type: string) => {
+    const labels: { [key: string]: string } = {
+      monthly: "Mensal",
+      yearly: "Anual",
+      weekly: "Semanal",
+      daily: "Diário"
+    };
+    return labels[type] || type;
+  };
+
+  const handleEdit = (bill: any) => {
     setSelectedBill(bill);
     setDialogOpen(true);
-  };urringBillId = (notes: string | null): string | null => {
+  };
+
+  const extractRecurringBillId = (notes: string | null): string | null => {
     if (!notes) return null;
     const match = notes.match(/recurring_bill_id:([a-f0-9-]+)/);
     return match ? match[1] : null;
