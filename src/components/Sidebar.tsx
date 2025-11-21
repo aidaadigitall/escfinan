@@ -61,7 +61,6 @@ const menuItems: MenuItem[] = [
     submenu: [
       { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
       { icon: CreditCard, label: "Contas a Pagar", path: "/despesas" },
-      { icon: FileText, label: "Despesas", path: "/despesas" },
       { icon: FileText, label: "Despesas Fixas", path: "/contas-fixas" },
       { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
       { icon: PieChart, label: "Relatórios Gerenciais", path: "/relatorios-gerenciais" },
