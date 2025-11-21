@@ -36,7 +36,7 @@ export const useUsers = () => {
     },
   });
 
-  // 2. CREATE: Criar um novo usuário (usando a função de signup do Supabase para criar a conta Auth)
+  // 2. CREATE: Criar um novo usuário (usando Edge Function com privilégios admin)
   const createMutation = useMutation({
     mutationFn: async (userData: { email: string; password?: string; name: string; phone?: string; role: string; is_active: boolean }) => {
       const { email, password, name, phone, role, is_active } = userData;
@@ -45,37 +45,22 @@ export const useUsers = () => {
         throw new Error("A senha é obrigatória para criar um novo usuário.");
       }
 
-      // 1. Criar a conta de autenticação no Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-            phone,
-            role,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-
-      // 2. Criar o perfil do usuário na tabela 'system_users'
-      const { data: profileData, error: profileError } = await supabase
-        .from("system_users" as any)
-        .insert({
-          user_id: authData.user?.id,
+      // Chamar Edge Function para criar usuário com privilégios admin
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
           email,
+          password,
           name,
           phone,
           role,
           is_active,
-        } as any)
-        .select()
-        .single();
+        },
+      });
 
-      if (profileError) throw profileError;
-      return profileData;
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      return data.profile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
