@@ -30,14 +30,20 @@ const ContasFixas = () => {
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const queryClient = useQueryClient();
 
-  // Buscar as contas fixas (recurring bills) cadastradas
+  // Buscar as contas fixas (recurring bills) cadastradas com suas relações
   const { data: recurringBills = [], isLoading } = useQuery({
     queryKey: ["recurring-bills"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recurring_bills")
-        .select("*")
-        .order("next_due_date", { ascending: true });
+        .select(`
+          *,
+          category:category_id(name),
+          bank_account:bank_account_id(name),
+          cost_center:cost_center_id(name),
+          payment_method:payment_method_id(name)
+        `)
+        .order("start_date", { ascending: true });
 
       if (error) throw error;
       return data;
@@ -80,6 +86,57 @@ const ContasFixas = () => {
     },
   });
 
+  // Função para calcular a próxima data de vencimento
+  const calculateNextDueDate = (bill: any) => {
+    const today = new Date();
+    const startDate = new Date(bill.start_date);
+    
+    // Se ainda não começou
+    if (today < startDate) return startDate;
+    
+    // Se já terminou
+    if (bill.end_date && today > new Date(bill.end_date)) return null;
+    
+    let nextDate: Date;
+    
+    switch (bill.recurrence_type) {
+      case 'monthly':
+        const day = bill.recurrence_day || 1;
+        const lastDayThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+        const actualDayThisMonth = Math.min(day, lastDayThisMonth);
+        
+        nextDate = new Date(today.getFullYear(), today.getMonth(), actualDayThisMonth);
+        
+        if (nextDate <= today) {
+          const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+          const lastDayNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
+          const actualDayNextMonth = Math.min(day, lastDayNextMonth);
+          nextDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), actualDayNextMonth);
+        }
+        break;
+      case 'yearly':
+        nextDate = new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate());
+        if (nextDate <= today) {
+          nextDate = new Date(today.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
+        }
+        break;
+      case 'weekly':
+        nextDate = new Date(startDate);
+        while (nextDate <= today) {
+          nextDate.setDate(nextDate.getDate() + 7);
+        }
+        break;
+      case 'daily':
+        nextDate = new Date(today);
+        nextDate.setDate(nextDate.getDate() + 1);
+        break;
+      default:
+        nextDate = startDate;
+    }
+    
+    return nextDate;
+  };
+
   const filteredBills = useMemo(() => {
     if (!recurringBills) return [];
     
@@ -97,6 +154,13 @@ const ContasFixas = () => {
         return false;
       }
       return true;
+    }).map((bill: any) => ({
+      ...bill,
+      nextDueDate: calculateNextDueDate(bill),
+    })).sort((a: any, b: any) => {
+      if (!a.nextDueDate) return 1;
+      if (!b.nextDueDate) return -1;
+      return a.nextDueDate.getTime() - b.nextDueDate.getTime();
     });
   }, [recurringBills, searchFilters]);
 
@@ -194,15 +258,17 @@ const ContasFixas = () => {
                 return (
                   <TableRow key={bill.id}>
                     <TableCell>{bill.description}</TableCell>
-                    <TableCell>{bill.entity || "-"}</TableCell>
-                    <TableCell>{bill.account || "-"}</TableCell>
-                    <TableCell>{bill.payment_method || "-"}</TableCell>
+                    <TableCell>
+                      {bill.type === 'income' ? 'Receita' : 'Despesa'}
+                    </TableCell>
+                    <TableCell>{bill.category?.name || "-"}</TableCell>
+                    <TableCell>{bill.payment_method?.name || "-"}</TableCell>
                     <TableCell>{getRecurrenceLabel(bill.recurrence_type)}</TableCell>
                     <TableCell>
-                      {bill.next_due_date ? format(new Date(bill.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                      {bill.nextDueDate ? format(bill.nextDueDate, "dd/MM/yyyy", { locale: ptBR }) : "-"}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      {parseFloat(bill.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      R$ {parseFloat(bill.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
