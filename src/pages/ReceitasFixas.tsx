@@ -20,7 +20,7 @@ import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDia
 import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
 
-const ContasFixas = () => {
+const ReceitasFixas = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<any>(null);
@@ -31,7 +31,7 @@ const ContasFixas = () => {
   const queryClient = useQueryClient();
 
   const { data: recurringBills = [], isLoading } = useQuery({
-    queryKey: ["recurring-bills-expense"],
+    queryKey: ["recurring-bills-income"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recurring_bills")
@@ -42,7 +42,7 @@ const ContasFixas = () => {
           cost_center:cost_center_id(name),
           payment_method:payment_method_id(name)
         `)
-        .eq("type", "expense")
+        .eq("type", "income")
         .order("start_date", { ascending: true });
 
       if (error) throw error;
@@ -51,12 +51,12 @@ const ContasFixas = () => {
   });
 
   const { data: transactions = [] } = useQuery({
-    queryKey: ["transactions-from-recurring-expense"],
+    queryKey: ["transactions-from-recurring-income"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .eq("type", "expense")
+        .eq("type", "income")
         .like("notes", "%recurring_bill_id:%");
 
       if (error) throw error;
@@ -74,11 +74,11 @@ const ContasFixas = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recurring-bills-expense"] });
-      toast.success("Conta fixa excluída com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["recurring-bills-income"] });
+      toast.success("Receita fixa excluída com sucesso!");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Erro ao excluir conta fixa");
+      toast.error(error.message || "Erro ao excluir receita fixa");
     },
   });
 
@@ -92,7 +92,7 @@ const ContasFixas = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions-from-recurring-expense"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions-from-recurring-income"] });
       toast.success("Transação atualizada com sucesso!");
     },
     onError: (error: any) => {
@@ -100,15 +100,11 @@ const ContasFixas = () => {
     },
   });
 
-  // Função para calcular a próxima data de vencimento
   const calculateNextDueDate = (bill: any) => {
     const today = new Date();
     const startDate = new Date(bill.start_date);
     
-    // Se ainda não começou
     if (today < startDate) return startDate;
-    
-    // Se já terminou
     if (bill.end_date && today > new Date(bill.end_date)) return null;
     
     let nextDate: Date;
@@ -169,9 +165,6 @@ const ContasFixas = () => {
     
     return recurringBills.filter((bill: any) => {
       if (searchFilters.description && !bill.description.toLowerCase().includes(searchFilters.description.toLowerCase())) {
-        return false;
-      }
-      if (searchFilters.type && bill.type !== searchFilters.type) {
         return false;
       }
       if (searchFilters.minAmount && parseFloat(bill.amount) < parseFloat(searchFilters.minAmount)) {
@@ -237,9 +230,9 @@ const ContasFixas = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Contas Fixas</h1>
+          <h1 className="text-2xl font-bold">Receitas Fixas</h1>
           <p className="text-muted-foreground mt-1">
-            As contas fixas são geradas automaticamente pelo sistema e passam a ser visualizadas nas contas a pagar de acordo com a configuração feita pelo usuário.
+            As receitas fixas são geradas automaticamente pelo sistema e passam a ser visualizadas nas contas a receber de acordo com a configuração feita pelo usuário.
           </p>
         </div>
         <div className="flex gap-2">
@@ -258,7 +251,7 @@ const ContasFixas = () => {
 
       <Card className="p-4 bg-info/10 border-info">
         <p className="text-sm">
-          As contas fixas são geradas automaticamente pelo sistema e passam a ser visualizadas nas contas a pagar de acordo com a configuração feita pelo usuário.
+          As receitas fixas são geradas automaticamente pelo sistema e passam a ser visualizadas nas contas a receber de acordo com a configuração feita pelo usuário.
         </p>
       </Card>
 
@@ -269,7 +262,7 @@ const ContasFixas = () => {
               <TableHead>Descrição</TableHead>
               <TableHead>Plano de contas</TableHead>
               <TableHead>Pagamento</TableHead>
-              <TableHead>Gerar pagamento</TableHead>
+              <TableHead>Gerar recebimento</TableHead>
               <TableHead>Próximo vencimento</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead>Situação</TableHead>
@@ -280,7 +273,7 @@ const ContasFixas = () => {
             {filteredBills.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                  Nenhuma conta fixa encontrada
+                  Nenhuma receita fixa encontrada
                 </TableCell>
               </TableRow>
             ) : (
@@ -300,13 +293,13 @@ const ContasFixas = () => {
                     <TableCell>
                       {bill.transaction ? (
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          bill.transaction.status === 'paid' || bill.transaction.status === 'confirmed'
+                          bill.transaction.status === 'received' || bill.transaction.status === 'confirmed'
                             ? "bg-success/10 text-success"
                             : bill.transaction.status === 'overdue'
                             ? "bg-destructive/10 text-destructive"
                             : "bg-warning/10 text-warning"
                         }`}>
-                          {bill.transaction.status === 'paid' ? 'Pago' : 
+                          {bill.transaction.status === 'received' ? 'Recebido' : 
                            bill.transaction.status === 'confirmed' ? 'Confirmado' :
                            bill.transaction.status === 'overdue' ? 'Vencido' : 'Pendente'}
                         </span>
@@ -324,7 +317,7 @@ const ContasFixas = () => {
                               variant="ghost" 
                               size="sm" 
                               onClick={() => handleConfirmPayment(bill.transaction)}
-                              title="Confirmar Pagamento"
+                              title="Confirmar Recebimento"
                             >
                               <CheckCircle className="h-4 w-4" />
                             </Button>
@@ -332,7 +325,7 @@ const ContasFixas = () => {
                               variant="ghost" 
                               size="sm" 
                               onClick={() => handlePartialPayment(bill.transaction)}
-                              title="Pagamento Parcial"
+                              title="Recebimento Parcial"
                             >
                               <DollarSign className="h-4 w-4" />
                             </Button>
@@ -404,4 +397,4 @@ const ContasFixas = () => {
   );
 };
 
-export default ContasFixas;
+export default ReceitasFixas;
