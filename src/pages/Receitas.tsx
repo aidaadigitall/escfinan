@@ -299,7 +299,7 @@ const Receitas = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Contas a Receber</h2>
         <div className="flex items-center space-x-2">
-                <Button variant="outline" onClick={() => navigate("/contas-fixas")}>Receitas Fixas</Button>
+                <Button variant="outline" onClick={() => navigate("/receitas-fixas")}>Receitas Fixas</Button>
           <Button variant="outline" onClick={() => handleOpenTransactionDialog()}>Lançamento Diário</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
