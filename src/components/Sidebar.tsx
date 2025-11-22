@@ -62,6 +62,7 @@ const menuItems: MenuItem[] = [
       { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
       { icon: CreditCard, label: "Contas a Pagar", path: "/despesas" },
       { icon: FileText, label: "Despesas Fixas", path: "/contas-fixas" },
+      { icon: FileText, label: "Receitas Fixas", path: "/receitas-fixas" },
       { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
       { icon: PieChart, label: "Relatórios Gerenciais", path: "/relatorios-gerenciais" },
       { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },

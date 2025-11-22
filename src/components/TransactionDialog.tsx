@@ -63,6 +63,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     recurrence_day: string;
     start_date: string;
     end_date: string;
+    installments: string;
   }>({
     description: "",
     amount: "",
@@ -82,6 +83,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     recurrence_day: "1",
     start_date: "",
     end_date: "",
+    installments: "1",
   });
 
   useEffect(() => {
@@ -105,6 +107,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         recurrence_day: "1",
         start_date: "",
         end_date: "",
+        installments: "1",
       });
       setIsRecurring(false);
     } else {
@@ -127,6 +130,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         recurrence_day: "1",
         start_date: new Date().toISOString().split("T")[0],
         end_date: "",
+        installments: "1",
       });
       setIsRecurring(false);
     }
@@ -140,6 +144,48 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         ...formData,
         amount: parseFloat(formData.amount),
       });
+
+      const installments = parseInt(formData.installments) || 1;
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Se há parcelamento, criar múltiplas transações
+      if (installments > 1 && !transaction) {
+        const installmentAmount = parseFloat(formData.amount) / installments;
+        const baseDate = new Date(formData.due_date);
+        
+        const installmentPromises = [];
+        for (let i = 0; i < installments; i++) {
+          const installmentDate = new Date(baseDate);
+          installmentDate.setMonth(installmentDate.getMonth() + i);
+          
+          const installmentData = {
+            user_id: user.id,
+            description: `${formData.description} (${i + 1}/${installments})`,
+            amount: installmentAmount,
+            type: formData.type,
+            status: formData.status,
+            due_date: installmentDate.toISOString().split("T")[0],
+            category_id: formData.category_id || undefined,
+            entity: formData.entity || undefined,
+            client: formData.client || undefined,
+            account: formData.account || undefined,
+            payment_method: formData.payment_method || undefined,
+            bank_account_id: formData.bank_account_id || undefined,
+            notes: formData.notes || undefined,
+          };
+          
+          installmentPromises.push(
+            supabase.from("transactions").insert(installmentData)
+          );
+        }
+        
+        await Promise.all(installmentPromises);
+        toast.success(`${installments} parcelas criadas com sucesso!`);
+        onOpenChange(false);
+        return;
+      }
 
       const dataToSave = {
         description: formData.description,
@@ -380,6 +426,23 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                 </p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="installments">Número de Parcelas</Label>
+            <Input
+              id="installments"
+              type="number"
+              min="1"
+              placeholder="1 para pagamento único"
+              value={formData.installments}
+              onChange={(e) => setFormData({ ...formData, installments: e.target.value })}
+            />
+            {formData.installments && parseInt(formData.installments) > 1 && (
+              <p className="text-sm text-muted-foreground">
+                Valor por parcela: R$ {(parseFloat(formData.amount || "0") / parseInt(formData.installments)).toFixed(2)}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
