@@ -68,6 +68,14 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
           dueDate = addDays(firstDate, i * parseInt(formData.interval_days));
         } else if (formData.recurrence_type === "monthly") {
           dueDate = addMonths(firstDate, i);
+        } else if (formData.recurrence_type === "2months") {
+          dueDate = addMonths(firstDate, i * 2);
+        } else if (formData.recurrence_type === "3months") {
+          dueDate = addMonths(firstDate, i * 3);
+        } else if (formData.recurrence_type === "4months") {
+          dueDate = addMonths(firstDate, i * 4);
+        } else if (formData.recurrence_type === "6months") {
+          dueDate = addMonths(firstDate, i * 6);
         } else if (formData.recurrence_type === "biweekly") {
           dueDate = addDays(firstDate, i * 15);
         } else if (formData.recurrence_type === "quarterly") {
@@ -365,6 +373,10 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="monthly">Mensal</SelectItem>
+                      <SelectItem value="2months">2 meses</SelectItem>
+                      <SelectItem value="3months">3 meses</SelectItem>
+                      <SelectItem value="4months">4 meses</SelectItem>
+                      <SelectItem value="6months">6 meses</SelectItem>
                       <SelectItem value="biweekly">Quinzenal</SelectItem>
                       <SelectItem value="quarterly">Trimestral</SelectItem>
                       <SelectItem value="semiannual">Semestral</SelectItem>

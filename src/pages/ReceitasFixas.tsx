@@ -124,6 +124,28 @@ const ReceitasFixas = () => {
           nextDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), actualDayNextMonth);
         }
         break;
+      case '2months':
+      case '3months':
+      case '4months':
+      case '6months':
+        const monthsInterval = parseInt(bill.recurrence_type.replace('months', ''));
+        const dayMulti = bill.recurrence_day || 1;
+        const monthsSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+        const cyclesPassed = Math.floor(monthsSinceStart / monthsInterval);
+        
+        const targetMonth = startDate.getMonth() + (cyclesPassed * monthsInterval);
+        const lastDayTargetMonth = new Date(today.getFullYear(), targetMonth + 1, 0).getDate();
+        const actualDayTarget = Math.min(dayMulti, lastDayTargetMonth);
+        
+        nextDate = new Date(today.getFullYear(), targetMonth, actualDayTarget);
+        
+        if (nextDate <= today) {
+          const nextTargetMonth = targetMonth + monthsInterval;
+          const lastDayNextTarget = new Date(today.getFullYear(), nextTargetMonth + 1, 0).getDate();
+          const actualDayNextTarget = Math.min(dayMulti, lastDayNextTarget);
+          nextDate = new Date(today.getFullYear(), nextTargetMonth, actualDayNextTarget);
+        }
+        break;
       case 'yearly':
         nextDate = new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate());
         if (nextDate <= today) {
@@ -191,6 +213,10 @@ const ReceitasFixas = () => {
   const getRecurrenceLabel = (type: string) => {
     const labels: { [key: string]: string } = {
       monthly: "Mensal",
+      "2months": "2 meses",
+      "3months": "3 meses",
+      "4months": "4 meses",
+      "6months": "6 meses",
       yearly: "Anual",
       weekly: "Semanal",
       daily: "Diário"

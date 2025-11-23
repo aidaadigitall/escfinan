@@ -183,6 +183,10 @@ function checkIfShouldProcess(bill: any, today: Date): boolean {
       // Processar no dia da semana definido
       return today.getDay() === (bill.recurrence_day || 0);
     case 'monthly':
+    case '2months':
+    case '3months':
+    case '4months':
+    case '6months':
       // Processar no dia do mês definido
       return currentDay === (bill.recurrence_day || 1);
     case 'yearly':
@@ -204,6 +208,10 @@ function calculateDueDate(bill: any, today: Date): string {
     case 'weekly':
       return today.toISOString().split('T')[0];
     case 'monthly':
+    case '2months':
+    case '3months':
+    case '4months':
+    case '6months':
       const day = bill.recurrence_day || 1;
       const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       const actualDay = Math.min(day, lastDayOfMonth);
