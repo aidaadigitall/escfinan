@@ -215,6 +215,10 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
                   <SelectItem value="daily">Diário</SelectItem>
                   <SelectItem value="weekly">Semanal</SelectItem>
                   <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="2months">2 meses</SelectItem>
+                  <SelectItem value="3months">3 meses</SelectItem>
+                  <SelectItem value="4months">4 meses</SelectItem>
+                  <SelectItem value="6months">6 meses</SelectItem>
                   <SelectItem value="yearly">Anual</SelectItem>
                 </SelectContent>
               </Select>

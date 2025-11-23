@@ -58,6 +58,10 @@ const RelatorioRecorrencias = () => {
       daily: "Diário",
       weekly: "Semanal",
       monthly: "Mensal",
+      "2months": "2 meses",
+      "3months": "3 meses",
+      "4months": "4 meses",
+      "6months": "6 meses",
       yearly: "Anual",
     };
     return labels[type] || type;
@@ -75,6 +79,58 @@ const RelatorioRecorrencias = () => {
     switch (bill.recurrence_type) {
       case 'monthly':
         for (let i = 0; i < count; i++) {
+          const date = addMonths(today, i);
+          const day = bill.recurrence_day || 1;
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+          const actualDay = Math.min(day, lastDay);
+          const nextDate = new Date(date.getFullYear(), date.getMonth(), actualDay);
+          
+          if (nextDate >= today && (!bill.end_date || nextDate <= new Date(bill.end_date))) {
+            occurrences.push(nextDate);
+          }
+        }
+        break;
+      case '2months':
+        for (let i = 0; i < count * 2; i += 2) {
+          const date = addMonths(today, i);
+          const day = bill.recurrence_day || 1;
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+          const actualDay = Math.min(day, lastDay);
+          const nextDate = new Date(date.getFullYear(), date.getMonth(), actualDay);
+          
+          if (nextDate >= today && (!bill.end_date || nextDate <= new Date(bill.end_date))) {
+            occurrences.push(nextDate);
+          }
+        }
+        break;
+      case '3months':
+        for (let i = 0; i < count * 3; i += 3) {
+          const date = addMonths(today, i);
+          const day = bill.recurrence_day || 1;
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+          const actualDay = Math.min(day, lastDay);
+          const nextDate = new Date(date.getFullYear(), date.getMonth(), actualDay);
+          
+          if (nextDate >= today && (!bill.end_date || nextDate <= new Date(bill.end_date))) {
+            occurrences.push(nextDate);
+          }
+        }
+        break;
+      case '4months':
+        for (let i = 0; i < count * 4; i += 4) {
+          const date = addMonths(today, i);
+          const day = bill.recurrence_day || 1;
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+          const actualDay = Math.min(day, lastDay);
+          const nextDate = new Date(date.getFullYear(), date.getMonth(), actualDay);
+          
+          if (nextDate >= today && (!bill.end_date || nextDate <= new Date(bill.end_date))) {
+            occurrences.push(nextDate);
+          }
+        }
+        break;
+      case '6months':
+        for (let i = 0; i < count * 6; i += 6) {
           const date = addMonths(today, i);
           const day = bill.recurrence_day || 1;
           const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
