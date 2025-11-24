@@ -6,6 +6,7 @@ import { UpcomingRecurringBills } from "@/components/dashboard/UpcomingRecurring
 import { BankAccountsCard } from "@/components/dashboard/BankAccountsCard";
 import { FinancialInsightsWidget } from "@/components/FinancialInsightsWidget";
 import RecurringCalendar from "@/components/dashboard/RecurringCalendar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -72,22 +73,26 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <CashFlowChart />
-        <SalesChart />
+        <ErrorBoundary><CashFlowChart /></ErrorBoundary>
+        <ErrorBoundary><SalesChart /></ErrorBoundary>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <BankAccountsCard />
-        <UpcomingRecurringBills />
+        <ErrorBoundary><BankAccountsCard /></ErrorBoundary>
+        <ErrorBoundary><UpcomingRecurringBills /></ErrorBoundary>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <RecurringCalendar />
-      </div>
+      <ErrorBoundary>
+        <div className="grid grid-cols-1 gap-6">
+          <RecurringCalendar />
+        </div>
+      </ErrorBoundary>
 
-      <div className="grid grid-cols-1 gap-6">
-        <FinancialInsightsWidget />
-      </div>
+      <ErrorBoundary>
+        <div className="grid grid-cols-1 gap-6">
+          <FinancialInsightsWidget />
+        </div>
+      </ErrorBoundary>
     </div>
   );
 };

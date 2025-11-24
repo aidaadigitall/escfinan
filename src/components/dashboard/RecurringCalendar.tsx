@@ -42,41 +42,6 @@ const RecurringCalendar = () => {
     },
   });
 
-  const projectedOccurrences = useMemo(() => {
-    const occurrences: ProjectedOccurrence[] = [];
-    const today = new Date();
-    const endDate = addMonths(today, 12);
-
-    recurringBills.forEach((bill) => {
-      let currentDate = new Date(bill.start_date);
-      
-      // Se a data de início é no futuro, começar dela
-      if (currentDate > today) {
-        currentDate = new Date(bill.start_date);
-      } else {
-        // Caso contrário, começar do próximo vencimento
-        currentDate = getNextOccurrence(bill, today);
-      }
-
-      // Gerar ocorrências até 12 meses no futuro
-      while (currentDate <= endDate) {
-        // Verificar se está dentro do período ativo
-        if (bill.end_date && currentDate > new Date(bill.end_date)) {
-          break;
-        }
-
-        occurrences.push({
-          date: new Date(currentDate),
-          bill: bill,
-        });
-
-        currentDate = getNextOccurrence(bill, currentDate);
-      }
-    });
-
-    return occurrences;
-  }, [recurringBills]);
-
   const getNextOccurrence = (bill: RecurringBill, fromDate: Date): Date => {
     const nextDate = new Date(fromDate);
     
@@ -103,6 +68,69 @@ const RecurringCalendar = () => {
         return addMonths(nextDate, 1);
     }
   };
+
+  const projectedOccurrences = useMemo(() => {
+    try {
+      const occurrences: ProjectedOccurrence[] = [];
+      const today = new Date();
+      const endDate = addMonths(today, 12);
+
+      recurringBills.forEach((bill) => {
+        try {
+          let currentDate = new Date(bill.start_date);
+          
+          // Validar data inicial
+          if (isNaN(currentDate.getTime())) {
+            console.error('Invalid start_date for bill:', bill);
+            return;
+          }
+          
+          // Se a data de início é no futuro, começar dela
+          if (currentDate > today) {
+            currentDate = new Date(bill.start_date);
+          } else {
+            // Caso contrário, começar do próximo vencimento
+            currentDate = getNextOccurrence(bill, today);
+          }
+
+          // Gerar ocorrências até 12 meses no futuro (máximo 100 para evitar loops)
+          let iterations = 0;
+          const maxIterations = 100;
+          
+          while (currentDate <= endDate && iterations < maxIterations) {
+            iterations++;
+            
+            // Verificar se está dentro do período ativo
+            if (bill.end_date && currentDate > new Date(bill.end_date)) {
+              break;
+            }
+
+            occurrences.push({
+              date: new Date(currentDate),
+              bill: bill,
+            });
+
+            const nextDate = getNextOccurrence(bill, currentDate);
+            
+            // Garantir que está avançando
+            if (nextDate <= currentDate) {
+              console.error('Date not advancing for bill:', bill);
+              break;
+            }
+            
+            currentDate = nextDate;
+          }
+        } catch (error) {
+          console.error('Error processing bill:', bill, error);
+        }
+      });
+
+      return occurrences;
+    } catch (error) {
+      console.error('Error generating projected occurrences:', error);
+      return [];
+    }
+  }, [recurringBills]);
 
   const occurrencesByDate = useMemo(() => {
     const map = new Map<string, ProjectedOccurrence[]>();
