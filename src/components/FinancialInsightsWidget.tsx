@@ -17,17 +17,15 @@ export const FinancialInsightsWidget = () => {
       const analysis = analyzeSystemData();
       const generatedInsights = await generateFinancialInsights(analysis);
       setInsights(generatedInsights);
+      toast.success("Insights gerados com sucesso!");
     } catch (error) {
-      toast.error("Erro ao gerar insights financeiros");
-      console.error(error);
+      toast.error("Erro ao gerar insights financeiros. Verifique sua conexão.");
+      console.error("Erro ao gerar insights:", error);
+      setInsights("");
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadInsights();
-  }, []);
 
   return (
     <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
@@ -67,9 +65,15 @@ export const FinancialInsightsWidget = () => {
           {insights}
         </div>
       ) : (
-        <p className="text-gray-600 text-sm">
-          Clique em atualizar para gerar insights
-        </p>
+        <div className="text-center py-6">
+          <p className="text-gray-600 text-sm mb-4">
+            Clique no botão para gerar insights inteligentes sobre suas finanças
+          </p>
+          <Button onClick={loadInsights} variant="outline" className="gap-2">
+            <Lightbulb className="h-4 w-4" />
+            Gerar Insights
+          </Button>
+        </div>
       )}
     </Card>
   );
