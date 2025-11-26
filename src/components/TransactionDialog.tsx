@@ -47,7 +47,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
   const [formData, setFormData] = useState<{
     description: string;
     amount: string;
-    type: "income" | "expense";
+    type: "income" | "expense" | "transfer";
     category_id: string;
     entity: string;
     client: string;
