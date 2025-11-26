@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, ArrowRightLeft } from "lucide-react";
+import { Plus, ArrowRightLeft, TrendingUp, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,6 +33,8 @@ import {
 
 export default function Transferencias() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [formData, setFormData] = useState({
     from_account_id: "",
     to_account_id: "",
@@ -144,6 +146,39 @@ export default function Transferencias() {
     return account?.name || "Conta desconhecida";
   };
 
+  const filteredTransfers = useMemo(() => {
+    return transfers
+      .filter((t: any) => t.notes?.includes("transfer_out"))
+      .filter((t: any) => {
+        const transferDate = new Date(t.due_date);
+        return (
+          transferDate.getMonth() === selectedMonth &&
+          transferDate.getFullYear() === selectedYear
+        );
+      });
+  }, [transfers, selectedMonth, selectedYear]);
+
+  const monthlyStats = useMemo(() => {
+    const total = filteredTransfers.reduce(
+      (sum: number, t: any) => sum + parseFloat(t.amount),
+      0
+    );
+    const count = filteredTransfers.length;
+    const avgAmount = count > 0 ? total / count : 0;
+
+    return { total, count, avgAmount };
+  }, [filteredTransfers]);
+
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  const years = Array.from(
+    { length: 5 },
+    (_, i) => new Date().getFullYear() - 2 + i
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -167,6 +202,93 @@ export default function Transferencias() {
         </Button>
       </div>
 
+      <div className="flex gap-4 items-center">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Select
+            value={selectedMonth.toString()}
+            onValueChange={(value) => setSelectedMonth(parseInt(value))}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month, index) => (
+                <SelectItem key={index} value={index.toString()}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedYear.toString()}
+            onValueChange={(value) => setSelectedYear(parseInt(value))}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Transferido
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              R$ {monthlyStats.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {months[selectedMonth]} {selectedYear}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Quantidade
+            </CardTitle>
+            <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{monthlyStats.count}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {monthlyStats.count === 1 ? "transferência" : "transferências"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Valor Médio
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              R$ {monthlyStats.avgAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              por transferência
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <Table>
           <TableHeader>
@@ -179,16 +301,14 @@ export default function Transferencias() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transfers.length === 0 ? (
+            {filteredTransfers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  Nenhuma transferência realizada
+                  Nenhuma transferência encontrada para {months[selectedMonth]}/{selectedYear}
                 </TableCell>
               </TableRow>
             ) : (
-              transfers
-                .filter((t: any) => t.notes?.includes("transfer_out"))
-                .map((transfer: any) => {
+              filteredTransfers.map((transfer: any) => {
                   const toAccountId = transfer.notes?.split(":")[1];
                   return (
                     <TableRow key={transfer.id}>
