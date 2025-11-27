@@ -81,21 +81,29 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
   }, [transaction]);
 
   const handleSubmit = () => {
-    if (currentStatus === "confirmado" || currentStatus === "pago" || currentStatus === "recebido") {
+    // Validate required fields for confirmed/paid/received status
+    if (currentStatus === "confirmado" || currentStatus === "pago" || currentStatus === "recebido" || currentStatus === "confirmed" || currentStatus === "paid" || currentStatus === "received") {
       if (!valueReceived || !compensationDate || !paymentMethod || !bankAccount) {
         toast.error("Preencha todos os campos obrigatórios para confirmar a transação.");
         return;
       }
     }
 
+    // Map status from form to database
+    let dbStatus = currentStatus;
+    if (currentStatus === "pago") dbStatus = "paid";
+    if (currentStatus === "recebido") dbStatus = "received";
+    if (currentStatus === "confirmado") dbStatus = "confirmed";
+
     const newTransactionData = {
-      status: currentStatus,
-      value_received: parseFloat(valueReceived),
-      compensation_date: compensationDate ? format(compensationDate, "yyyy-MM-dd") : null,
+      id: transaction.id,
+      status: dbStatus,
+      paid_amount: parseFloat(valueReceived),
+      paid_date: compensationDate ? format(compensationDate, "yyyy-MM-dd") : null,
       payment_method: paymentMethod,
       bank_account_id: bankAccount,
-      observation: observation,
-      complementary_info: complementaryInfo,
+      notes: observation || complementaryInfo,
+      description: description,
     };
 
     onStatusChange(transaction.id, newTransactionData);
