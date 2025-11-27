@@ -31,6 +31,9 @@ import Clientes from "./pages/cadastros/Clientes";
 import Fornecedores from "./pages/cadastros/Fornecedores";
 import Funcionarios from "./pages/cadastros/Funcionarios";
 import Produtos from "./pages/cadastros/Produtos";
+import Categorias from "./pages/Categorias";
+import PlanoContas from "./pages/PlanoContas";
+import LancamentosDiarios from "./pages/LancamentosDiarios";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +87,9 @@ const App = () => (
             <Route path="/cadastros/fornecedores" element={<ProtectedRoute><Layout><Fornecedores /></Layout></ProtectedRoute>} />
             <Route path="/cadastros/funcionarios" element={<ProtectedRoute><Layout><Funcionarios /></Layout></ProtectedRoute>} />
             <Route path="/cadastros/produtos" element={<ProtectedRoute><Layout><Produtos /></Layout></ProtectedRoute>} />
+            <Route path="/categorias" element={<ProtectedRoute><Layout><Categorias /></Layout></ProtectedRoute>} />
+            <Route path="/plano-contas" element={<ProtectedRoute><Layout><PlanoContas /></Layout></ProtectedRoute>} />
+            <Route path="/lancamentos-diarios" element={<ProtectedRoute><Layout><LancamentosDiarios /></Layout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

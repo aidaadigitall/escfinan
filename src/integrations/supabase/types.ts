@@ -59,6 +59,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_balance_audit: {
+        Row: {
+          balance_change: number
+          bank_account_id: string
+          created_at: string
+          description: string | null
+          id: string
+          new_balance: number
+          old_balance: number | null
+          operation: string
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_change: number
+          bank_account_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          new_balance: number
+          old_balance?: number | null
+          operation: string
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_change?: number
+          bank_account_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          new_balance?: number
+          old_balance?: number | null
+          operation?: string
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_balance_audit_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_balance_audit_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -82,6 +136,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      chart_of_accounts: {
+        Row: {
+          account_type: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chart_of_accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clients: {
         Row: {
