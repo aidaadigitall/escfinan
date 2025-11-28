@@ -17,19 +17,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-
-// Assumindo uma interface Transaction simplificada
-interface Transaction {
-  id: string;
-  status: string;
-  amount: number;
-  description: string;
-  due_date: string;
-  type: "income" | "expense";
-// Adicione outros campos necessários para o formulário
-}
-
 import { useBankAccounts } from "@/hooks/useBankAccounts";
+import { useTransactionStatusHistory } from "@/hooks/useTransactionStatusHistory";
 
 const statusOptions = [
   { value: "pending", label: "Pendente" },
@@ -39,11 +28,27 @@ const statusOptions = [
   { value: "received", label: "Recebido" },
 ];
 
+const statusLabels: Record<string, string> = {
+  pending: "Pendente",
+  confirmed: "Confirmado",
+  overdue: "Vencido",
+  paid: "Pago",
+  received: "Recebido",
+};
+
 const paymentMethods = [
   "PIX", "Boleto", "Cartão de Crédito", "Transferência", "Dinheiro", "Outro"
 ];
 
-
+// Interface Transaction
+interface Transaction {
+  id: string;
+  status: string;
+  amount: number;
+  description: string;
+  due_date: string;
+  type: "income" | "expense";
+}
 
 interface ChangeStatusDialogProps {
   open: boolean;
@@ -54,7 +59,8 @@ interface ChangeStatusDialogProps {
 
 export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusChange }: ChangeStatusDialogProps) => {
   const { accounts: bankAccounts } = useBankAccounts();
-  const [currentStatus, setCurrentStatus] = useState(transaction?.status || "em_aberto");
+  const { history, isLoading: historyLoading } = useTransactionStatusHistory(transaction?.id);
+  const [currentStatus, setCurrentStatus] = useState(transaction?.status || "pending");
   const [description, setDescription] = useState(transaction?.description || ""); // Descrição editável
   const [valueReceived, setValueReceived] = useState(transaction?.amount.toString() || "");
   const [compensationDate, setCompensationDate] = useState<Date | undefined>(undefined); // Inicializa como undefined
@@ -243,37 +249,53 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
 	            </div>
 	          </div>
 
-	          {/* Histórico de Situações (Simulação) */}
+	          {/* Histórico de Situações Real */}
 	          <div className="space-y-2 border-t pt-4">
 	            <h3 className="text-lg font-semibold">Histórico de situações</h3>
-	            <div className="border rounded-md">
-	              <table className="w-full text-sm">
-	                <thead>
-	                  <tr className="bg-muted/50">
-	                    <th className="p-2 text-left">Data</th>
-	                    <th className="p-2 text-left">Observação</th>
-	                    <th className="p-2 text-left">Situação</th>
-	                    <th className="p-2 text-left">Funcionário</th>
-	                  </tr>
-	                </thead>
-	                <tbody>
-	                  {/* Dados de exemplo (Simulação de dados reais) */}
-	                  {/* O histórico real viria de uma prop ou chamada de API */}
-	                  <tr className="border-t">
-	                    <td className="p-2">01/11/2025 11:05:17</td>
-	                    <td className="p-2">Observação de teste</td>
-                    <td className="p-2"><Badge variant="default">Confirmado</Badge></td>
-                    <td className="p-2">Funcionário 1</td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-2">31/10/2025 10:12:12</td>
-                    <td className="p-2"></td>
-                    <td className="p-2"><Badge variant="outline">Em aberto</Badge></td>
-	                    <td className="p-2">Funcionário 2</td>
-	                  </tr>
-	                </tbody>
-	              </table>
-	            </div>
+	            {historyLoading ? (
+	              <div className="text-sm text-muted-foreground">Carregando histórico...</div>
+	            ) : history.length > 0 ? (
+	              <div className="border rounded-md">
+	                <table className="w-full text-sm">
+	                  <thead>
+	                    <tr className="bg-muted/50">
+	                      <th className="p-2 text-left">Data</th>
+	                      <th className="p-2 text-left">Observação</th>
+	                      <th className="p-2 text-left">Status Anterior</th>
+	                      <th className="p-2 text-left">Novo Status</th>
+	                    </tr>
+	                  </thead>
+	                  <tbody>
+	                    {history.map((entry) => (
+	                      <tr key={entry.id} className="border-t">
+	                        <td className="p-2">
+	                          {new Date(entry.created_at).toLocaleString('pt-BR', {
+	                            day: '2-digit',
+	                            month: '2-digit',
+	                            year: 'numeric',
+	                            hour: '2-digit',
+	                            minute: '2-digit'
+	                          })}
+	                        </td>
+	                        <td className="p-2">{entry.observation || "-"}</td>
+	                        <td className="p-2">
+	                          {entry.old_status ? (
+	                            <Badge variant="outline">{statusLabels[entry.old_status] || entry.old_status}</Badge>
+	                          ) : (
+	                            "-"
+	                          )}
+	                        </td>
+	                        <td className="p-2">
+	                          <Badge variant="default">{statusLabels[entry.new_status] || entry.new_status}</Badge>
+	                        </td>
+	                      </tr>
+	                    ))}
+	                  </tbody>
+	                </table>
+	              </div>
+	            ) : (
+	              <div className="text-sm text-muted-foreground">Nenhuma mudança de status registrada.</div>
+	            )}
 	          </div>
         </div>
         <div className="flex justify-end gap-2">

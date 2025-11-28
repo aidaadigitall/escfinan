@@ -681,6 +681,47 @@ export type Database = {
         }
         Relationships: []
       }
+      transaction_status_history: {
+        Row: {
+          created_at: string
+          created_by_name: string | null
+          id: string
+          new_status: string
+          observation: string | null
+          old_status: string | null
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_name?: string | null
+          id?: string
+          new_status: string
+          observation?: string | null
+          old_status?: string | null
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by_name?: string | null
+          id?: string
+          new_status?: string
+          observation?: string | null
+          old_status?: string | null
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_status_history_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           account: string | null
