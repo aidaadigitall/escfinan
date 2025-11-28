@@ -26,11 +26,16 @@ const LancamentosDiarios = () => {
     setDialogOpen(true);
   };
 
-  const handleSaveTransaction = (data: any) => {
-    if (dialogType === "income") {
-      createIncome(data);
-    } else {
-      createExpense(data);
+  const handleSaveTransaction = async (data: any) => {
+    try {
+      if (dialogType === "income") {
+        await createIncome(data);
+      } else {
+        await createExpense(data);
+      }
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao salvar transação:", error);
     }
   };
 

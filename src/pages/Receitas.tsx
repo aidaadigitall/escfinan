@@ -62,12 +62,14 @@ const Receitas = () => {
     setTransactionDialogOpen(true);
   };
 
-  const handleSaveTransaction = (data: any) => {
+  const handleSaveTransaction = async (data: any) => {
     if (data.id) {
-      updateTransaction(data);
+      await updateTransaction(data);
     } else {
-      createTransaction(data);
+      await createTransaction(data);
     }
+    setTransactionDialogOpen(false);
+    setTransactionToEdit(undefined);
   };
 
   const summaryData = useMemo(() => {
