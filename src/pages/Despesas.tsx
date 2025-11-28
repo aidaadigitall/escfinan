@@ -434,9 +434,14 @@ const Despesas = () => {
         <TransactionDialog
           open={transactionDialogOpen}
           onOpenChange={setTransactionDialogOpen}
-          transaction={editingTransaction}
+          transaction={editingTransaction || undefined}
           type="expense"
-          onSave={() => {
+          onSave={async (data) => {
+            if (data.id) {
+              await updateTransaction(data);
+            } else {
+              await createTransaction(data);
+            }
             setTransactionDialogOpen(false);
             setEditingTransaction(null);
           }}

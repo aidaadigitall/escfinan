@@ -146,22 +146,17 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
       });
 
       const installments = parseInt(formData.installments) || 1;
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error("Usuário não autenticado");
 
-      // Se há parcelamento, criar múltiplas transações
+      // Se há parcelamento, criar múltiplas transações através do onSave
       if (installments > 1 && !transaction) {
         const installmentAmount = parseFloat(formData.amount) / installments;
         const baseDate = new Date(formData.due_date);
         
-        const installmentPromises = [];
         for (let i = 0; i < installments; i++) {
           const installmentDate = new Date(baseDate);
           installmentDate.setMonth(installmentDate.getMonth() + i);
           
           const installmentData = {
-            user_id: user.id,
             description: `${formData.description} (${i + 1}/${installments})`,
             amount: installmentAmount,
             type: formData.type,
@@ -174,14 +169,13 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
             payment_method: formData.payment_method || undefined,
             bank_account_id: formData.bank_account_id || undefined,
             notes: formData.notes || undefined,
+            paid_amount: formData.paid_amount ? parseFloat(formData.paid_amount) / installments : undefined,
+            paid_date: formData.paid_date || undefined,
           };
           
-          installmentPromises.push(
-            supabase.from("transactions").insert(installmentData)
-          );
+          onSave(installmentData);
         }
         
-        await Promise.all(installmentPromises);
         toast.success(`${installments} parcelas criadas com sucesso!`);
         onOpenChange(false);
         return;

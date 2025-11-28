@@ -49,7 +49,7 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
     first_installment_date: new Date().toISOString().split('T')[0],
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isRecurring && formData.installments) {
@@ -105,7 +105,10 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
         });
       }
 
-      transactions.forEach(transaction => onSave(transaction));
+      // Aguardar todas as transações serem salvas
+      for (const transaction of transactions) {
+        await onSave(transaction);
+      }
     } else {
       const transactionData = {
         description: formData.description,
@@ -123,7 +126,7 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
         status: type === "income" ? "received" : "paid",
       };
 
-      onSave(transactionData);
+      await onSave(transactionData);
     }
     
     setFormData({
