@@ -31,14 +31,12 @@ interface Transaction {
 
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 
-const statusOptions = [ { value: "em_aberto", label: "Em aberto" },
-  { value: "confirmado", label: "Confirmado" },
-  { value: "permuta", label: "Permuta" },
-  { value: "em_protesto", label: "Em protesto" },
-  { value: "negociado", label: "Negociado" },
-  { value: "inadimplencia_irrecuperavel", label: "Inadimplência irrecuperável" },
-  { value: "pago", label: "Pago" }, // Para despesas
-  { value: "recebido", label: "Recebido" }, // Para receitas
+const statusOptions = [
+  { value: "pending", label: "Pendente" },
+  { value: "confirmed", label: "Confirmado" },
+  { value: "overdue", label: "Vencido" },
+  { value: "paid", label: "Pago" },
+  { value: "received", label: "Recebido" },
 ];
 
 const paymentMethods = [
@@ -68,43 +66,44 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
 
   useEffect(() => {
     if (transaction) {
-      // Mapeia o status interno para o label do formulário
-      const initialStatus = transaction.status === "paid" ? "pago" : transaction.status === "received" ? "recebido" : transaction.status;
-      setCurrentStatus(initialStatus || "em_aberto");
+      setCurrentStatus(transaction.status || "pending");
       setDescription(transaction.description || "");
       setValueReceived(transaction.amount.toString() || "");
-      // Inicializa a data de compensação com a data atual se não houver uma
       setCompensationDate(new Date());
-      // setPaymentMethod(transaction.payment_method || "");
-      // setBankAccount(transaction.bank_account_id || "");
+      setPaymentMethod("");
+      setBankAccount("");
+      setObservation("");
+      setComplementaryInfo("");
     }
   }, [transaction]);
 
   const handleSubmit = () => {
     // Validate required fields for confirmed/paid/received status
-    if (currentStatus === "confirmado" || currentStatus === "pago" || currentStatus === "recebido" || currentStatus === "confirmed" || currentStatus === "paid" || currentStatus === "received") {
+    if (currentStatus === "confirmed" || currentStatus === "paid" || currentStatus === "received") {
       if (!valueReceived || !compensationDate || !paymentMethod || !bankAccount) {
         toast.error("Preencha todos os campos obrigatórios para confirmar a transação.");
         return;
       }
     }
 
-    // Map status from form to database
-    let dbStatus = currentStatus;
-    if (currentStatus === "pago") dbStatus = "paid";
-    if (currentStatus === "recebido") dbStatus = "received";
-    if (currentStatus === "confirmado") dbStatus = "confirmed";
-
-    const newTransactionData = {
+    const newTransactionData: any = {
       id: transaction.id,
-      status: dbStatus,
-      paid_amount: parseFloat(valueReceived),
-      paid_date: compensationDate ? format(compensationDate, "yyyy-MM-dd") : null,
-      payment_method: paymentMethod,
-      bank_account_id: bankAccount,
-      notes: observation || complementaryInfo,
+      status: currentStatus,
       description: description,
     };
+
+    // Adiciona campos de pagamento apenas se status for confirmado/pago/recebido
+    if (currentStatus === "confirmed" || currentStatus === "paid" || currentStatus === "received") {
+      newTransactionData.paid_amount = parseFloat(valueReceived) || 0;
+      newTransactionData.paid_date = compensationDate ? format(compensationDate, "yyyy-MM-dd") : null;
+      newTransactionData.payment_method = paymentMethod;
+      newTransactionData.bank_account_id = bankAccount;
+    }
+
+    // Adiciona notas se houver
+    if (observation || complementaryInfo) {
+      newTransactionData.notes = observation || complementaryInfo;
+    }
 
     onStatusChange(transaction.id, newTransactionData);
     onOpenChange(false);
@@ -112,7 +111,7 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
 
   if (!transaction) return null;
 
-  const isConfirmedOrPaid = currentStatus === "confirmado" || currentStatus === "pago" || currentStatus === "recebido";
+  const isConfirmedOrPaid = currentStatus === "confirmed" || currentStatus === "paid" || currentStatus === "received";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
