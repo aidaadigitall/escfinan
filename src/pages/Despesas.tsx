@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { TransactionFormTabs } from "@/components/TransactionFormTabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 
 const Despesas = () => {
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
+  const [showTabsDialog, setShowTabsDialog] = useState(false);
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
@@ -207,7 +209,7 @@ const Despesas = () => {
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
-    setTransactionDialogOpen(true);
+    setShowTabsDialog(true);
   };
 
   const handleView = (transaction: Transaction) => {
@@ -478,6 +480,44 @@ const Despesas = () => {
           setSearchOpen(false);
         }}
         onClear={() => setFilters({})}
+      />
+
+      <TransactionDialog
+        open={transactionDialogOpen}
+        onOpenChange={(open) => {
+          setTransactionDialogOpen(open);
+          if (!open) setEditingTransaction(null);
+        }}
+        type="expense"
+        transaction={editingTransaction}
+        onSave={async (data) => {
+          if (data.id) {
+            await updateTransaction(data);
+          } else {
+            await createTransaction(data);
+          }
+          setTransactionDialogOpen(false);
+          setEditingTransaction(null);
+        }}
+      />
+
+      <TransactionFormTabs
+        open={showTabsDialog}
+        onOpenChange={(open) => {
+          setShowTabsDialog(open);
+          if (!open) setEditingTransaction(null);
+        }}
+        type="expense"
+        transaction={editingTransaction}
+        onSave={async (data) => {
+          if (data.id) {
+            await updateTransaction(data);
+          } else {
+            await createTransaction(data);
+          }
+          setShowTabsDialog(false);
+          setEditingTransaction(null);
+        }}
       />
 
       {transactionToChangeStatus && (

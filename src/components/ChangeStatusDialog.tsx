@@ -83,7 +83,7 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
     }
   }, [transaction]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate required fields for confirmed/paid/received status
     if (currentStatus === "confirmed" || currentStatus === "paid" || currentStatus === "received") {
       if (!valueReceived || !compensationDate || !paymentMethod || !bankAccount) {
@@ -93,17 +93,20 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
     }
 
     const newTransactionData: any = {
-      id: transaction.id,
       status: currentStatus,
       description: description,
     };
 
     // Adiciona campos de pagamento apenas se status for confirmado/pago/recebido
     if (currentStatus === "confirmed" || currentStatus === "paid" || currentStatus === "received") {
-      newTransactionData.paid_amount = parseFloat(valueReceived) || 0;
+      newTransactionData.paid_amount = parseFloat(valueReceived) || transaction.amount;
       newTransactionData.paid_date = compensationDate ? format(compensationDate, "yyyy-MM-dd") : null;
       newTransactionData.payment_method = paymentMethod;
       newTransactionData.bank_account_id = bankAccount;
+    } else {
+      // Se o status não for confirmado/pago/recebido, limpa os campos de pagamento
+      newTransactionData.paid_amount = null;
+      newTransactionData.paid_date = null;
     }
 
     // Adiciona notas se houver

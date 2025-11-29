@@ -26,6 +26,7 @@ import { TableSortHeader } from "@/components/TableSortHeader";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { PartialPaymentDialog } from "@/components/PartialPaymentDialog";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { TransactionFormTabs } from "@/components/TransactionFormTabs";
 import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import {
   DropdownMenu,
@@ -40,6 +41,7 @@ import { ChangeStatusDialog } from "@/components/ChangeStatusDialog";
 
 const Receitas = () => {
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
+  const [showTabsDialog, setShowTabsDialog] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | undefined>(undefined);
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -221,7 +223,8 @@ const Receitas = () => {
   }, [transactions, activeFilter, filters, sortKey, sortDirection]);
 
   const handleEdit = (transaction: Transaction) => {
-    handleOpenTransactionDialog(transaction);
+    setTransactionToEdit(transaction);
+    setShowTabsDialog(true);
   };
 
   const handleView = (transaction: Transaction) => {
@@ -477,6 +480,17 @@ const Receitas = () => {
       <TransactionDialog
         open={transactionDialogOpen}
         onOpenChange={setTransactionDialogOpen}
+        type="income"
+        transaction={transactionToEdit}
+        onSave={handleSaveTransaction}
+      />
+
+      <TransactionFormTabs
+        open={showTabsDialog}
+        onOpenChange={(open) => {
+          setShowTabsDialog(open);
+          if (!open) setTransactionToEdit(undefined);
+        }}
         type="income"
         transaction={transactionToEdit}
         onSave={handleSaveTransaction}
