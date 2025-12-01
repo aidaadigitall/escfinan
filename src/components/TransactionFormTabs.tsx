@@ -13,14 +13,12 @@ import { CalendarIcon, Upload, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCategories } from "@/hooks/useCategories";
-import { useCostCenters } from "@/hooks/useCostCenters";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { useClients } from "@/hooks/useClients";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useChartOfAccounts } from "@/hooks/useChartOfAccounts";
 import { QuickCategoryDialog } from "./QuickCategoryDialog";
-import { QuickCostCenterDialog } from "./QuickCostCenterDialog";
 import { QuickPaymentMethodDialog } from "./QuickPaymentMethodDialog";
 
 interface TransactionFormTabsProps {
@@ -43,7 +41,6 @@ export const TransactionFormTabs = ({
   
   // Quick add dialogs
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
-  const [showCostCenterDialog, setShowCostCenterDialog] = useState(false);
   const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
 
   // Form data - Lançamento Financeiro
@@ -52,7 +49,6 @@ export const TransactionFormTabs = ({
   const [paymentMethod, setPaymentMethod] = useState("");
   const [situation, setSituation] = useState("pending");
   const [dueDate, setDueDate] = useState<Date>();
-  const [costCenterId, setCostCenterId] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
   const [compensationDate, setCompensationDate] = useState<Date>();
   
@@ -72,7 +68,6 @@ export const TransactionFormTabs = ({
   const [additionalInfo, setAdditionalInfo] = useState("");
 
   const { categories } = useCategories(type);
-  const { costCenters } = useCostCenters();
   const { paymentMethods } = usePaymentMethods();
   const { accounts: bankAccounts } = useBankAccounts();
   const { clients } = useClients();
@@ -93,7 +88,6 @@ export const TransactionFormTabs = ({
       setPaymentMethod(transaction.payment_method || "");
       setSituation(transaction.status || "pending");
       setDueDate(transaction.due_date ? new Date(transaction.due_date) : undefined);
-      setCostCenterId(transaction.cost_center_id || "");
       setBankAccountId(transaction.bank_account_id || "");
       setCompensationDate(transaction.paid_date ? new Date(transaction.paid_date) : undefined);
       setGrossAmount(transaction.amount?.toString() || "");
@@ -107,7 +101,6 @@ export const TransactionFormTabs = ({
       setPaymentMethod("");
       setSituation("pending");
       setDueDate(undefined);
-      setCostCenterId("");
       setBankAccountId("");
       setCompensationDate(undefined);
       setGrossAmount("");
@@ -154,7 +147,6 @@ export const TransactionFormTabs = ({
           payment_method: paymentMethod || null,
           status: situation,
           due_date: format(installmentDate, "yyyy-MM-dd"),
-          cost_center_id: costCenterId || null,
           bank_account_id: bankAccountId || null,
           paid_date: compensationDate ? format(compensationDate, "yyyy-MM-dd") : null,
           paid_amount: situation === "confirmed" || situation === "paid" || situation === "received" ? installmentAmount : null,
@@ -173,7 +165,6 @@ export const TransactionFormTabs = ({
         payment_method: paymentMethod || null,
         status: situation,
         due_date: format(dueDate, "yyyy-MM-dd"),
-        cost_center_id: costCenterId || null,
         bank_account_id: bankAccountId || null,
         paid_date: compensationDate ? format(compensationDate, "yyyy-MM-dd") : null,
         paid_amount: situation === "confirmed" || situation === "paid" || situation === "received" ? total : null,
@@ -302,31 +293,6 @@ export const TransactionFormTabs = ({
                           />
                         </PopoverContent>
                       </Popover>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <Label>Centro de custo</Label>
-                        <Button
-                          type="button"
-                          variant="link"
-                          size="sm"
-                          className="h-auto p-0 text-xs"
-                          onClick={() => setShowCostCenterDialog(true)}
-                        >
-                          + Criar
-                        </Button>
-                      </div>
-                      <Select value={costCenterId} onValueChange={setCostCenterId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o centro de custo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {costCenters.map((cc) => (
-                            <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
 
                     <div className="space-y-2">
@@ -646,10 +612,6 @@ export const TransactionFormTabs = ({
         open={showCategoryDialog}
         onOpenChange={setShowCategoryDialog}
         type={type}
-      />
-      <QuickCostCenterDialog
-        open={showCostCenterDialog}
-        onOpenChange={setShowCostCenterDialog}
       />
       <QuickPaymentMethodDialog
         open={showPaymentMethodDialog}
