@@ -389,8 +389,8 @@ const Despesas = () => {
           </TableHeader>
           <TableBody>
             {filteredAndSortedTransactions.map((transaction) => {
-              const statusText = transaction.status === 'paid' ? 'Pago' : transaction.status === 'received' ? 'Recebido' : transaction.status === 'pending' ? 'Pendente' : 'Vencido';
-              const statusVariant = transaction.status === 'paid' || transaction.status === 'received' ? 'default' : transaction.status === 'pending' ? 'secondary' : 'destructive';
+              const statusText = transaction.status === 'paid' ? 'Pago' : transaction.status === 'received' ? 'Recebido' : transaction.status === 'confirmed' ? 'Confirmado' : transaction.status === 'pending' ? 'Pendente' : 'Vencido';
+              const statusVariant = transaction.status === 'paid' || transaction.status === 'received' || transaction.status === 'confirmed' ? 'default' : transaction.status === 'pending' ? 'secondary' : 'destructive';
               const statusClass = transaction.status === 'pending' ? 'bg-orange-500 text-white hover:bg-orange-600' : '';
 
               return (
