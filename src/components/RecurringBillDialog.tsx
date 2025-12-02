@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useEffect, useMemo } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { CalendarDays, DollarSign, Tag, Building2, Users, Truck, FileText, CreditCard, FolderOpen } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { useCostCenters } from "@/hooks/useCostCenters";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { useBankAccounts } from "@/hooks/useBankAccounts";
+import { useSuppliers } from "@/hooks/useSuppliers";
+import { useClients } from "@/hooks/useClients";
+import { useChartOfAccounts } from "@/hooks/useChartOfAccounts";
+import { SearchableSelect } from "@/components/SearchableSelect";
+import { QuickCategoryDialog } from "@/components/QuickCategoryDialog";
+import { QuickCostCenterDialog } from "@/components/QuickCostCenterDialog";
+import { QuickPaymentMethodDialog } from "@/components/QuickPaymentMethodDialog";
+import { QuickBankAccountDialog } from "@/components/QuickBankAccountDialog";
+import { QuickSupplierDialog } from "@/components/QuickSupplierDialog";
+import { QuickClientDialog } from "@/components/QuickClientDialog";
+import { QuickChartOfAccountDialog } from "@/components/QuickChartOfAccountDialog";
 
 interface RecurringBillDialogProps {
   open: boolean;
@@ -33,62 +45,45 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
     bank_account_id: "",
     cost_center_id: "",
     payment_method_id: "",
+    supplier_id: "",
+    client_id: "",
+    chart_account_id: "",
     notes: "",
   });
 
+  // Quick dialogs state
   const [showNewCategory, setShowNewCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
   const [showNewCostCenter, setShowNewCostCenter] = useState(false);
-  const [newCostCenterName, setNewCostCenterName] = useState("");
   const [showNewPaymentMethod, setShowNewPaymentMethod] = useState(false);
-  const [newPaymentMethodName, setNewPaymentMethodName] = useState("");
+  const [showNewBankAccount, setShowNewBankAccount] = useState(false);
+  const [showNewSupplier, setShowNewSupplier] = useState(false);
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [showNewChartAccount, setShowNewChartAccount] = useState(false);
 
-  const { categories, isLoading: categoriesLoading, createCategory } = useCategories(formData.type as "income" | "expense");
-  const { costCenters, isLoading: costCentersLoading, createCostCenter } = useCostCenters();
-  const { paymentMethods, isLoading: paymentMethodsLoading, createPaymentMethod } = usePaymentMethods();
+  // Hooks for data
+  const { categories } = useCategories(formData.type as "income" | "expense");
+  const { costCenters } = useCostCenters();
+  const { paymentMethods } = usePaymentMethods();
+  const { accounts: bankAccounts } = useBankAccounts();
+  const { suppliers } = useSuppliers();
+  const { clients } = useClients();
+  const { accounts: chartAccounts } = useChartOfAccounts();
 
-  const { data: bankAccounts = [] } = useQuery({
-    queryKey: ["bank-accounts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("bank_accounts")
-        .select("*")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const handleCreateCategory = () => {
-    if (!newCategoryName.trim()) {
-      toast.error("Digite um nome para a categoria");
-      return;
-    }
-    createCategory({ name: newCategoryName, type: formData.type as "income" | "expense" });
-    setNewCategoryName("");
-    setShowNewCategory(false);
-  };
-
-  const handleCreateCostCenter = () => {
-    if (!newCostCenterName.trim()) {
-      toast.error("Digite um nome para o centro de custo");
-      return;
-    }
-    createCostCenter({ name: newCostCenterName, is_active: true });
-    setNewCostCenterName("");
-    setShowNewCostCenter(false);
-  };
-
-  const handleCreatePaymentMethod = () => {
-    if (!newPaymentMethodName.trim()) {
-      toast.error("Digite um nome para a forma de pagamento");
-      return;
-    }
-    createPaymentMethod(newPaymentMethodName);
-    setNewPaymentMethodName("");
-    setShowNewPaymentMethod(false);
-  };
+  // Convert to options format
+  const categoryOptions = useMemo(() => 
+    categories.map(c => ({ value: c.id, label: c.name })), [categories]);
+  const costCenterOptions = useMemo(() => 
+    costCenters.map(c => ({ value: c.id, label: c.name })), [costCenters]);
+  const paymentMethodOptions = useMemo(() => 
+    paymentMethods.map(p => ({ value: p.id, label: p.name })), [paymentMethods]);
+  const bankAccountOptions = useMemo(() => 
+    bankAccounts.map(a => ({ value: a.id, label: a.name })), [bankAccounts]);
+  const supplierOptions = useMemo(() => 
+    suppliers.map(s => ({ value: s.id, label: s.name })), [suppliers]);
+  const clientOptions = useMemo(() => 
+    clients.map(c => ({ value: c.id, label: c.name })), [clients]);
+  const chartAccountOptions = useMemo(() => 
+    chartAccounts.map(a => ({ value: a.id, label: `${a.code} - ${a.name}` })), [chartAccounts]);
 
   useEffect(() => {
     if (bill) {
@@ -104,6 +99,9 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
         bank_account_id: bill.bank_account_id || "",
         cost_center_id: bill.cost_center_id || "",
         payment_method_id: bill.payment_method_id || "",
+        supplier_id: bill.supplier_id || "",
+        client_id: bill.client_id || "",
+        chart_account_id: bill.chart_account_id || "",
         notes: bill.notes || "",
       });
     } else {
@@ -119,6 +117,9 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
         bank_account_id: "",
         cost_center_id: "",
         payment_method_id: "",
+        supplier_id: "",
+        client_id: "",
+        chart_account_id: "",
         notes: "",
       });
     }
@@ -174,233 +175,323 @@ export const RecurringBillDialog = ({ open, onOpenChange, bill }: RecurringBillD
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{bill ? "Editar" : "Adicionar"} Conta Fixa</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <Label htmlFor="description">Descrição *</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                required
-              />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border-border/50 shadow-xl">
+          <DialogHeader className="pb-4 border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10">
+                <CalendarDays className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">{bill ? "Editar" : "Adicionar"} Conta Fixa</DialogTitle>
+                <DialogDescription>
+                  Configure os detalhes da conta fixa recorrente
+                </DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
-            <div>
-              <Label htmlFor="type">Tipo *</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="income">Receita</SelectItem>
-                  <SelectItem value="expense">Despesa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+            {/* Seção: Informações Básicas */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Informações Básicas
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl">
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="description">Descrição *</Label>
+                  <Input
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Ex: Aluguel, Internet, Salário..."
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
 
-            <div>
-              <Label htmlFor="recurrence_type">Recorrência *</Label>
-              <Select value={formData.recurrence_type} onValueChange={(value) => setFormData({ ...formData, recurrence_type: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Diário</SelectItem>
-                  <SelectItem value="weekly">Semanal</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                  <SelectItem value="2months">Bimestral</SelectItem>
-                  <SelectItem value="3months">Trimestral</SelectItem>
-                  <SelectItem value="4months">Quadrimestral</SelectItem>
-                  <SelectItem value="6months">Semestral</SelectItem>
-                  <SelectItem value="yearly">Anual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="amount">Valor *</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="recurrence_day">Dia da Recorrência</Label>
-              <Input
-                id="recurrence_day"
-                type="number"
-                min="1"
-                max="31"
-                value={formData.recurrence_day}
-                onChange={(e) => setFormData({ ...formData, recurrence_day: e.target.value })}
-                placeholder="1-31"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="start_date">Data de Início *</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="end_date">Data de Término</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="category_id">Categoria</Label>
-              {!showNewCategory ? (
-                <div className="flex gap-2">
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                <div className="space-y-2">
+                  <Label>Tipo *</Label>
+                  <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value, category_id: "" })}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat: any) => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="income">Receita</SelectItem>
+                      <SelectItem value="expense">Despesa</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewCategory(true)}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Nova categoria"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreateCategory())}
-                  />
-                  <Button type="button" onClick={handleCreateCategory}>Criar</Button>
-                  <Button type="button" variant="outline" onClick={() => setShowNewCategory(false)}>Cancelar</Button>
-                </div>
-              )}
-            </div>
 
-            <div>
-              <Label htmlFor="bank_account_id">Conta Bancária</Label>
-              <Select value={formData.bank_account_id} onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {bankAccounts.map((acc: any) => (
-                    <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="cost_center_id">Centro de Custo</Label>
-              {!showNewCostCenter ? (
-                <div className="flex gap-2">
-                  <Select value={formData.cost_center_id} onValueChange={(value) => setFormData({ ...formData, cost_center_id: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                <div className="space-y-2">
+                  <Label>Recorrência *</Label>
+                  <Select value={formData.recurrence_type} onValueChange={(value) => setFormData({ ...formData, recurrence_type: value })}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {costCenters.map((cc: any) => (
-                        <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>
-                      ))}
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="daily">Diário</SelectItem>
+                      <SelectItem value="weekly">Semanal</SelectItem>
+                      <SelectItem value="monthly">Mensal</SelectItem>
+                      <SelectItem value="2months">Bimestral</SelectItem>
+                      <SelectItem value="3months">Trimestral</SelectItem>
+                      <SelectItem value="4months">Quadrimestral</SelectItem>
+                      <SelectItem value="6months">Semestral</SelectItem>
+                      <SelectItem value="yearly">Anual</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewCostCenter(true)}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
-              ) : (
-                <div className="flex gap-2">
+              </div>
+            </div>
+
+            {/* Seção: Valores e Datas */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Valores e Datas
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-xl">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Valor *</Label>
                   <Input
-                    placeholder="Novo centro de custo"
-                    value={newCostCenterName}
-                    onChange={(e) => setNewCostCenterName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreateCostCenter())}
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="0,00"
+                    className="rounded-xl"
+                    required
                   />
-                  <Button type="button" onClick={handleCreateCostCenter}>Criar</Button>
-                  <Button type="button" variant="outline" onClick={() => setShowNewCostCenter(false)}>Cancelar</Button>
                 </div>
-              )}
-            </div>
 
-            <div>
-              <Label htmlFor="payment_method_id">Forma de Pagamento</Label>
-              {!showNewPaymentMethod ? (
-                <div className="flex gap-2">
-                  <Select value={formData.payment_method_id} onValueChange={(value) => setFormData({ ...formData, payment_method_id: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentMethods.map((pm: any) => (
-                        <SelectItem key={pm.id} value={pm.id}>{pm.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewPaymentMethod(true)}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="recurrence_day">Dia da Recorrência</Label>
                   <Input
-                    placeholder="Nova forma de pagamento"
-                    value={newPaymentMethodName}
-                    onChange={(e) => setNewPaymentMethodName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreatePaymentMethod())}
+                    id="recurrence_day"
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={formData.recurrence_day}
+                    onChange={(e) => setFormData({ ...formData, recurrence_day: e.target.value })}
+                    placeholder="1-31"
+                    className="rounded-xl"
                   />
-                  <Button type="button" onClick={handleCreatePaymentMethod}>Criar</Button>
-                  <Button type="button" variant="outline" onClick={() => setShowNewPaymentMethod(false)}>Cancelar</Button>
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="start_date">Data de Início *</Label>
+                  <Input
+                    id="start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="end_date">Data de Término</Label>
+                  <Input
+                    id="end_date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    className="rounded-xl"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="col-span-2">
-              <Label htmlFor="notes">Observações</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
-              />
-            </div>
-          </div>
+            {/* Seção: Classificação */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                Classificação
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl">
+                <div className="space-y-2">
+                  <Label>Categoria</Label>
+                  <SearchableSelect
+                    options={categoryOptions}
+                    value={formData.category_id}
+                    onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                    placeholder="Buscar categoria..."
+                    searchPlaceholder="Digite para buscar..."
+                    emptyMessage="Nenhuma categoria encontrada"
+                    onAddNew={() => setShowNewCategory(true)}
+                    addNewLabel="Criar nova categoria"
+                  />
+                </div>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+                <div className="space-y-2">
+                  <Label>Centro de Custo</Label>
+                  <SearchableSelect
+                    options={costCenterOptions}
+                    value={formData.cost_center_id}
+                    onValueChange={(value) => setFormData({ ...formData, cost_center_id: value })}
+                    placeholder="Buscar centro de custo..."
+                    searchPlaceholder="Digite para buscar..."
+                    emptyMessage="Nenhum centro de custo encontrado"
+                    onAddNew={() => setShowNewCostCenter(true)}
+                    addNewLabel="Criar novo centro de custo"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Plano de Contas</Label>
+                  <SearchableSelect
+                    options={chartAccountOptions}
+                    value={formData.chart_account_id}
+                    onValueChange={(value) => setFormData({ ...formData, chart_account_id: value })}
+                    placeholder="Buscar plano de contas..."
+                    searchPlaceholder="Digite para buscar..."
+                    emptyMessage="Nenhuma conta encontrada"
+                    onAddNew={() => setShowNewChartAccount(true)}
+                    addNewLabel="Criar nova conta"
+                  />
+                </div>
+
+                {formData.type === "expense" ? (
+                  <div className="space-y-2">
+                    <Label>Fornecedor</Label>
+                    <SearchableSelect
+                      options={supplierOptions}
+                      value={formData.supplier_id}
+                      onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
+                      placeholder="Buscar fornecedor..."
+                      searchPlaceholder="Digite para buscar..."
+                      emptyMessage="Nenhum fornecedor encontrado"
+                      onAddNew={() => setShowNewSupplier(true)}
+                      addNewLabel="Cadastrar novo fornecedor"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Cliente</Label>
+                    <SearchableSelect
+                      options={clientOptions}
+                      value={formData.client_id}
+                      onValueChange={(value) => setFormData({ ...formData, client_id: value })}
+                      placeholder="Buscar cliente..."
+                      searchPlaceholder="Digite para buscar..."
+                      emptyMessage="Nenhum cliente encontrado"
+                      onAddNew={() => setShowNewClient(true)}
+                      addNewLabel="Cadastrar novo cliente"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Seção: Pagamento */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Pagamento
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl">
+                <div className="space-y-2">
+                  <Label>Conta Bancária</Label>
+                  <SearchableSelect
+                    options={bankAccountOptions}
+                    value={formData.bank_account_id}
+                    onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}
+                    placeholder="Buscar conta bancária..."
+                    searchPlaceholder="Digite para buscar..."
+                    emptyMessage="Nenhuma conta encontrada"
+                    onAddNew={() => setShowNewBankAccount(true)}
+                    addNewLabel="Criar nova conta bancária"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Forma de Pagamento</Label>
+                  <SearchableSelect
+                    options={paymentMethodOptions}
+                    value={formData.payment_method_id}
+                    onValueChange={(value) => setFormData({ ...formData, payment_method_id: value })}
+                    placeholder="Buscar forma de pagamento..."
+                    searchPlaceholder="Digite para buscar..."
+                    emptyMessage="Nenhuma forma de pagamento encontrada"
+                    onAddNew={() => setShowNewPaymentMethod(true)}
+                    addNewLabel="Criar nova forma de pagamento"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Seção: Observações */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <FolderOpen className="h-4 w-4" />
+                Observações
+              </h3>
+              <div className="p-4 bg-muted/30 rounded-xl">
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Adicione observações sobre esta conta fixa..."
+                  rows={3}
+                  className="rounded-xl resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Botões */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saveMutation.isPending} className="rounded-xl px-8">
+                {saveMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick dialogs */}
+      <QuickCategoryDialog
+        open={showNewCategory}
+        onOpenChange={setShowNewCategory}
+        type={formData.type as "income" | "expense"}
+        onSuccess={(id) => setFormData({ ...formData, category_id: id })}
+      />
+      <QuickCostCenterDialog
+        open={showNewCostCenter}
+        onOpenChange={setShowNewCostCenter}
+        onSuccess={(id) => setFormData({ ...formData, cost_center_id: id })}
+      />
+      <QuickPaymentMethodDialog
+        open={showNewPaymentMethod}
+        onOpenChange={setShowNewPaymentMethod}
+        onSuccess={(id) => setFormData({ ...formData, payment_method_id: id })}
+      />
+      <QuickBankAccountDialog
+        open={showNewBankAccount}
+        onOpenChange={setShowNewBankAccount}
+        onSuccess={(id) => setFormData({ ...formData, bank_account_id: id })}
+      />
+      <QuickSupplierDialog
+        open={showNewSupplier}
+        onOpenChange={setShowNewSupplier}
+        onSuccess={(id) => setFormData({ ...formData, supplier_id: id })}
+      />
+      <QuickClientDialog
+        open={showNewClient}
+        onOpenChange={setShowNewClient}
+        onSuccess={(id) => setFormData({ ...formData, client_id: id })}
+      />
+      <QuickChartOfAccountDialog
+        open={showNewChartAccount}
+        onOpenChange={setShowNewChartAccount}
+        onSuccess={(id) => setFormData({ ...formData, chart_account_id: id })}
+      />
+    </>
   );
 };
