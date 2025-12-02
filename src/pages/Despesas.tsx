@@ -390,8 +390,15 @@ const Despesas = () => {
           <TableBody>
             {filteredAndSortedTransactions.map((transaction) => {
               const statusText = transaction.status === 'paid' ? 'Pago' : transaction.status === 'received' ? 'Recebido' : transaction.status === 'confirmed' ? 'Confirmado' : transaction.status === 'pending' ? 'Pendente' : 'Vencido';
-              const statusVariant = transaction.status === 'paid' || transaction.status === 'received' || transaction.status === 'confirmed' ? 'default' : transaction.status === 'pending' ? 'secondary' : 'destructive';
-              const statusClass = transaction.status === 'pending' ? 'bg-orange-500 text-white hover:bg-orange-600' : '';
+              const statusVariant = transaction.status === 'pending' ? 'secondary' : transaction.status === 'overdue' ? 'destructive' : 'default';
+              // Green colors: confirmed = dark green, paid/received = lighter green
+              const statusClass = transaction.status === 'confirmed' 
+                ? 'bg-green-700 text-white hover:bg-green-800' 
+                : transaction.status === 'paid' || transaction.status === 'received' 
+                  ? 'bg-green-500 text-white hover:bg-green-600' 
+                  : transaction.status === 'pending' 
+                    ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                    : '';
 
               return (
                 <TableRow key={transaction.id}>

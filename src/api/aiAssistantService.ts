@@ -1,6 +1,7 @@
 // Este arquivo contém apenas a lógica de chamada para o backend
-// A OpenAI é chamada apenas no servidor (seguro)
+// A IA é chamada através do Lovable AI Gateway
 import { supabase } from "@/integrations/supabase/client";
+
 interface AIAssistantRequest {
   message: string;
   systemData?: {
@@ -23,70 +24,46 @@ interface AIAssistantResponse {
   creditsRemaining?: number;
 }
 
-// Get the API base URL - use absolute URL in production
-const getApiBaseUrl = () => {
-  // In production (Lovable), use the backend API directly
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return 'https://apifinanbk.escsistemas.com';
-  }
-  // In development, use relative path (proxy will handle it)
-  return '';
-};
-
-// Helper function to fetch with timeout
-const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 60000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-};
-
 /**
- * Chama o assistente de IA através do backend
- * O backend é responsável por chamar a OpenAI com segurança
+ * Chama o assistente de IA através da edge function
+ * A edge function usa o Lovable AI Gateway
  */
 export const callAIAssistant = async (
   request: AIAssistantRequest
 ): Promise<AIAssistantResponse> => {
   try {
-    // Get Supabase session token for authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error("Usuário não autenticado");
-    }
+    // Build messages array from conversation history
+    const messages = request.conversationHistory?.map(m => ({
+      role: m.role,
+      content: m.content
+    })) || [];
 
-    const apiUrl = getApiBaseUrl();
-    // Increase timeout to 90 seconds for AI responses (OpenAI can be slow)
-    const response = await fetchWithTimeout(
-      `${apiUrl}/api/ai-assistant`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(request),
-      },
-      90000
-    );
+    // Add current user message
+    messages.push({
+      role: "user" as const,
+      content: request.message
+    });
 
-    if (!response.ok) {
-      const error = await response.json();
+    const { data, error } = await supabase.functions.invoke('chat', {
+      body: { 
+        messages,
+        systemData: request.systemData
+      }
+    });
+
+    if (error) {
+      console.error("Erro ao chamar assistente de IA:", error);
       throw new Error(error.message || "Erro ao conectar com o assistente");
     }
 
-    const data: AIAssistantResponse = await response.json();
-    return data;
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return {
+      response: data.response,
+      type: data.type || "text",
+    };
   } catch (error) {
     console.error("Erro ao chamar assistente de IA:", error);
     throw error;
@@ -107,33 +84,34 @@ export const generateFinancialInsights = async (
   }
 ): Promise<string> => {
   try {
-    // Get Supabase session token for authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error("Usuário não autenticado");
+    const prompt = `Analise os seguintes dados financeiros e forneça insights úteis:
+
+Total de Receitas: R$ ${analysis.totalIncome.toLocaleString('pt-BR')}
+Total de Despesas: R$ ${analysis.totalExpense.toLocaleString('pt-BR')}
+Saldo: R$ ${analysis.balance.toLocaleString('pt-BR')}
+
+Principais Despesas:
+${analysis.topExpenses.map(e => `- ${e.description}: R$ ${e.amount.toLocaleString('pt-BR')}`).join('\n')}
+
+Principais Receitas:
+${analysis.topIncomes.map(i => `- ${i.description}: R$ ${i.amount.toLocaleString('pt-BR')}`).join('\n')}
+
+Tendência Mensal:
+${analysis.monthlyTrend.map(m => `- ${m.month}: Receitas R$ ${m.income.toLocaleString('pt-BR')}, Despesas R$ ${m.expense.toLocaleString('pt-BR')}`).join('\n')}
+
+Forneça 3-5 insights práticos e acionáveis para melhorar a saúde financeira.`;
+
+    const { data, error } = await supabase.functions.invoke('chat', {
+      body: { 
+        messages: [{ role: "user", content: prompt }]
+      }
+    });
+
+    if (error) {
+      throw new Error(error.message || "Erro ao gerar insights");
     }
 
-    const apiUrl = getApiBaseUrl();
-    // Increase timeout to 90 seconds for insights (OpenAI can be slow)
-    const response = await fetchWithTimeout(
-      `${apiUrl}/api/ai-insights`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ analysis }),
-      },
-      90000
-    );
-
-    if (!response.ok) {
-      throw new Error("Erro ao gerar insights");
-    }
-
-    const data = await response.json();
-    return data.insights;
+    return data.response;
   } catch (error) {
     console.error("Erro ao gerar insights:", error);
     throw error;
@@ -141,38 +119,17 @@ export const generateFinancialInsights = async (
 };
 
 /**
- * Busca o saldo de créditos do usuário
+ * Busca o saldo de créditos do usuário (não aplicável ao Lovable AI)
  */
 export const getUserAICredits = async (): Promise<{
   available_credits: number;
   total_credits: number;
   plan_type: string;
 }> => {
-  try {
-    // Get Supabase session token for authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error("Usuário não autenticado");
-    }
-
-    const apiUrl = getApiBaseUrl();
-    const response = await fetchWithTimeout(
-      `${apiUrl}/api/user/ai-credits`,
-      {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      },
-      10000
-    );
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar créditos");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Erro ao buscar créditos:", error);
-    throw error;
-  }
+  // Lovable AI tem créditos inclusos, retornamos valores padrão
+  return {
+    available_credits: 1000,
+    total_credits: 1000,
+    plan_type: "lovable"
+  };
 };

@@ -1,56 +1,83 @@
 import { useTransactions } from "./useTransactions";
 import { useMemo } from "react";
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths, format } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// Helper function to parse date string as local date (avoiding timezone issues)
+const parseLocalDate = (dateString: string): Date => {
+  // Parse the date string as local date to avoid UTC conversion issues
+  const date = parseISO(dateString);
+  return date;
+};
+
+// Helper function to check if a date is within a range (comparing date parts only)
+const isDateInRange = (dateStr: string, start: Date, end: Date): boolean => {
+  const date = parseLocalDate(dateStr);
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const startOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  return dateOnly >= startOnly && dateOnly <= endOnly;
+};
+
+// Helper function to check if a date is today
+const isToday = (dateStr: string): boolean => {
+  const date = parseLocalDate(dateStr);
+  const today = new Date();
+  return date.getFullYear() === today.getFullYear() &&
+         date.getMonth() === today.getMonth() &&
+         date.getDate() === today.getDate();
+};
+
+// Helper function to check if a date is in current month
+const isCurrentMonth = (dateStr: string): boolean => {
+  const date = parseLocalDate(dateStr);
+  const today = new Date();
+  return date.getFullYear() === today.getFullYear() &&
+         date.getMonth() === today.getMonth();
+};
 
 export const useDashboardData = () => {
   const { transactions, isLoading } = useTransactions();
 
   const dashboardData = useMemo(() => {
     const today = new Date();
-    const startToday = startOfDay(today);
-    const endToday = endOfDay(today);
     const startMonth = startOfMonth(today);
     const endMonth = endOfMonth(today);
 
-    // Valores do dia
+    // Valores do dia - somente pendentes (a receber/pagar)
     const todayIncome = transactions
       .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "income" && dueDate >= startToday && dueDate <= endToday;
+        return t.type === "income" && 
+               isToday(t.due_date) && 
+               t.status !== "received" && 
+               t.status !== "confirmed" &&
+               t.status !== "paid";
       })
       .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
     const todayExpenses = transactions
       .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "expense" && dueDate >= startToday && dueDate <= endToday;
+        return t.type === "expense" && 
+               isToday(t.due_date) && 
+               t.status !== "paid" && 
+               t.status !== "confirmed";
       })
       .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-    // Valores do mês
+    // Valores do mês - total previsto
     const monthIncome = transactions
-      .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "income" && dueDate >= startMonth && dueDate <= endMonth;
-      })
+      .filter(t => t.type === "income" && isCurrentMonth(t.due_date))
       .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
     const monthExpenses = transactions
-      .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "expense" && dueDate >= startMonth && dueDate <= endMonth;
-      })
+      .filter(t => t.type === "expense" && isCurrentMonth(t.due_date))
       .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
     // Recebido vs a receber (incluindo parciais)
     const monthIncomeReceived = transactions
-      .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "income" && dueDate >= startMonth && dueDate <= endMonth;
-      })
+      .filter(t => t.type === "income" && isCurrentMonth(t.due_date))
       .reduce((sum, t) => {
-        // Se está confirmado, use paid_amount ou amount
+        // Se está confirmado/recebido, use paid_amount ou amount
         if (t.status === "received" || t.status === "confirmed" || t.status === "paid") {
           const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
           return sum + parseFloat(paidValue.toString());
@@ -64,9 +91,9 @@ export const useDashboardData = () => {
 
     const monthIncomePending = transactions
       .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "income" && dueDate >= startMonth && dueDate <= endMonth && 
-               t.status === "pending";
+        return t.type === "income" && 
+               isCurrentMonth(t.due_date) && 
+               (t.status === "pending" || t.status === "overdue");
       })
       .reduce((sum, t) => {
         const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : 0;
@@ -76,12 +103,9 @@ export const useDashboardData = () => {
 
     // Pago vs a pagar (incluindo parciais)
     const monthExpensesPaid = transactions
-      .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "expense" && dueDate >= startMonth && dueDate <= endMonth;
-      })
+      .filter(t => t.type === "expense" && isCurrentMonth(t.due_date))
       .reduce((sum, t) => {
-        // Se está confirmado, use paid_amount ou amount
+        // Se está confirmado/pago, use paid_amount ou amount
         if (t.status === "paid" || t.status === "confirmed") {
           const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : t.amount;
           return sum + parseFloat(paidValue.toString());
@@ -95,9 +119,9 @@ export const useDashboardData = () => {
 
     const monthExpensesPending = transactions
       .filter(t => {
-        const dueDate = new Date(t.due_date);
-        return t.type === "expense" && dueDate >= startMonth && dueDate <= endMonth && 
-               t.status === "pending";
+        return t.type === "expense" && 
+               isCurrentMonth(t.due_date) && 
+               (t.status === "pending" || t.status === "overdue");
       })
       .reduce((sum, t) => {
         const paidValue = t.paid_amount && t.paid_amount > 0 ? t.paid_amount : 0;
@@ -113,8 +137,8 @@ export const useDashboardData = () => {
 
       const income = transactions
         .filter(t => {
-          const dueDate = new Date(t.due_date);
-          return t.type === "income" && dueDate >= monthStart && dueDate <= monthEnd &&
+          return t.type === "income" && 
+                 isDateInRange(t.due_date, monthStart, monthEnd) &&
                  (t.status === "received" || t.status === "confirmed" || t.status === "paid");
         })
         .reduce((sum, t) => {
@@ -124,8 +148,8 @@ export const useDashboardData = () => {
 
       const expenses = transactions
         .filter(t => {
-          const dueDate = new Date(t.due_date);
-          return t.type === "expense" && dueDate >= monthStart && dueDate <= monthEnd &&
+          return t.type === "expense" && 
+                 isDateInRange(t.due_date, monthStart, monthEnd) &&
                  (t.status === "paid" || t.status === "confirmed");
         })
         .reduce((sum, t) => {
@@ -141,6 +165,10 @@ export const useDashboardData = () => {
       };
     });
 
+    // Calcular percentagens com arredondamento
+    const incomePercentage = monthIncome > 0 ? Math.round((monthIncomeReceived / monthIncome) * 100) : 0;
+    const expensePercentage = monthExpenses > 0 ? Math.round((monthExpensesPaid / monthExpenses) * 100) : 0;
+
     return {
       todayIncome,
       todayExpenses,
@@ -150,8 +178,8 @@ export const useDashboardData = () => {
       monthIncomePending,
       monthExpensesPaid,
       monthExpensesPending,
-      incomePercentage: monthIncome > 0 ? (monthIncomeReceived / monthIncome) * 100 : 0,
-      expensePercentage: monthExpenses > 0 ? (monthExpensesPaid / monthExpenses) * 100 : 0,
+      incomePercentage,
+      expensePercentage,
       last6MonthsData,
       currentMonth: format(today, "MMMM yyyy", { locale: ptBR }),
     };
