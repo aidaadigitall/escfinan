@@ -97,7 +97,7 @@ const LancamentosDiarios = () => {
                       <TableCell>{transaction.category_id || "-"}</TableCell>
                       <TableCell>{transaction.payment_method || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant="default">Recebido</Badge>
+                        <Badge className="bg-green-500 text-white hover:bg-green-600">Recebido</Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-success">
                         {formatCurrency(transaction.paid_amount || transaction.amount)}
@@ -151,7 +151,7 @@ const LancamentosDiarios = () => {
                       <TableCell>{transaction.category_id || "-"}</TableCell>
                       <TableCell>{transaction.payment_method || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">Pago</Badge>
+                        <Badge className="bg-green-500 text-white hover:bg-green-600">Pago</Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-destructive">
                         {formatCurrency(transaction.paid_amount || transaction.amount)}
