@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Database, Download } from "lucide-react";
+import { DataManagementDialog } from "@/components/DataManagementDialog";
 
 const Configuracoes = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ const Configuracoes = () => {
   const [logoUrl, setLogoUrl] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [dataManagementOpen, setDataManagementOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -171,7 +173,7 @@ const Configuracoes = () => {
         </p>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl">
         <CardHeader>
           <CardTitle>Logo do Sistema</CardTitle>
           <CardDescription>
@@ -195,7 +197,7 @@ const Configuracoes = () => {
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full"
+                  className="w-full rounded-xl"
                   disabled={uploading}
                 >
                   <Upload className="mr-2 h-4 w-4" />
@@ -208,7 +210,7 @@ const Configuracoes = () => {
             </div>
 
             {previewUrl && (
-              <div className="p-4 border rounded-lg bg-muted/50 relative">
+              <div className="p-4 border rounded-xl bg-muted/50 relative">
                 <Button
                   type="button"
                   variant="ghost"
@@ -230,7 +232,7 @@ const Configuracoes = () => {
             )}
 
             <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={loading || uploading}>
+              <Button type="submit" disabled={loading || uploading} className="rounded-xl">
                 {(loading || uploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {uploading ? "Enviando..." : "Salvar Logo"}
               </Button>
@@ -238,6 +240,34 @@ const Configuracoes = () => {
           </form>
         </CardContent>
       </Card>
+
+      <Card className="rounded-2xl">
+        <CardHeader>
+          <CardTitle>Gerenciamento de Dados</CardTitle>
+          <CardDescription>
+            Backup, importação e exclusão de dados
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Gerencie seus dados do sistema: faça backup para não perder informações, 
+            importe dados de outros sistemas ou exclua todos os dados.
+          </p>
+          <Button 
+            variant="outline" 
+            onClick={() => setDataManagementOpen(true)}
+            className="w-full rounded-xl"
+          >
+            <Database className="mr-2 h-4 w-4" />
+            Abrir Gerenciamento de Dados
+          </Button>
+        </CardContent>
+      </Card>
+
+      <DataManagementDialog 
+        open={dataManagementOpen} 
+        onOpenChange={setDataManagementOpen} 
+      />
     </div>
   );
 };

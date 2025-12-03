@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import { MaskedInput } from "@/components/ui/masked-input";
 import { Truck } from "lucide-react";
 
 interface QuickSupplierDialogProps {
@@ -16,6 +17,7 @@ export function QuickSupplierDialog({ open, onOpenChange, onSuccess }: QuickSupp
   const [formData, setFormData] = useState({
     name: "",
     cnpj: "",
+    cpf: "",
     email: "",
     phone: "",
   });
@@ -30,12 +32,13 @@ export function QuickSupplierDialog({ open, onOpenChange, onSuccess }: QuickSupp
       {
         name: formData.name.trim(),
         cnpj: formData.cnpj || undefined,
+        cpf: formData.cpf || undefined,
         email: formData.email || undefined,
         phone: formData.phone || undefined,
       },
       {
         onSuccess: (data) => {
-          setFormData({ name: "", cnpj: "", email: "", phone: "" });
+          setFormData({ name: "", cnpj: "", cpf: "", email: "", phone: "" });
           onOpenChange(false);
           if (onSuccess && data) {
             onSuccess(data.id);
@@ -73,15 +76,27 @@ export function QuickSupplierDialog({ open, onOpenChange, onSuccess }: QuickSupp
               autoFocus
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="supplier-cnpj">CNPJ</Label>
-            <Input
-              id="supplier-cnpj"
-              placeholder="00.000.000/0000-00"
-              value={formData.cnpj}
-              onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-              className="rounded-xl"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="supplier-cnpj">CNPJ</Label>
+              <MaskedInput
+                id="supplier-cnpj"
+                mask="cnpj"
+                placeholder="00.000.000/0000-00"
+                value={formData.cnpj}
+                onChange={(value) => setFormData({ ...formData, cnpj: value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supplier-cpf">CPF</Label>
+              <MaskedInput
+                id="supplier-cpf"
+                mask="cpf"
+                placeholder="000.000.000-00"
+                value={formData.cpf}
+                onChange={(value) => setFormData({ ...formData, cpf: value })}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -97,12 +112,12 @@ export function QuickSupplierDialog({ open, onOpenChange, onSuccess }: QuickSupp
             </div>
             <div className="space-y-2">
               <Label htmlFor="supplier-phone">Telefone</Label>
-              <Input
+              <MaskedInput
                 id="supplier-phone"
+                mask="phone"
                 placeholder="(00) 00000-0000"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="rounded-xl"
+                onChange={(value) => setFormData({ ...formData, phone: value })}
               />
             </div>
           </div>

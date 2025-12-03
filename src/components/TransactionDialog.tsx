@@ -10,13 +10,22 @@ import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useClients } from "@/hooks/useClients";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
+import { useCostCenters } from "@/hooks/useCostCenters";
+import { useChartOfAccounts } from "@/hooks/useChartOfAccounts";
 import { Transaction } from "@/hooks/useTransactions";
-import { QuickAddDialog } from "@/components/QuickAddDialog";
-import { Plus } from "lucide-react";
+type TransactionType = "income" | "expense";
+import { SearchableSelect } from "@/components/SearchableSelect";
+import { QuickCategoryDialog } from "@/components/QuickCategoryDialog";
+import { QuickPaymentMethodDialog } from "@/components/QuickPaymentMethodDialog";
+import { QuickBankAccountDialog } from "@/components/QuickBankAccountDialog";
+import { QuickCostCenterDialog } from "@/components/QuickCostCenterDialog";
+import { QuickClientDialog } from "@/components/QuickClientDialog";
+import { QuickSupplierDialog } from "@/components/QuickSupplierDialog";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { DollarSign } from "lucide-react";
 
 const transactionSchema = z.object({
   description: z.string().min(3, "Descrição deve ter no mínimo 3 caracteres"),
@@ -34,37 +43,18 @@ type TransactionDialogProps = {
 };
 
 export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSave }: TransactionDialogProps) => {
-  const { categories, createCategory } = useCategories(type);
-  const { paymentMethods, createPaymentMethod } = usePaymentMethods();
-  const { clients, createClient } = useClients();
-  const { suppliers, createSupplier } = useSuppliers();
+  const { categories } = useCategories(type);
+  const { paymentMethods } = usePaymentMethods();
+  const { clients } = useClients();
+  const { suppliers } = useSuppliers();
   const { accounts: bankAccounts } = useBankAccounts();
+  const { costCenters } = useCostCenters();
+  const { accounts: chartOfAccounts } = useChartOfAccounts();
   
   const [quickAddOpen, setQuickAddOpen] = useState<string | null>(null);
-  
   const [isRecurring, setIsRecurring] = useState(false);
   
-  const [formData, setFormData] = useState<{
-    description: string;
-    amount: string;
-    type: "income" | "expense" | "transfer";
-    category_id: string;
-    entity: string;
-    client: string;
-    account: string;
-    payment_method: string;
-    bank_account_id: string;
-    paid_amount: string;
-    status: "pending" | "confirmed" | "overdue" | "paid" | "received";
-    due_date: string;
-    paid_date: string;
-    notes: string;
-    recurrence_type: string;
-    recurrence_day: string;
-    start_date: string;
-    end_date: string;
-    installments: string;
-  }>({
+  const [formData, setFormData] = useState({
     description: "",
     amount: "",
     type: type,
@@ -74,8 +64,9 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     account: "",
     payment_method: "",
     bank_account_id: "",
+    cost_center_id: "",
     paid_amount: "",
-    status: "pending",
+    status: "pending" as "pending" | "confirmed" | "overdue" | "paid" | "received",
     due_date: "",
     paid_date: "",
     notes: "",
@@ -91,13 +82,14 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
       setFormData({
         description: transaction.description,
         amount: transaction.amount.toString(),
-        type: transaction.type,
+        type: transaction.type as TransactionType,
         category_id: transaction.category_id || "",
         entity: transaction.entity || "",
         client: transaction.client || "",
         account: transaction.account || "",
         payment_method: transaction.payment_method || "",
         bank_account_id: transaction.bank_account_id || "",
+        cost_center_id: "",
         paid_amount: transaction.paid_amount?.toString() || "",
         status: transaction.status,
         due_date: transaction.due_date,
@@ -121,6 +113,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         account: "",
         payment_method: "",
         bank_account_id: "",
+        cost_center_id: "",
         paid_amount: "",
         status: "pending",
         due_date: new Date().toISOString().split("T")[0],
@@ -140,14 +133,13 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     e.preventDefault();
 
     try {
-      const validatedData = transactionSchema.parse({
+      transactionSchema.parse({
         ...formData,
         amount: parseFloat(formData.amount),
       });
 
       const installments = parseInt(formData.installments) || 1;
 
-      // Se há parcelamento, criar múltiplas transações através do onSave
       if (installments > 1 && !transaction) {
         const installmentAmount = parseFloat(formData.amount) / installments;
         const baseDate = new Date(formData.due_date);
@@ -198,7 +190,6 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
         notes: formData.notes || undefined,
       };
 
-      // Se é recorrente e não é edição, criar conta fixa também
       if (isRecurring && !transaction) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
@@ -234,16 +225,29 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
     }
   };
 
+  const categoryOptions = categories.map(c => ({ value: c.id, label: c.name }));
+  const supplierOptions = suppliers.map(s => ({ value: s.name, label: s.name }));
+  const clientOptions = clients.map(c => ({ value: c.name, label: c.name }));
+  const bankAccountOptions = bankAccounts.map(a => ({ value: a.id, label: `${a.name} - ${a.bank_name || 'Sem banco'}` }));
+  const paymentMethodOptions = paymentMethods.map(m => ({ value: m.name, label: m.name }));
+  const costCenterOptions = costCenters.map(c => ({ value: c.id, label: c.name }));
+  const chartOfAccountOptions = chartOfAccounts.map(c => ({ value: c.id, label: `${c.code} - ${c.name}` }));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>
-            {transaction ? "Editar" : "Adicionar"} {type === "income" ? "Receita" : "Despesa"}
-          </DialogTitle>
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-xl ${type === "income" ? "bg-green-500/10" : "bg-red-500/10"}`}>
+              <DollarSign className={`h-5 w-5 ${type === "income" ? "text-green-600" : "text-red-600"}`} />
+            </div>
+            <DialogTitle>
+              {transaction ? "Editar" : "Adicionar"} {type === "income" ? "Receita" : "Despesa"}
+            </DialogTitle>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="description">Descrição *</Label>
@@ -251,6 +255,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="rounded-xl"
                 required
               />
             </div>
@@ -263,114 +268,85 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                 step="0.01"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="rounded-xl"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Categoria</Label>
-              <div className="flex gap-2">
-                <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("category")}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Label>Categoria</Label>
+              <SearchableSelect
+                options={categoryOptions}
+                value={formData.category_id}
+                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                placeholder="Selecione uma categoria"
+                onAddNew={() => setQuickAddOpen("category")}
+                addNewLabel="Nova Categoria"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="entity">Entidade</Label>
-              <div className="flex gap-2">
-                <Select value={formData.entity} onValueChange={(value) => setFormData({ ...formData, entity: value })}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecione uma entidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.name}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("entity")}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Label>{type === "expense" ? "Fornecedor" : "Cliente"}</Label>
+              <SearchableSelect
+                options={type === "expense" ? supplierOptions : clientOptions}
+                value={type === "expense" ? formData.entity : formData.client}
+                onValueChange={(value) => setFormData({ ...formData, [type === "expense" ? "entity" : "client"]: value })}
+                placeholder={`Selecione ${type === "expense" ? "um fornecedor" : "um cliente"}`}
+                onAddNew={() => setQuickAddOpen(type === "expense" ? "supplier" : "client")}
+                addNewLabel={type === "expense" ? "Novo Fornecedor" : "Novo Cliente"}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="client">Cliente</Label>
-              <div className="flex gap-2">
-                <Select value={formData.client} onValueChange={(value) => setFormData({ ...formData, client: value })}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecione um cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.name}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("client")}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Label>Conta Bancária</Label>
+              <SearchableSelect
+                options={bankAccountOptions}
+                value={formData.bank_account_id}
+                onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}
+                placeholder="Selecione uma conta"
+                onAddNew={() => setQuickAddOpen("bank_account")}
+                addNewLabel="Nova Conta Bancária"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bank_account">Conta Bancária</Label>
-              <Select value={formData.bank_account_id} onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma conta bancária" />
-                </SelectTrigger>
-                <SelectContent>
-                  {bankAccounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account.name} - {account.bank_name || "Sem banco"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Forma de Pagamento</Label>
+              <SearchableSelect
+                options={paymentMethodOptions}
+                value={formData.payment_method}
+                onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+                placeholder="Selecione uma forma"
+                onAddNew={() => setQuickAddOpen("payment_method")}
+                addNewLabel="Nova Forma de Pagamento"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payment_method">Forma de Pagamento</Label>
-              <div className="flex gap-2">
-                <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecione uma forma" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethods.map((method) => (
-                      <SelectItem key={method.id} value={method.name}>
-                        {method.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setQuickAddOpen("payment")}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Label>Centro de Custo</Label>
+              <SearchableSelect
+                options={costCenterOptions}
+                value={formData.cost_center_id}
+                onValueChange={(value) => setFormData({ ...formData, cost_center_id: value })}
+                placeholder="Selecione um centro"
+                onAddNew={() => setQuickAddOpen("cost_center")}
+                addNewLabel="Novo Centro de Custo"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Plano de Contas</Label>
+              <SearchableSelect
+                options={chartOfAccountOptions}
+                value={formData.account}
+                onValueChange={(value) => setFormData({ ...formData, account: value })}
+                placeholder="Selecione uma conta"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
               <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -390,6 +366,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                 type="date"
                 value={formData.due_date}
                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                className="rounded-xl"
                 required
               />
             </div>
@@ -401,18 +378,20 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                 type="date"
                 value={formData.paid_date}
                 onChange={(e) => setFormData({ ...formData, paid_date: e.target.value })}
+                className="rounded-xl"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="paid_amount">Valor Pago (Pagamento Parcial)</Label>
+              <Label htmlFor="paid_amount">Valor Pago (Parcial)</Label>
               <Input
                 id="paid_amount"
                 type="number"
                 step="0.01"
-                placeholder="Deixe vazio para pagamento total"
+                placeholder="Deixe vazio para total"
                 value={formData.paid_amount}
                 onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })}
+                className="rounded-xl"
               />
               {formData.paid_amount && formData.amount && (
                 <p className="text-sm text-muted-foreground">
@@ -431,6 +410,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
               placeholder="1 para pagamento único"
               value={formData.installments}
               onChange={(e) => setFormData({ ...formData, installments: e.target.value })}
+              className="rounded-xl"
             />
             {formData.installments && parseInt(formData.installments) > 1 && (
               <p className="text-sm text-muted-foreground">
@@ -446,6 +426,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
+              className="rounded-xl"
             />
           </div>
 
@@ -463,31 +444,31 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
               </div>
 
               {isRecurring && (
-                <div className="grid grid-cols-2 gap-4 pl-6">
+                <div className="grid grid-cols-2 gap-4 pl-6 p-4 bg-muted/50 rounded-xl">
                   <div className="space-y-2">
                     <Label htmlFor="recurrence_type">Recorrência *</Label>
                     <Select
                       value={formData.recurrence_type}
                       onValueChange={(value) => setFormData({ ...formData, recurrence_type: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="daily">Diário</SelectItem>
                         <SelectItem value="weekly">Semanal</SelectItem>
                         <SelectItem value="monthly">Mensal</SelectItem>
-                        <SelectItem value="2months">2 meses</SelectItem>
-                        <SelectItem value="3months">3 meses</SelectItem>
-                        <SelectItem value="4months">4 meses</SelectItem>
-                        <SelectItem value="6months">6 meses</SelectItem>
+                        <SelectItem value="2months">Bimestral</SelectItem>
+                        <SelectItem value="3months">Trimestral</SelectItem>
+                        <SelectItem value="4months">Quadrimestral</SelectItem>
+                        <SelectItem value="6months">Semestral</SelectItem>
                         <SelectItem value="yearly">Anual</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="recurrence_day">Dia da Recorrência (1-31)</Label>
+                    <Label htmlFor="recurrence_day">Dia (1-31)</Label>
                     <Input
                       id="recurrence_day"
                       type="number"
@@ -495,6 +476,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                       max="31"
                       value={formData.recurrence_day}
                       onChange={(e) => setFormData({ ...formData, recurrence_day: e.target.value })}
+                      className="rounded-xl"
                     />
                   </div>
 
@@ -505,6 +487,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                       type="date"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                      className="rounded-xl"
                       required={isRecurring}
                     />
                   </div>
@@ -516,6 +499,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                       type="date"
                       value={formData.end_date}
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                      className="rounded-xl"
                     />
                   </div>
                 </div>
@@ -523,60 +507,59 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
             </div>
           )}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">
               Cancelar
             </Button>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit" className="rounded-xl">Salvar</Button>
           </div>
         </form>
       </DialogContent>
-      
-      <QuickAddDialog
+
+      <QuickCategoryDialog
         open={quickAddOpen === "category"}
         onOpenChange={(open) => !open && setQuickAddOpen(null)}
-        title={`Adicionar Categoria de ${type === "income" ? "Receita" : "Despesa"}`}
-        onSave={(name) => {
-          createCategory({ name, type });
-          // Não define formData.category_id aqui, pois o hook useCategories irá invalidar a query e recarregar a lista.
-          // O usuário precisará selecionar o novo item na lista recarregada.
-        }}
+        type={type}
+        onSuccess={(id) => setFormData({ ...formData, category_id: id })}
       />
-      
-      <QuickAddDialog
-        open={quickAddOpen === "entity"}
+
+      <QuickSupplierDialog
+        open={quickAddOpen === "supplier"}
         onOpenChange={(open) => !open && setQuickAddOpen(null)}
-        title="Adicionar Fornecedor"
-        onSave={(name) => {
-          createSupplier({ name });
-          // Não define formData.entity aqui, pois o hook useSuppliers irá invalidar a query e recarregar a lista.
-          // O usuário precisará selecionar o novo item na lista recarregada.
-          // Para uma melhor UX, o ideal seria que o createSupplier retornasse o ID/Nome e o setFormData fosse chamado.
-          // Como o createSupplier não retorna o objeto completo, vamos apenas fechar o modal.
+        onSuccess={(id) => {
+          const supplier = suppliers.find(s => s.id === id);
+          if (supplier) setFormData({ ...formData, entity: supplier.name });
         }}
       />
-      
-      <QuickAddDialog
+
+      <QuickClientDialog
         open={quickAddOpen === "client"}
         onOpenChange={(open) => !open && setQuickAddOpen(null)}
-        title="Adicionar Cliente"
-        onSave={(name) => {
-          createClient({ name });
-          // Não define formData.client aqui, pois o hook useClients irá invalidar a query e recarregar a lista.
-          // O usuário precisará selecionar o novo item na lista recarregada.
-          // Como o createClient não retorna o objeto completo, vamos apenas fechar o modal.
+        onSuccess={(id) => {
+          const client = clients.find(c => c.id === id);
+          if (client) setFormData({ ...formData, client: client.name });
         }}
       />
-      
-      <QuickAddDialog
-        open={quickAddOpen === "payment"}
+
+      <QuickBankAccountDialog
+        open={quickAddOpen === "bank_account"}
         onOpenChange={(open) => !open && setQuickAddOpen(null)}
-        title="Adicionar Forma de Pagamento"
-        onSave={(name) => {
-          createPaymentMethod(name);
-          // Não define formData.payment_method aqui, pois o hook usePaymentMethods irá invalidar a query e recarregar a lista.
-          // O usuário precisará selecionar o novo item na lista recarregada.
+        onSuccess={(id) => setFormData({ ...formData, bank_account_id: id })}
+      />
+
+      <QuickPaymentMethodDialog
+        open={quickAddOpen === "payment_method"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        onSuccess={(id) => {
+          const method = paymentMethods.find(m => m.id === id);
+          if (method) setFormData({ ...formData, payment_method: method.name });
         }}
+      />
+
+      <QuickCostCenterDialog
+        open={quickAddOpen === "cost_center"}
+        onOpenChange={(open) => !open && setQuickAddOpen(null)}
+        onSuccess={(id) => setFormData({ ...formData, cost_center_id: id })}
       />
     </Dialog>
   );

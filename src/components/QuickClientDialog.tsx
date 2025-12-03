@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useClients } from "@/hooks/useClients";
+import { MaskedInput } from "@/components/ui/masked-input";
 import { Users } from "lucide-react";
 
 interface QuickClientDialogProps {
@@ -16,6 +17,7 @@ export function QuickClientDialog({ open, onOpenChange, onSuccess }: QuickClient
   const [formData, setFormData] = useState({
     name: "",
     cpf: "",
+    cnpj: "",
     email: "",
     phone: "",
   });
@@ -30,12 +32,13 @@ export function QuickClientDialog({ open, onOpenChange, onSuccess }: QuickClient
       {
         name: formData.name.trim(),
         cpf: formData.cpf || undefined,
+        cnpj: formData.cnpj || undefined,
         email: formData.email || undefined,
         phone: formData.phone || undefined,
       },
       {
         onSuccess: (data) => {
-          setFormData({ name: "", cpf: "", email: "", phone: "" });
+          setFormData({ name: "", cpf: "", cnpj: "", email: "", phone: "" });
           onOpenChange(false);
           if (onSuccess && data) {
             onSuccess(data.id);
@@ -73,15 +76,27 @@ export function QuickClientDialog({ open, onOpenChange, onSuccess }: QuickClient
               autoFocus
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="client-cpf">CPF/CNPJ</Label>
-            <Input
-              id="client-cpf"
-              placeholder="000.000.000-00"
-              value={formData.cpf}
-              onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-              className="rounded-xl"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="client-cpf">CPF</Label>
+              <MaskedInput
+                id="client-cpf"
+                mask="cpf"
+                placeholder="000.000.000-00"
+                value={formData.cpf}
+                onChange={(value) => setFormData({ ...formData, cpf: value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-cnpj">CNPJ</Label>
+              <MaskedInput
+                id="client-cnpj"
+                mask="cnpj"
+                placeholder="00.000.000/0000-00"
+                value={formData.cnpj}
+                onChange={(value) => setFormData({ ...formData, cnpj: value })}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -97,12 +112,12 @@ export function QuickClientDialog({ open, onOpenChange, onSuccess }: QuickClient
             </div>
             <div className="space-y-2">
               <Label htmlFor="client-phone">Telefone</Label>
-              <Input
+              <MaskedInput
                 id="client-phone"
+                mask="phone"
                 placeholder="(00) 00000-0000"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="rounded-xl"
+                onChange={(value) => setFormData({ ...formData, phone: value })}
               />
             </div>
           </div>
