@@ -27,12 +27,12 @@ export const useUsers = () => {
     queryKey: ["users"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("system_users" as any)
+        .from("system_users")
         .select("*")
         .order("name");
 
       if (error) throw error;
-      return data as any as UserProfile[];
+      return data as UserProfile[];
     },
   });
 
@@ -77,8 +77,8 @@ export const useUsers = () => {
       const { id, ...updateData } = userData;
       
       const { data, error } = await supabase
-        .from("system_users" as any)
-        .update(updateData as any)
+        .from("system_users")
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -98,10 +98,8 @@ export const useUsers = () => {
   // 4. DELETE: Deletar o perfil do usuário (a exclusão da conta Auth deve ser feita via Service Role Key)
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Nota: A exclusão da conta Auth (supabase.auth.admin.deleteUser) deve ser feita
-      // em uma Edge Function segura. Aqui, vamos apenas deletar o perfil.
       const { error } = await supabase
-        .from("system_users" as any)
+        .from("system_users")
         .delete()
         .eq("id", id);
 
