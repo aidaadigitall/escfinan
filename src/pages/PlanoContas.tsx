@@ -220,14 +220,14 @@ const PlanoContas = () => {
             <div>
               <Label htmlFor="parent_id">Conta Pai (Opcional)</Label>
               <Select
-                value={formData.parent_id}
-                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
+                value={formData.parent_id || "none"}
+                onValueChange={(value) => setFormData({ ...formData, parent_id: value === "none" ? "" : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {accounts
                     .filter(a => a.id !== accountToEdit?.id)
                     .map((account) => (

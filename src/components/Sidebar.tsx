@@ -49,7 +49,6 @@ const menuItems: MenuItem[] = [
     label: "Cadastros",
     submenu: [
       { icon: Briefcase, label: "Clientes", path: "/cadastros/clientes" },
-      { icon: User, label: "Usuários", path: "/cadastros/usuarios" },
       { icon: Building2, label: "Fornecedores", path: "/cadastros/fornecedores" },
       { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
       { icon: Users, label: "Funcionários", path: "/cadastros/funcionarios" },
@@ -81,11 +80,7 @@ const menuItems: MenuItem[] = [
       { icon: Target, label: "Centros de Custos", path: "/auxiliares/centros-custos" },
       { icon: FileText, label: "Categorias", path: "/categorias" },
       { icon: Table, label: "Plano de Contas", path: "/plano-contas" },
-      { icon: Landmark, label: "Boletos Bancários", path: "/boletos" },
-      { icon: ArrowRightLeft, label: "Conciliação Bancária", path: "/auxiliares/conciliacao" },
-      { icon: FileText, label: "Campos Extras", path: "/auxiliares/campos-extras" },
-      { icon: Mail, label: "Modelos de E-mails", path: "/auxiliares/modelos-emails" },
-      { icon: Table, label: "Tabelas de Rateios", path: "/auxiliares/tabelas-rateios" },
+      { icon: Landmark, label: "Formas de Pagamento", path: "/formas-pagamento" },
       { icon: FileBarChart, label: "Relatório de Recorrências", path: "/relatorio-recorrencias" },
     ],
   },
@@ -95,14 +90,30 @@ const menuItems: MenuItem[] = [
 export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  
+  // Initialize expanded menus based on current route
+  const getInitialExpandedMenus = () => {
+    const expanded: string[] = [];
+    menuItems.forEach(item => {
+      if (item.submenu?.some(sub => location.pathname === sub.path)) {
+        expanded.push(item.label);
+      }
+    });
+    return expanded;
+  };
+  
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(getInitialExpandedMenus);
 
-  const toggleSubmenu = (label: string) => {
-    setExpandedMenus((prev) =>
-      prev.includes(label)
+  // Keep parent menu open when navigating within submenu
+  const toggleSubmenu = (label: string, keepOpen = false) => {
+    setExpandedMenus((prev) => {
+      if (keepOpen) {
+        return prev.includes(label) ? prev : [...prev, label];
+      }
+      return prev.includes(label)
         ? prev.filter((item) => item !== label)
-        : [...prev, label]
-    );
+        : [...prev, label];
+    });
   };
 
   const isActive = (path?: string) => {

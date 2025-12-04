@@ -4,38 +4,42 @@ import { toast } from "sonner";
 
 export type Employee = {
   id: string;
+  user_id: string;
   name: string;
-  cpf: string;
-  email: string;
+  cpf: string | null;
+  email: string | null;
   phone: string | null;
   position: string | null;
   salary: number;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export const useEmployees = () => {
   const queryClient = useQueryClient();
 
-  // 1. READ: Buscar todos os funcionários
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("employees" as any)
+        .from("employees")
         .select("*")
         .order("name");
 
       if (error) throw error;
-      return data as any as Employee[];
+      return data as Employee[];
     },
   });
 
-  // 2. CREATE: Criar um novo funcionário
   const createMutation = useMutation({
-    mutationFn: async (employeeData: Omit<Employee, "id">) => {
+    mutationFn: async (employeeData: Omit<Employee, "id" | "user_id" | "created_at" | "updated_at">) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       const { data, error } = await supabase
-        .from("employees" as any)
-        .insert(employeeData as any)
+        .from("employees")
+        .insert({ ...employeeData, user_id: user.id })
         .select()
         .single();
 
@@ -51,14 +55,13 @@ export const useEmployees = () => {
     },
   });
 
-  // 3. UPDATE: Atualizar um funcionário
   const updateMutation = useMutation({
     mutationFn: async (employeeData: Partial<Employee> & { id: string }) => {
       const { id, ...updateData } = employeeData;
       
       const { data, error } = await supabase
-        .from("employees" as any)
-        .update(updateData as any)
+        .from("employees")
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -75,11 +78,10 @@ export const useEmployees = () => {
     },
   });
 
-  // 4. DELETE: Deletar um funcionário
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("employees" as any)
+        .from("employees")
         .delete()
         .eq("id", id);
 

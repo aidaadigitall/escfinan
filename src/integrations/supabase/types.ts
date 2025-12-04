@@ -394,6 +394,48 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          position: string | null
+          salary: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          position?: string | null
+          salary?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          position?: string | null
+          salary?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

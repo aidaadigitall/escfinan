@@ -82,6 +82,27 @@ export const useNotifications = () => {
     },
   });
 
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Todas as notificações foram excluídas");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao excluir notificações");
+    },
+  });
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return {
@@ -91,5 +112,6 @@ export const useNotifications = () => {
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
     deleteNotification: deleteMutation.mutate,
+    deleteAllNotifications: deleteAllMutation.mutate,
   };
 };

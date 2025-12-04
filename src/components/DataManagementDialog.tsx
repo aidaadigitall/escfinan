@@ -108,6 +108,8 @@ export function DataManagementDialog({ open, onOpenChange }: DataManagementDialo
       if (!user) throw new Error("Usuário não autenticado");
 
       // Delete data in reverse dependency order
+      // First delete audit records (no FK constraint on transaction_id for deletes)
+      await supabase.from("bank_balance_audit").delete().eq("user_id", user.id);
       await supabase.from("credit_card_transactions").delete().eq("user_id", user.id);
       await supabase.from("transaction_status_history").delete().eq("user_id", user.id);
       await supabase.from("notifications").delete().eq("user_id", user.id);
@@ -120,6 +122,7 @@ export function DataManagementDialog({ open, onOpenChange }: DataManagementDialo
       await supabase.from("categories").delete().eq("user_id", user.id);
       await supabase.from("clients").delete().eq("user_id", user.id);
       await supabase.from("suppliers").delete().eq("user_id", user.id);
+      await supabase.from("employees").delete().eq("user_id", user.id);
       await supabase.from("bank_accounts").delete().eq("user_id", user.id);
       await supabase.from("system_settings").delete().eq("user_id", user.id);
 
@@ -130,6 +133,7 @@ export function DataManagementDialog({ open, onOpenChange }: DataManagementDialo
       // Reload to refresh the app state
       setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
+      console.error("Delete error:", error);
       toast.error(error.message || "Erro ao excluir dados");
     } finally {
       setLoading(false);
