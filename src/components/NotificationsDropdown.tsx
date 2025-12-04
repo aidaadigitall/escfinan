@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 export const NotificationsDropdown = () => {
   const navigate = useNavigate();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } = useNotifications();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -42,7 +42,6 @@ export const NotificationsDropdown = () => {
       markAsRead(notification.id);
     }
     if (notification.transaction_id) {
-      // Navigate to the appropriate page based on transaction type
       navigate("/fluxo-de-caixa");
     }
   };
@@ -65,17 +64,30 @@ export const NotificationsDropdown = () => {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between px-2 py-2">
           <h3 className="font-semibold">Notificações</h3>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => markAllAsRead()}
-              className="h-8 text-xs"
-            >
-              <CheckCheck className="h-3 w-3 mr-1" />
-              Marcar todas como lidas
-            </Button>
-          )}
+          <div className="flex gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => markAllAsRead()}
+                className="h-8 text-xs"
+              >
+                <CheckCheck className="h-3 w-3 mr-1" />
+                Marcar lidas
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => deleteAllNotifications()}
+                className="h-8 text-xs text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
         </div>
         <DropdownMenuSeparator />
         
