@@ -4,36 +4,71 @@ import { toast } from "sonner";
 
 export type Product = {
   id: string;
-  nome: string;
-  sku: string;
-  preco: number;
-  estoque: number;
-  ativo: boolean;
+  user_id: string;
+  name: string;
+  description: string | null;
+  sku: string | null;
+  unit: string;
+  cost_price: number;
+  sale_price: number;
+  profit_margin: number;
+  markup: number;
+  profit_amount: number;
+  stock_quantity: number;
+  min_stock: number;
+  category: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export const useProducts = () => {
   const queryClient = useQueryClient();
 
-  // 1. READ: Buscar todos os produtos
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("products" as any)
+        .from("products")
         .select("*")
         .order("name");
 
       if (error) throw error;
-      return data as any as Product[];
+      return data as Product[];
     },
   });
 
-  // 2. CREATE: Criar um novo produto
   const createMutation = useMutation({
-    mutationFn: async (productData: Omit<Product, "id">) => {
+    mutationFn: async (productData: {
+      name: string;
+      description?: string;
+      sku?: string;
+      unit?: string;
+      cost_price: number;
+      sale_price: number;
+      stock_quantity?: number;
+      min_stock?: number;
+      category?: string;
+      is_active?: boolean;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       const { data, error } = await supabase
-        .from("products" as any)
-        .insert(productData as any)
+        .from("products")
+        .insert([{ 
+          name: productData.name,
+          description: productData.description || null,
+          sku: productData.sku || null,
+          unit: productData.unit || 'UN',
+          cost_price: productData.cost_price,
+          sale_price: productData.sale_price,
+          stock_quantity: productData.stock_quantity || 0,
+          min_stock: productData.min_stock || 0,
+          category: productData.category || null,
+          is_active: productData.is_active ?? true,
+          user_id: user.id 
+        }])
         .select()
         .single();
 
@@ -49,14 +84,13 @@ export const useProducts = () => {
     },
   });
 
-  // 3. UPDATE: Atualizar um produto
   const updateMutation = useMutation({
     mutationFn: async (productData: Partial<Product> & { id: string }) => {
-      const { id, ...updateData } = productData;
+      const { id, profit_margin, markup, profit_amount, user_id, created_at, updated_at, ...updateData } = productData;
       
       const { data, error } = await supabase
-        .from("products" as any)
-        .update(updateData as any)
+        .from("products")
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -73,11 +107,10 @@ export const useProducts = () => {
     },
   });
 
-  // 4. DELETE: Deletar um produto
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("products" as any)
+        .from("products")
         .delete()
         .eq("id", id);
 
