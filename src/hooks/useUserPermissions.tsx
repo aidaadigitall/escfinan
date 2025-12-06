@@ -106,6 +106,8 @@ export const useCurrentUserPermissions = () => {
         return permissions as UserPermissions;
       }
 
+      // If no permissions record exists, return default permissions with can_view_dashboard_values based on default
+      // For non-admin users without explicit permissions, use defaults
       return defaultPermissions;
     },
   });

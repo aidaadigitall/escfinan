@@ -171,7 +171,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Data</label>
-                  <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+                  <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen} modal={true}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -180,7 +180,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                           : "Selecionar"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                    <PopoverContent className="w-auto p-0 z-[200]" align="start" sideOffset={4}>
                       <Calendar
                         mode="single"
                         selected={formData.due_date ? new Date(formData.due_date) : undefined}
@@ -189,7 +189,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                           setDatePopoverOpen(false);
                         }}
                         locale={ptBR}
-                        className="pointer-events-auto"
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -233,10 +233,15 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                     <SelectTrigger>
                       <SelectValue placeholder="Selecionar" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[100]">
                       <SelectItem value="none">Nenhum</SelectItem>
-                      {employees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                      {allUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                          <span className="text-xs text-muted-foreground ml-2">
+                            ({user.type === 'employee' ? 'Funcionário' : 'Usuário'})
+                          </span>
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -269,28 +274,53 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
 
               <div>
                 <label className="text-sm font-medium">Lembrete</label>
-                <Popover open={reminderPopoverOpen} onOpenChange={setReminderPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
-                      <Clock className="mr-2 h-4 w-4" />
-                      {formData.reminder_date
-                        ? format(new Date(formData.reminder_date), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                        : "Definir lembrete"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-50" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.reminder_date ? new Date(formData.reminder_date) : undefined}
-                      onSelect={(date) => {
-                        setFormData({ ...formData, reminder_date: date?.toISOString() || null });
-                        setReminderPopoverOpen(false);
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <Popover open={reminderPopoverOpen} onOpenChange={setReminderPopoverOpen} modal={true}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.reminder_date
+                          ? format(new Date(formData.reminder_date), "dd/MM/yyyy", { locale: ptBR })
+                          : "Data"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[200]" align="start" sideOffset={4}>
+                      <Calendar
+                        mode="single"
+                        selected={formData.reminder_date ? new Date(formData.reminder_date) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const currentReminder = formData.reminder_date ? new Date(formData.reminder_date) : new Date();
+                            date.setHours(currentReminder.getHours(), currentReminder.getMinutes());
+                            setFormData({ ...formData, reminder_date: date.toISOString() });
+                          }
+                          setReminderPopoverOpen(false);
+                        }}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="time"
+                      className="pl-9"
+                      value={formData.reminder_date 
+                        ? format(new Date(formData.reminder_date), "HH:mm") 
+                        : ""}
+                      onChange={(e) => {
+                        const time = e.target.value;
+                        if (time) {
+                          const [hours, minutes] = time.split(':').map(Number);
+                          const date = formData.reminder_date ? new Date(formData.reminder_date) : new Date();
+                          date.setHours(hours, minutes);
+                          setFormData({ ...formData, reminder_date: date.toISOString() });
+                        }
                       }}
-                      locale={ptBR}
-                      className="pointer-events-auto"
                     />
-                  </PopoverContent>
-                </Popover>
+                  </div>
+                </div>
               </div>
             </TabsContent>
 
