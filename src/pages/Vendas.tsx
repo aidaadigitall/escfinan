@@ -5,7 +5,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
 import { useEmployees } from "@/hooks/useEmployees";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus, Calendar as CalendarIcon, Search, Edit, Trash2, Loader, ShoppingCart } from "lucide-react";
+import { DiscountInput } from "@/components/DiscountInput";
 
 interface SaleItem {
   id?: string;
@@ -58,6 +59,8 @@ const Vendas = () => {
   const [editingSale, setEditingSale] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<SaleItem[]>([]);
+  const [saleDateOpen, setSaleDateOpen] = useState(false);
+  const [deliveryDateOpen, setDeliveryDateOpen] = useState(false);
   const [formData, setFormData] = useState({
     client_id: "",
     seller_id: "",
@@ -162,8 +165,33 @@ const Vendas = () => {
     if (!formData.client_id) return;
 
     const totals = calculateTotals();
+    
+    // Ensure dates are in ISO format
+    let saleDate = formData.sale_date;
+    let deliveryDate = formData.delivery_date;
+
+    if (saleDate && !saleDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      try {
+        const date = new Date(saleDate);
+        saleDate = !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+      } catch {
+        saleDate = new Date().toISOString().split("T")[0];
+      }
+    }
+
+    if (deliveryDate && !deliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      try {
+        const date = new Date(deliveryDate);
+        deliveryDate = !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : "";
+      } catch {
+        deliveryDate = "";
+      }
+    }
+
     const saleData = {
       ...formData,
+      sale_date: saleDate,
+      delivery_date: deliveryDate || null,
       products_total: totals.productsTotal,
       services_total: totals.servicesTotal,
       discount_total: totals.discountTotal,
@@ -176,6 +204,22 @@ const Vendas = () => {
       await createSale(saleData as any);
     }
     setDialogOpen(false);
+  };
+
+  const handleSaleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setFormData({ ...formData, sale_date: format(date, "yyyy-MM-dd") });
+    }
+    setSaleDateOpen(false);
+  };
+
+  const handleDeliveryDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setFormData({ ...formData, delivery_date: format(date, "yyyy-MM-dd") });
+    } else {
+      setFormData({ ...formData, delivery_date: "" });
+    }
+    setDeliveryDateOpen(false);
   };
 
   const totals = calculateTotals();
@@ -237,7 +281,7 @@ const Vendas = () => {
                     <TableCell className="font-medium">#{sale.sale_number}</TableCell>
                     <TableCell>{sale.clients?.name || "-"}</TableCell>
                     <TableCell>
-                      {sale.sale_date ? format(new Date(sale.sale_date), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                      {sale.sale_date ? format(new Date(sale.sale_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                     </TableCell>
                     <TableCell>{sale.payment_method || "-"}</TableCell>
                     <TableCell className="font-medium">
@@ -313,19 +357,24 @@ const Vendas = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium">Data da Venda</label>
-                  <Popover>
+                  <Popover open={saleDateOpen} onOpenChange={setSaleDateOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.sale_date ? format(new Date(formData.sale_date), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                        {formData.sale_date 
+                          ? format(new Date(formData.sale_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) 
+                          : "Selecionar"
+                        }
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={formData.sale_date ? new Date(formData.sale_date) : undefined}
-                        onSelect={(date) => setFormData({ ...formData, sale_date: date?.toISOString().split("T")[0] || "" })}
+                        selected={formData.sale_date ? new Date(formData.sale_date + "T00:00:00") : undefined}
+                        onSelect={handleSaleDateSelect}
                         locale={ptBR}
+                        className="pointer-events-auto"
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -333,19 +382,24 @@ const Vendas = () => {
 
                 <div>
                   <label className="text-sm font-medium">Prazo de Entrega</label>
-                  <Popover>
+                  <Popover open={deliveryDateOpen} onOpenChange={setDeliveryDateOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.delivery_date ? format(new Date(formData.delivery_date), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                        {formData.delivery_date 
+                          ? format(new Date(formData.delivery_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) 
+                          : "Selecionar"
+                        }
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={formData.delivery_date ? new Date(formData.delivery_date) : undefined}
-                        onSelect={(date) => setFormData({ ...formData, delivery_date: date?.toISOString().split("T")[0] || "" })}
+                        selected={formData.delivery_date ? new Date(formData.delivery_date + "T00:00:00") : undefined}
+                        onSelect={handleDeliveryDateSelect}
                         locale={ptBR}
+                        className="pointer-events-auto"
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -463,11 +517,10 @@ const Vendas = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
+                          <DiscountInput
                             value={item.discount}
-                            onChange={(e) => handleItemChange(index, "discount", parseFloat(e.target.value) || 0)}
-                            className="w-20"
+                            onChange={(value) => handleItemChange(index, "discount", value)}
+                            baseValue={item.quantity * item.unit_price}
                           />
                         </TableCell>
                         <TableCell className="font-medium">

@@ -5,20 +5,19 @@ import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Calendar as CalendarIcon, Search, Edit, Trash2, Loader, Wrench, Monitor, User } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader, Wrench, Monitor } from "lucide-react";
+import { DiscountInput } from "@/components/DiscountInput";
 
 interface OrderItem {
   id?: string;
@@ -600,11 +599,10 @@ const OrdensServico = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
+                          <DiscountInput
                             value={item.discount}
-                            onChange={(e) => handleItemChange(index, "discount", parseFloat(e.target.value) || 0)}
-                            className="w-20"
+                            onChange={(value) => handleItemChange(index, "discount", value)}
+                            baseValue={item.quantity * item.unit_price}
                           />
                         </TableCell>
                         <TableCell className="font-medium">
