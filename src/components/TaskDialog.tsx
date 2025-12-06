@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus, Calendar as CalendarIcon, Clock, Tag, Users, Paperclip, MessageSquare, AtSign, Trash2, Send } from "lucide-react";
+import { TaskAttachments, Attachment } from "./TaskAttachments";
 
 interface TaskDialogProps {
   open: boolean;
@@ -328,17 +329,15 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
 
             <TabsContent value="attachments" className="space-y-4 m-0 p-1">
               <div>
-                <label className="text-sm font-medium flex items-center gap-2">
+                <label className="text-sm font-medium flex items-center gap-2 mb-3">
                   <Paperclip className="h-4 w-4" />
                   Anexos
                 </label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Funcionalidade de anexos será implementada em breve
-                </p>
-                <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
-                  <Paperclip className="h-8 w-8 mx-auto mb-2" />
-                  <p>Arraste arquivos aqui ou clique para selecionar</p>
-                </div>
+                <TaskAttachments
+                  attachments={(formData.attachments as Attachment[]) || []}
+                  onAttachmentsChange={(attachments) => setFormData({ ...formData, attachments })}
+                  taskId={task?.id}
+                />
               </div>
             </TabsContent>
 
