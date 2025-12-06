@@ -136,9 +136,9 @@ export const DocumentActionsMenu = ({
   };
 
   const handleBillingLink = () => {
-    const docData = prepareDocumentData();
-    const html = generateA4PDF(docData, companySettings || {});
-    openViewWindow(html);
+    const typeSlug = documentType === "service_order" ? "os" : documentType === "sale" ? "venda" : "orcamento";
+    const publicUrl = `${window.location.origin}/cobranca/${typeSlug}/${document.id}`;
+    window.open(publicUrl, "_blank");
     toast.success("Link de cobrança aberto em nova aba");
   };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useUsers } from "@/hooks/useUsers";
@@ -114,6 +114,7 @@ const priorityLabels = {
 
 const Tarefas = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
   const { employees } = useEmployees();
   const { users } = useUsers();
@@ -127,6 +128,22 @@ const Tarefas = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
+
+  // Check for task parameter in URL to open specific task
+  useEffect(() => {
+    const taskId = searchParams.get("task");
+    if (taskId && tasks.length > 0) {
+      const taskToOpen = tasks.find(t => t.id === taskId);
+      if (taskToOpen) {
+        setEditingTask(taskToOpen);
+        setParentTaskId(null);
+        setDialogOpen(true);
+        // Clear the URL parameter
+        searchParams.delete("task");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, tasks, setSearchParams]);
 
   const filteredTasks = tasks.filter((task) => {
     if (filterStatus !== "all" && task.status !== filterStatus) return false;
