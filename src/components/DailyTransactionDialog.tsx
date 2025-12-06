@@ -483,7 +483,7 @@ export const DailyTransactionDialog = ({ open, onOpenChange, type, onSave }: Dai
         onOpenChange={(open) => !open && setQuickAddOpen(null)}
         title="Adicionar Forma de Pagamento"
         onSave={(name) => {
-          createPaymentMethod(name);
+          createPaymentMethod({ name });
           setFormData({ ...formData, payment_method: name });
         }}
       />
