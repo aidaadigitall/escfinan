@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PermissionProtectedRoute } from "./components/PermissionProtectedRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Receitas from "./pages/Receitas";
@@ -61,39 +62,180 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-            <Route path="/receitas" element={<ProtectedRoute><Layout><Receitas /></Layout></ProtectedRoute>} />
-            <Route path="/despesas" element={<ProtectedRoute><Layout><Despesas /></Layout></ProtectedRoute>} />
-            <Route path="/fluxo-de-caixa" element={<ProtectedRoute><Layout><FluxoDeCaixa /></Layout></ProtectedRoute>} />
-            <Route path="/transferencias" element={<ProtectedRoute><Layout><Transferencias /></Layout></ProtectedRoute>} />
-            <Route path="/caixa" element={<ProtectedRoute><Layout><Caixa /></Layout></ProtectedRoute>} />
-            <Route path="/dre-gerencial" element={<ProtectedRoute><Layout><DreGerencial /></Layout></ProtectedRoute>} />
-            <Route path="/relatorios-gerenciais" element={<ProtectedRoute><Layout><RelatoriosGerenciais /></Layout></ProtectedRoute>} />
-            <Route path="/calendario-financeiro" element={<ProtectedRoute><Layout><CalendarioFinanceiro /></Layout></ProtectedRoute>} />
-            <Route path="/tarefas" element={<ProtectedRoute><Layout><Tarefas /></Layout></ProtectedRoute>} />
-            <Route path="/orcamentos" element={<ProtectedRoute><Layout><Orcamentos /></Layout></ProtectedRoute>} />
-            <Route path="/ordens-servico" element={<ProtectedRoute><Layout><OrdensServico /></Layout></ProtectedRoute>} />
-            <Route path="/vendas" element={<ProtectedRoute><Layout><Vendas /></Layout></ProtectedRoute>} />
-            <Route path="/estoque/movimentacoes" element={<ProtectedRoute><Layout><Movimentacoes /></Layout></ProtectedRoute>} />
-            <Route path="/auxiliares/caixas" element={<ProtectedRoute><Layout><Caixa /></Layout></ProtectedRoute>} />
-            <Route path="/auxiliares/contas-bancarias" element={<ProtectedRoute><Layout><ContasBancarias /></Layout></ProtectedRoute>} />
-            <Route path="/auxiliares/cartoes-credito" element={<ProtectedRoute><Layout><CartoesCredito /></Layout></ProtectedRoute>} />
-            <Route path="/auxiliares/formas-de-pagamento" element={<ProtectedRoute><Layout><PaymentMethods /></Layout></ProtectedRoute>} />
-            <Route path="/auxiliares/centros-custos" element={<ProtectedRoute><Layout><CentrosCustos /></Layout></ProtectedRoute>} />
-            <Route path="/contas-fixas" element={<ProtectedRoute><Layout><ContasFixas /></Layout></ProtectedRoute>} />
-            <Route path="/receitas-fixas" element={<ProtectedRoute><Layout><ReceitasFixas /></Layout></ProtectedRoute>} />
-            <Route path="/relatorio-recorrencias" element={<ProtectedRoute><Layout><RelatorioRecorrencias /></Layout></ProtectedRoute>} />
+            
+            {/* Financial routes with permission protection */}
+            <Route path="/receitas" element={
+              <PermissionProtectedRoute permission="can_view_receivables">
+                <Layout><Receitas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/despesas" element={
+              <PermissionProtectedRoute permission="can_view_payables">
+                <Layout><Despesas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/fluxo-de-caixa" element={
+              <PermissionProtectedRoute permission="can_view_cashflow">
+                <Layout><FluxoDeCaixa /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/transferencias" element={
+              <PermissionProtectedRoute permission="can_view_transfers">
+                <Layout><Transferencias /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/caixa" element={
+              <PermissionProtectedRoute permission="can_view_cash">
+                <Layout><Caixa /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/dre-gerencial" element={
+              <PermissionProtectedRoute permission="can_view_dre">
+                <Layout><DreGerencial /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/relatorios-gerenciais" element={
+              <PermissionProtectedRoute permission="can_view_reports">
+                <Layout><RelatoriosGerenciais /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/calendario-financeiro" element={
+              <PermissionProtectedRoute permission="can_view_calendar">
+                <Layout><CalendarioFinanceiro /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/tarefas" element={
+              <PermissionProtectedRoute permission="can_view_tasks">
+                <Layout><Tarefas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/contas-fixas" element={
+              <PermissionProtectedRoute permission="can_view_fixed_expenses">
+                <Layout><ContasFixas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/receitas-fixas" element={
+              <PermissionProtectedRoute permission="can_view_fixed_income">
+                <Layout><ReceitasFixas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/lancamentos-diarios" element={
+              <PermissionProtectedRoute permission="can_view_daily_entries">
+                <Layout><LancamentosDiarios /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
+            {/* Commercial routes */}
+            <Route path="/orcamentos" element={
+              <PermissionProtectedRoute permission="can_view_quotes">
+                <Layout><Orcamentos /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/ordens-servico" element={
+              <PermissionProtectedRoute permission="can_view_service_orders">
+                <Layout><OrdensServico /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/vendas" element={
+              <PermissionProtectedRoute permission="can_view_sales">
+                <Layout><Vendas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
+            {/* Stock routes */}
+            <Route path="/estoque/movimentacoes" element={
+              <PermissionProtectedRoute permission="can_view_stock_movements">
+                <Layout><Movimentacoes /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
+            {/* Auxiliary routes */}
+            <Route path="/auxiliares/caixas" element={
+              <PermissionProtectedRoute permission="can_view_cash">
+                <Layout><Caixa /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/auxiliares/contas-bancarias" element={
+              <PermissionProtectedRoute permission="can_view_bank_accounts">
+                <Layout><ContasBancarias /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/auxiliares/cartoes-credito" element={
+              <PermissionProtectedRoute permission="can_view_credit_cards">
+                <Layout><CartoesCredito /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/auxiliares/formas-de-pagamento" element={
+              <PermissionProtectedRoute permission="can_view_payment_methods">
+                <Layout><PaymentMethods /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/auxiliares/centros-custos" element={
+              <PermissionProtectedRoute permission="can_view_cost_centers">
+                <Layout><CentrosCustos /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/categorias" element={
+              <PermissionProtectedRoute permission="can_view_categories">
+                <Layout><Categorias /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/plano-contas" element={
+              <PermissionProtectedRoute permission="can_view_chart_of_accounts">
+                <Layout><PlanoContas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/formas-pagamento" element={
+              <PermissionProtectedRoute permission="can_view_payment_methods">
+                <Layout><PaymentMethods /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
+            {/* Cadastros routes */}
+            <Route path="/cadastros/usuarios" element={
+              <PermissionProtectedRoute permission="can_view_users">
+                <Layout><Usuarios /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/cadastros/clientes" element={
+              <PermissionProtectedRoute permission="can_view_clients">
+                <Layout><Clientes /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/cadastros/fornecedores" element={
+              <PermissionProtectedRoute permission="can_view_suppliers">
+                <Layout><Fornecedores /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/cadastros/funcionarios" element={
+              <PermissionProtectedRoute permission="can_view_employees">
+                <Layout><Funcionarios /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/cadastros/produtos" element={
+              <PermissionProtectedRoute permission="can_view_products">
+                <Layout><Produtos /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/cadastros/servicos" element={
+              <PermissionProtectedRoute permission="can_view_services">
+                <Layout><Servicos /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
+            {/* Settings and profile */}
             <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
-            <Route path="/configuracoes" element={<ProtectedRoute><Layout><Configuracoes /></Layout></ProtectedRoute>} />
-            <Route path="/cadastros/usuarios" element={<ProtectedRoute><Layout><Usuarios /></Layout></ProtectedRoute>} />
-            <Route path="/cadastros/clientes" element={<ProtectedRoute><Layout><Clientes /></Layout></ProtectedRoute>} />
-            <Route path="/cadastros/fornecedores" element={<ProtectedRoute><Layout><Fornecedores /></Layout></ProtectedRoute>} />
-            <Route path="/cadastros/funcionarios" element={<ProtectedRoute><Layout><Funcionarios /></Layout></ProtectedRoute>} />
-            <Route path="/cadastros/produtos" element={<ProtectedRoute><Layout><Produtos /></Layout></ProtectedRoute>} />
-            <Route path="/cadastros/servicos" element={<ProtectedRoute><Layout><Servicos /></Layout></ProtectedRoute>} />
-            <Route path="/categorias" element={<ProtectedRoute><Layout><Categorias /></Layout></ProtectedRoute>} />
-            <Route path="/plano-contas" element={<ProtectedRoute><Layout><PlanoContas /></Layout></ProtectedRoute>} />
-            <Route path="/lancamentos-diarios" element={<ProtectedRoute><Layout><LancamentosDiarios /></Layout></ProtectedRoute>} />
-            <Route path="/formas-pagamento" element={<ProtectedRoute><Layout><PaymentMethods /></Layout></ProtectedRoute>} />
+            <Route path="/configuracoes" element={
+              <PermissionProtectedRoute permission="can_view_settings">
+                <Layout><Configuracoes /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/relatorio-recorrencias" element={
+              <PermissionProtectedRoute permission="can_view_reports">
+                <Layout><RelatorioRecorrencias /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
