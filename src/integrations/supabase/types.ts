@@ -1437,8 +1437,48 @@ export type Database = {
         }
         Relationships: []
       }
+      task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          mentions: string[] | null
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
+          assigned_users: string[] | null
+          attachments: Json | null
           completed_at: string | null
           created_at: string
           description: string | null
@@ -1458,6 +1498,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_users?: string[] | null
+          attachments?: Json | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
@@ -1477,6 +1519,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_users?: string[] | null
+          attachments?: Json | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
