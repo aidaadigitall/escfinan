@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Database, Building2, Image } from "lucide-react";
+import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft } from "lucide-react";
 import { DataManagementDialog } from "@/components/DataManagementDialog";
+import { DataMigrationDialog } from "@/components/DataMigrationDialog";
 import { MaskedInput } from "@/components/ui/masked-input";
 
 const Configuracoes = () => {
@@ -19,6 +20,7 @@ const Configuracoes = () => {
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const [uploadingSidebar, setUploadingSidebar] = useState(false);
   const [dataManagementOpen, setDataManagementOpen] = useState(false);
+  const [dataMigrationOpen, setDataMigrationOpen] = useState(false);
   
   const [companyData, setCompanyData] = useState({
     company_name: "",
@@ -489,14 +491,22 @@ const Configuracoes = () => {
             Backup, importação e exclusão de dados
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <Button 
             variant="outline" 
             onClick={() => setDataManagementOpen(true)}
             className="w-full rounded-xl"
           >
             <Database className="mr-2 h-4 w-4" />
-            Abrir Gerenciamento de Dados
+            Backup e Restauração
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setDataMigrationOpen(true)}
+            className="w-full rounded-xl"
+          >
+            <ArrowRightLeft className="mr-2 h-4 w-4" />
+            Migrar Dados de Outro Sistema
           </Button>
         </CardContent>
       </Card>
@@ -504,6 +514,11 @@ const Configuracoes = () => {
       <DataManagementDialog 
         open={dataManagementOpen} 
         onOpenChange={setDataManagementOpen} 
+      />
+
+      <DataMigrationDialog
+        open={dataMigrationOpen}
+        onOpenChange={setDataMigrationOpen}
       />
     </div>
   );

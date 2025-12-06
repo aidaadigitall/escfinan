@@ -23,6 +23,9 @@ export type Sale = {
   updated_at: string;
 };
 
+// Statuses that trigger financial integration
+const FINANCIAL_STATUSES = ['confirmed', 'delivered'];
+
 export const useSales = () => {
   const queryClient = useQueryClient();
 
@@ -39,6 +42,61 @@ export const useSales = () => {
     },
   });
 
+  // Helper to create financial transaction
+  const createFinancialTransaction = async (sale: any, clientName?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if transaction already exists
+      const { data: existing } = await supabase
+        .from("transactions")
+        .select("id")
+        .eq("notes", `sale:${sale.id}`)
+        .maybeSingle();
+
+      if (existing) return;
+
+      const dueDate = sale.delivery_date || sale.sale_date || new Date().toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
+      let status = "pending";
+      if (dueDate < today) status = "overdue";
+
+      await supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          description: `Venda #${sale.sale_number}${clientName ? ` - ${clientName}` : ""}`,
+          amount: sale.total_amount || 0,
+          type: "income",
+          client: clientName || null,
+          payment_method: sale.payment_method || null,
+          status,
+          due_date: dueDate,
+          notes: `sale:${sale.id}`,
+        });
+
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    } catch (error) {
+      console.error("Error creating financial transaction from sale:", error);
+    }
+  };
+
+  // Helper to update financial transaction status
+  const updateFinancialStatus = async (saleId: string, newStatus: string) => {
+    try {
+      if (newStatus === "cancelled") {
+        await supabase
+          .from("transactions")
+          .delete()
+          .eq("notes", `sale:${saleId}`);
+      }
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    } catch (error) {
+      console.error("Error updating financial status:", error);
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: async (saleData: Partial<Sale>) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -47,14 +105,20 @@ export const useSales = () => {
       const { data, error } = await supabase
         .from("sales")
         .insert({ ...saleData, user_id: user.id })
-        .select()
+        .select("*, clients(name)")
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      
+      // Create financial transaction if status triggers it
+      if (FINANCIAL_STATUSES.includes(data.status || "")) {
+        await createFinancialTransaction(data, data.clients?.name);
+      }
+      
       toast.success("Venda criada com sucesso!");
     },
     onError: (error: any) => {
@@ -70,14 +134,22 @@ export const useSales = () => {
         .from("sales")
         .update(updateData)
         .eq("id", id)
-        .select()
+        .select("*, clients(name)")
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      
+      // Handle financial integration based on status
+      if (FINANCIAL_STATUSES.includes(data.status || "")) {
+        await createFinancialTransaction(data, data.clients?.name);
+      } else if (data.status === "cancelled") {
+        await updateFinancialStatus(data.id, "cancelled");
+      }
+      
       toast.success("Venda atualizada com sucesso!");
     },
     onError: (error: any) => {
@@ -87,6 +159,12 @@ export const useSales = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Delete associated financial transaction first
+      await supabase
+        .from("transactions")
+        .delete()
+        .eq("notes", `sale:${id}`);
+
       const { error } = await supabase
         .from("sales")
         .delete()
@@ -96,6 +174,7 @@ export const useSales = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
       toast.success("Venda excluída com sucesso!");
     },
     onError: (error: any) => {
