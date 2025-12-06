@@ -8,6 +8,7 @@ export type PaymentMethod = {
   user_id: string;
   name: string;
   fee_percentage: number;
+  fee_type: "percentage" | "fixed";
   is_active: boolean;
   created_at: string;
 };
@@ -24,17 +25,25 @@ export const usePaymentMethods = () => {
         .order("name");
 
       if (error) throw error;
-      return data as PaymentMethod[];
+      return data.map(m => ({
+        ...m,
+        fee_type: (m as any).fee_type || "percentage"
+      })) as PaymentMethod[];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ name, fee_percentage }: { name: string; fee_percentage?: number }) => {
+    mutationFn: async ({ name, fee_percentage, fee_type }: { name: string; fee_percentage?: number; fee_type?: "percentage" | "fixed" }) => {
       const effectiveUserId = await getEffectiveUserId();
 
       const { data, error } = await supabase
         .from("payment_methods")
-        .insert({ name, fee_percentage: fee_percentage || 0, user_id: effectiveUserId })
+        .insert({ 
+          name, 
+          fee_percentage: fee_percentage || 0, 
+          fee_type: fee_type || "percentage",
+          user_id: effectiveUserId 
+        } as any)
         .select()
         .single();
 
@@ -51,10 +60,14 @@ export const usePaymentMethods = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, name, fee_percentage }: { id: string; name: string; fee_percentage?: number }) => {
+    mutationFn: async ({ id, name, fee_percentage, fee_type }: { id: string; name: string; fee_percentage?: number; fee_type?: "percentage" | "fixed" }) => {
       const { data, error } = await supabase
         .from("payment_methods")
-        .update({ name, fee_percentage: fee_percentage || 0 })
+        .update({ 
+          name, 
+          fee_percentage: fee_percentage || 0,
+          fee_type: fee_type || "percentage"
+        } as any)
         .eq("id", id)
         .select()
         .single();
@@ -93,6 +106,11 @@ export const usePaymentMethods = () => {
   const calculateNetAmount = (amount: number, paymentMethodId: string): number => {
     const method = paymentMethods.find(m => m.id === paymentMethodId);
     if (!method || !method.fee_percentage) return amount;
+    
+    if (method.fee_type === "fixed") {
+      return amount - method.fee_percentage;
+    }
+    
     const feeAmount = amount * (method.fee_percentage / 100);
     return amount - feeAmount;
   };
@@ -101,6 +119,11 @@ export const usePaymentMethods = () => {
   const getFeeAmount = (amount: number, paymentMethodId: string): number => {
     const method = paymentMethods.find(m => m.id === paymentMethodId);
     if (!method || !method.fee_percentage) return 0;
+    
+    if (method.fee_type === "fixed") {
+      return method.fee_percentage;
+    }
+    
     return amount * (method.fee_percentage / 100);
   };
 

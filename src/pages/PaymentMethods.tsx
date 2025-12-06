@@ -6,9 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Percent } from "lucide-react";
+import { Plus, Edit, Trash2, Percent, DollarSign } from "lucide-react";
 import { usePaymentMethods, PaymentMethod } from "@/hooks/usePaymentMethods";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const PaymentMethods = () => {
   const { paymentMethods, isLoading, createPaymentMethod, updatePaymentMethod, deletePaymentMethod } = usePaymentMethods();
@@ -20,6 +21,7 @@ const PaymentMethods = () => {
   const [formData, setFormData] = useState({
     name: "",
     fee_percentage: 0,
+    fee_type: "percentage" as "percentage" | "fixed",
   });
 
   const handleOpenDialog = (method?: PaymentMethod) => {
@@ -28,12 +30,14 @@ const PaymentMethods = () => {
       setFormData({
         name: method.name,
         fee_percentage: method.fee_percentage || 0,
+        fee_type: method.fee_type || "percentage",
       });
     } else {
       setMethodToEdit(undefined);
       setFormData({
         name: "",
         fee_percentage: 0,
+        fee_type: "percentage",
       });
     }
     setDialogOpen(true);
@@ -47,7 +51,7 @@ const PaymentMethods = () => {
       createPaymentMethod(formData);
     }
     setDialogOpen(false);
-    setFormData({ name: "", fee_percentage: 0 });
+    setFormData({ name: "", fee_percentage: 0, fee_type: "percentage" });
     setMethodToEdit(undefined);
   };
 
@@ -62,6 +66,27 @@ const PaymentMethods = () => {
     }
     setDeleteDialogOpen(false);
     setMethodToDelete(null);
+  };
+
+  const formatFee = (method: PaymentMethod) => {
+    if (!method.fee_percentage || method.fee_percentage === 0) {
+      return <span className="text-muted-foreground">Sem taxa</span>;
+    }
+    
+    if (method.fee_type === "fixed") {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          R$ {method.fee_percentage.toFixed(2)}
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="secondary" className="gap-1">
+        <Percent className="h-3 w-3" />
+        {method.fee_percentage.toFixed(2)}%
+      </Badge>
+    );
   };
 
   if (isLoading) {
@@ -82,7 +107,7 @@ const PaymentMethods = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead className="text-center">Taxa (%)</TableHead>
+                <TableHead className="text-center">Taxa</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -98,14 +123,7 @@ const PaymentMethods = () => {
                   <TableRow key={method.id}>
                     <TableCell className="font-medium">{method.name}</TableCell>
                     <TableCell className="text-center">
-                      {method.fee_percentage > 0 ? (
-                        <Badge variant="secondary" className="gap-1">
-                          <Percent className="h-3 w-3" />
-                          {method.fee_percentage.toFixed(2)}%
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">Sem taxa</span>
-                      )}
+                      {formatFee(method)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
@@ -142,23 +160,41 @@ const PaymentMethods = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fee_percentage">Taxa da Operadora (%)</Label>
-              <div className="relative">
-                <Input 
-                  id="fee_percentage" 
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={formData.fee_percentage} 
-                  onChange={(e) => setFormData({ ...formData, fee_percentage: parseFloat(e.target.value) || 0 })}
-                  placeholder="Ex: 2.50"
-                  className="pr-8"
-                />
-                <Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="fee_percentage">Taxa da Operadora</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input 
+                    id="fee_percentage" 
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={formData.fee_type === "percentage" ? 100 : undefined}
+                    value={formData.fee_percentage} 
+                    onChange={(e) => setFormData({ ...formData, fee_percentage: parseFloat(e.target.value) || 0 })}
+                    placeholder={formData.fee_type === "percentage" ? "Ex: 2.50" : "Ex: 5.00"}
+                  />
+                </div>
+                <ToggleGroup 
+                  type="single" 
+                  value={formData.fee_type}
+                  onValueChange={(value) => {
+                    if (value) setFormData({ ...formData, fee_type: value as "percentage" | "fixed" });
+                  }}
+                  className="border rounded-md"
+                >
+                  <ToggleGroupItem value="percentage" aria-label="Porcentagem" className="px-3">
+                    <Percent className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="fixed" aria-label="Valor fixo" className="px-3">
+                    <span className="text-sm font-medium">R$</span>
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
               <p className="text-xs text-muted-foreground">
-                Taxa cobrada pela operadora que será deduzida do valor recebido
+                {formData.fee_type === "percentage" 
+                  ? "Taxa percentual cobrada pela operadora que será deduzida do valor recebido"
+                  : "Valor fixo em reais cobrado pela operadora que será deduzido do valor recebido"
+                }
               </p>
             </div>
             <div className="flex justify-end gap-2 pt-2">
