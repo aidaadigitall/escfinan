@@ -1,32 +1,82 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTasks } from "@/hooks/useTasks";
 import { useUsers } from "@/hooks/useUsers";
-import { format, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, subDays, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend 
 } from "recharts";
-import { CheckCircle2, Clock, AlertTriangle, Target, TrendingUp, Users } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Target, TrendingUp, Users, CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
+type PeriodType = "3d" | "7d" | "15d" | "1m" | "3m" | "6m" | "12m" | "custom";
 
 const RelatorioTarefas = () => {
   const { tasks } = useTasks();
   const { users } = useUsers();
-  const [selectedPeriod, setSelectedPeriod] = useState("3");
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("3m");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
 
-  const periodMonths = parseInt(selectedPeriod);
+  // Calculate period dates based on selection
+  const { periodStart, periodEnd, periodMonths } = useMemo(() => {
+    const now = new Date();
+    let start: Date;
+    let end = endOfDay(now);
+    let months = 1;
+
+    switch (selectedPeriod) {
+      case "3d":
+        start = startOfDay(subDays(now, 2));
+        break;
+      case "7d":
+        start = startOfDay(subDays(now, 6));
+        break;
+      case "15d":
+        start = startOfDay(subDays(now, 14));
+        break;
+      case "1m":
+        start = startOfMonth(now);
+        months = 1;
+        break;
+      case "3m":
+        start = subMonths(startOfMonth(now), 2);
+        months = 3;
+        break;
+      case "6m":
+        start = subMonths(startOfMonth(now), 5);
+        months = 6;
+        break;
+      case "12m":
+        start = subMonths(startOfMonth(now), 11);
+        months = 12;
+        break;
+      case "custom":
+        start = customStartDate ? startOfDay(customStartDate) : startOfMonth(now);
+        end = customEndDate ? endOfDay(customEndDate) : endOfDay(now);
+        months = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+        break;
+      default:
+        start = subMonths(startOfMonth(now), 2);
+        months = 3;
+    }
+
+    return { periodStart: start, periodEnd: end, periodMonths: months };
+  }, [selectedPeriod, customStartDate, customEndDate]);
 
   // Calculate metrics for the selected period
   const metrics = useMemo(() => {
     const now = new Date();
-    const periodStart = subMonths(startOfMonth(now), periodMonths - 1);
-    const periodEnd = endOfMonth(now);
 
     const filteredTasks = tasks.filter(task => {
       if (!task.created_at) return false;
@@ -108,7 +158,7 @@ const RelatorioTarefas = () => {
       tasksByPriority,
       tasksByMonth: Object.values(tasksByMonth),
     };
-  }, [tasks, periodMonths]);
+  }, [tasks, periodMonths, periodStart, periodEnd]);
 
   // Prepare chart data
   const statusChartData = [
@@ -145,17 +195,63 @@ const RelatorioTarefas = () => {
           <p className="text-muted-foreground">Análise de tarefas por usuário</p>
         </div>
         
-        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Selecione o período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">Último mês</SelectItem>
-            <SelectItem value="3">Últimos 3 meses</SelectItem>
-            <SelectItem value="6">Últimos 6 meses</SelectItem>
-            <SelectItem value="12">Último ano</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={selectedPeriod} onValueChange={(val) => setSelectedPeriod(val as PeriodType)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Selecione o período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3d">Últimos 3 dias</SelectItem>
+              <SelectItem value="7d">Últimos 7 dias</SelectItem>
+              <SelectItem value="15d">Últimos 15 dias</SelectItem>
+              <SelectItem value="1m">Último mês</SelectItem>
+              <SelectItem value="3m">Últimos 3 meses</SelectItem>
+              <SelectItem value="6m">Últimos 6 meses</SelectItem>
+              <SelectItem value="12m">Último ano</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {selectedPeriod === "custom" && (
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customStartDate}
+                    onSelect={setCustomStartDate}
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <span className="text-muted-foreground">até</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customEndDate}
+                    onSelect={setCustomEndDate}
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Summary Cards */}

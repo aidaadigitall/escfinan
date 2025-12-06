@@ -1,8 +1,26 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import QRCode from "qrcode";
 
 export type DocumentType = "quote" | "sale" | "service_order";
 export type PrintFormat = "a4" | "coupon" | "label";
+
+// Generate QR Code as base64 data URL
+export const generateQRCodeDataURL = async (url: string): Promise<string> => {
+  try {
+    return await QRCode.toDataURL(url, {
+      width: 100,
+      margin: 1,
+      color: {
+        dark: "#000000",
+        light: "#ffffff",
+      },
+    });
+  } catch (error) {
+    console.error("Error generating QR Code:", error);
+    return "";
+  }
+};
 
 interface CompanyInfo {
   company_name?: string | null;
@@ -124,7 +142,8 @@ const statusLabels: Record<string, string> = {
 
 export const generateA4PDF = (
   document: DocumentData,
-  company: CompanyInfo
+  company: CompanyInfo,
+  qrCodeDataURL?: string
 ): string => {
   const title = getDocumentTitle(document.type);
   const prefix = getDocumentNumberPrefix(document.type);
@@ -172,6 +191,9 @@ export const generateA4PDF = (
         .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; }
         .badge-approved { background: #d4edda; color: #155724; }
         .badge-pending { background: #fff3cd; color: #856404; }
+        .qr-section { text-align: center; margin-top: 20px; padding: 10px; border: 1px dashed #ccc; }
+        .qr-code { width: 100px; height: 100px; }
+        .qr-text { font-size: 10px; color: #666; margin-top: 5px; }
         .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
         @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
       </style>
@@ -353,6 +375,12 @@ export const generateA4PDF = (
             <div class="signature-line"></div>
             <div>Assinatura do cliente</div>
           </div>
+          ${qrCodeDataURL ? `
+          <div class="qr-section">
+            <img src="${qrCodeDataURL}" class="qr-code" alt="QR Code">
+            <div class="qr-text">Escaneie para acessar o documento online</div>
+          </div>
+          ` : ''}
           <div class="signature">
             <div class="signature-line"></div>
             <div>Assinatura do técnico</div>
