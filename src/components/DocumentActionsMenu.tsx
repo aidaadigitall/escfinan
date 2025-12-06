@@ -38,6 +38,8 @@ import {
   generateA4PDF, 
   generateCouponPDF, 
   generateServiceOrderPDF,
+  generateQuotePDF,
+  generateSalePDF,
   openPrintWindow, 
   openViewWindow,
   generateWhatsAppMessage,
@@ -125,10 +127,14 @@ export const DocumentActionsMenu = ({
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
     
-    // Use specific format for service orders
+    // Use specific format for each document type
     let html: string;
     if (documentType === "service_order") {
       html = generateServiceOrderPDF(docData, companySettings || {});
+    } else if (documentType === "quote") {
+      html = generateQuotePDF(docData, companySettings || {});
+    } else if (documentType === "sale") {
+      html = generateSalePDF(docData, companySettings || {});
     } else {
       html = generateA4PDF(docData, companySettings || {}, qrCode);
     }
@@ -140,10 +146,14 @@ export const DocumentActionsMenu = ({
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
     
-    // Use specific format for service orders
+    // Use specific format for each document type
     let html: string;
     if (documentType === "service_order") {
       html = generateServiceOrderPDF(docData, companySettings || {});
+    } else if (documentType === "quote") {
+      html = generateQuotePDF(docData, companySettings || {});
+    } else if (documentType === "sale") {
+      html = generateSalePDF(docData, companySettings || {});
     } else {
       html = generateA4PDF(docData, companySettings || {}, qrCode);
     }
@@ -186,10 +196,14 @@ export const DocumentActionsMenu = ({
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
     
-    // Use specific format for service orders
+    // Use specific format for each document type
     let html: string;
     if (documentType === "service_order") {
       html = generateServiceOrderPDF(docData, companySettings || {});
+    } else if (documentType === "quote") {
+      html = generateQuotePDF(docData, companySettings || {});
+    } else if (documentType === "sale") {
+      html = generateSalePDF(docData, companySettings || {});
     } else {
       html = generateA4PDF(docData, companySettings || {}, qrCode);
     }
