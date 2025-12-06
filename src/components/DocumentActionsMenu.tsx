@@ -41,6 +41,7 @@ import {
   openViewWindow,
   generateWhatsAppMessage,
   generateEmailContent,
+  generateQRCodeDataURL,
   type DocumentType
 } from "@/utils/documentPdfGenerator";
 
@@ -113,15 +114,24 @@ export const DocumentActionsMenu = ({
     items: items,
   });
 
-  const handleViewDocument = () => {
+  const getPublicUrl = () => {
+    const typeSlug = documentType === "service_order" ? "os" : documentType === "sale" ? "venda" : "orcamento";
+    return `${window.location.origin}/cobranca/${typeSlug}/${document.id}`;
+  };
+
+  const handleViewDocument = async () => {
     const docData = prepareDocumentData();
-    const html = generateA4PDF(docData, companySettings || {});
+    const publicUrl = getPublicUrl();
+    const qrCode = await generateQRCodeDataURL(publicUrl);
+    const html = generateA4PDF(docData, companySettings || {}, qrCode);
     openViewWindow(html);
   };
 
-  const handlePrintA4 = () => {
+  const handlePrintA4 = async () => {
     const docData = prepareDocumentData();
-    const html = generateA4PDF(docData, companySettings || {});
+    const publicUrl = getPublicUrl();
+    const qrCode = await generateQRCodeDataURL(publicUrl);
+    const html = generateA4PDF(docData, companySettings || {}, qrCode);
     openPrintWindow(html, "a4");
   };
 
@@ -136,8 +146,7 @@ export const DocumentActionsMenu = ({
   };
 
   const handleBillingLink = () => {
-    const typeSlug = documentType === "service_order" ? "os" : documentType === "sale" ? "venda" : "orcamento";
-    const publicUrl = `${window.location.origin}/cobranca/${typeSlug}/${document.id}`;
+    const publicUrl = getPublicUrl();
     window.open(publicUrl, "_blank");
     toast.success("Link de cobrança aberto em nova aba");
   };
@@ -155,15 +164,17 @@ export const DocumentActionsMenu = ({
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
   };
 
-  const handleShareWhatsAppWithPDF = () => {
+  const handleShareWhatsAppWithPDF = async () => {
     const docData = prepareDocumentData();
     
-    // First open the PDF
-    const html = generateA4PDF(docData, companySettings || {});
+    // First open the PDF with QR code
+    const publicUrl = getPublicUrl();
+    const qrCode = await generateQRCodeDataURL(publicUrl);
+    const html = generateA4PDF(docData, companySettings || {}, qrCode);
     openViewWindow(html);
     
     // Then open WhatsApp
-    const message = generateWhatsAppMessage(docData, companySettings || {});
+    const message = generateWhatsAppMessage(docData, companySettings || {}, publicUrl);
     const phone = client?.phone || document.clients?.phone || "";
     const cleanPhone = phone.replace(/\D/g, "");
     
