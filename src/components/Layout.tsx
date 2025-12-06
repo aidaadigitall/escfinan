@@ -5,6 +5,7 @@ import { Sheet, SheetContent } from "./ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AIAssistant } from "./AIAssistant";
 import { useAIAssistant } from "@/hooks/useAIAssistant";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,6 +17,9 @@ export const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const { analyzeSystemData } = useAIAssistant();
   const systemData = analyzeSystemData();
+  
+  // Enable realtime notifications for tasks and comments
+  useRealtimeNotifications();
 
   return (
     <div className="min-h-screen bg-background">
