@@ -37,6 +37,7 @@ const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
   in_progress: "bg-blue-100 text-blue-800",
   waiting_parts: "bg-orange-100 text-orange-800",
+  approved: "bg-emerald-100 text-emerald-800",
   completed: "bg-green-100 text-green-800",
   delivered: "bg-purple-100 text-purple-800",
   cancelled: "bg-red-100 text-red-800",
@@ -46,6 +47,7 @@ const statusLabels: Record<string, string> = {
   pending: "Pendente",
   in_progress: "Em Andamento",
   waiting_parts: "Aguardando Peças",
+  approved: "Aprovado",
   completed: "Concluída",
   delivered: "Entregue",
   cancelled: "Cancelada",
@@ -94,6 +96,7 @@ const OrdensServico = () => {
     defects: "",
     technical_report: "",
     warranty_terms: companySettings?.warranty_terms || "",
+    paid_amount: 0,
     notes: "",
   });
 
@@ -123,6 +126,7 @@ const OrdensServico = () => {
         defects: order.defects || "",
         technical_report: order.technical_report || "",
         warranty_terms: order.warranty_terms || companySettings?.warranty_terms || "",
+        paid_amount: order.paid_amount || 0,
         notes: order.notes || "",
       });
       setItems([]);
@@ -146,6 +150,7 @@ const OrdensServico = () => {
         defects: "",
         technical_report: "",
         warranty_terms: companySettings?.warranty_terms || "",
+        paid_amount: 0,
         notes: "",
       });
       setItems([]);
@@ -411,6 +416,7 @@ const OrdensServico = () => {
                       <SelectItem value="pending">Pendente</SelectItem>
                       <SelectItem value="in_progress">Em Andamento</SelectItem>
                       <SelectItem value="waiting_parts">Aguardando Peças</SelectItem>
+                      <SelectItem value="approved">Aprovado</SelectItem>
                       <SelectItem value="completed">Concluída</SelectItem>
                       <SelectItem value="delivered">Entregue</SelectItem>
                       <SelectItem value="cancelled">Cancelada</SelectItem>
@@ -438,6 +444,23 @@ const OrdensServico = () => {
                   />
                 </div>
               </div>
+
+              {['approved', 'completed', 'delivered'].includes(formData.status) && (
+                <div>
+                  <label className="text-sm font-medium">Valor Pago (Parcial)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.paid_amount || ""}
+                    onChange={(e) => setFormData({ ...formData, paid_amount: parseFloat(e.target.value) || 0 })}
+                    placeholder="0,00"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Deixe em branco ou 0 para gerar todo o valor em contas a receber
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="equipamento" className="space-y-4 mt-4">

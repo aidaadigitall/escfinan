@@ -37,6 +37,7 @@ interface SaleItem {
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
+  approved: "bg-emerald-100 text-emerald-800",
   confirmed: "bg-green-100 text-green-800",
   delivered: "bg-blue-100 text-blue-800",
   cancelled: "bg-red-100 text-red-800",
@@ -44,6 +45,7 @@ const statusColors: Record<string, string> = {
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
+  approved: "Aprovado",
   confirmed: "Confirmado",
   delivered: "Entregue",
   cancelled: "Cancelado",
@@ -69,6 +71,7 @@ const Vendas = () => {
     delivery_date: "",
     payment_method: "",
     status: "pending",
+    paid_amount: 0,
     notes: "",
     warranty_terms: "",
   });
@@ -88,6 +91,7 @@ const Vendas = () => {
         delivery_date: sale.delivery_date || "",
         payment_method: sale.payment_method || "",
         status: sale.status || "pending",
+        paid_amount: sale.paid_amount || 0,
         notes: sale.notes || "",
         warranty_terms: sale.warranty_terms || "",
       });
@@ -101,6 +105,7 @@ const Vendas = () => {
         delivery_date: "",
         payment_method: "",
         status: "pending",
+        paid_amount: 0,
         notes: "",
         warranty_terms: "",
       });
@@ -421,19 +426,39 @@ const Vendas = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Status</label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pendente</SelectItem>
-                    <SelectItem value="confirmed">Confirmado</SelectItem>
-                    <SelectItem value="delivered">Entregue</SelectItem>
-                    <SelectItem value="cancelled">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="approved">Aprovado</SelectItem>
+                      <SelectItem value="confirmed">Confirmado</SelectItem>
+                      <SelectItem value="delivered">Entregue</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {['approved', 'confirmed', 'delivered'].includes(formData.status) && (
+                  <div>
+                    <label className="text-sm font-medium">Valor Pago (Parcial)</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.paid_amount || ""}
+                      onChange={(e) => setFormData({ ...formData, paid_amount: parseFloat(e.target.value) || 0 })}
+                      placeholder="0,00"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Deixe em branco ou 0 para gerar todo o valor em contas a receber
+                    </p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
