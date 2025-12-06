@@ -1,0 +1,516 @@
+import { useState } from "react";
+import { useQuotes } from "@/hooks/useQuotes";
+import { useClients } from "@/hooks/useClients";
+import { useProducts } from "@/hooks/useProducts";
+import { useServices } from "@/hooks/useServices";
+import { useEmployees } from "@/hooks/useEmployees";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Plus, Calendar as CalendarIcon, Search, Edit, Trash2, Eye, FileText, Loader } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface QuoteItem {
+  id?: string;
+  item_type: "product" | "service";
+  product_id?: string | null;
+  service_id?: string | null;
+  name: string;
+  unit: string;
+  quantity: number;
+  unit_price: number;
+  discount: number;
+  subtotal: number;
+}
+
+const statusColors: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-800",
+  sent: "bg-blue-100 text-blue-800",
+  approved: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  expired: "bg-orange-100 text-orange-800",
+};
+
+const statusLabels: Record<string, string> = {
+  draft: "Rascunho",
+  sent: "Enviado",
+  approved: "Aprovado",
+  rejected: "Rejeitado",
+  expired: "Expirado",
+};
+
+const Orcamentos = () => {
+  const { quotes, isLoading, createQuote, updateQuote, deleteQuote } = useQuotes();
+  const { clients } = useClients();
+  const { products } = useProducts();
+  const { services } = useServices();
+  const { employees } = useEmployees();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingQuote, setEditingQuote] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [items, setItems] = useState<QuoteItem[]>([]);
+  const [formData, setFormData] = useState({
+    client_id: "",
+    seller_id: "",
+    validity_days: 3,
+    delivery_date: "",
+    notes: "",
+    internal_notes: "",
+    status: "draft",
+  });
+
+  const filteredQuotes = quotes.filter(
+    (q: any) => q.quote_number?.toString().includes(searchTerm) || 
+    q.clients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleOpenDialog = (quote?: any) => {
+    if (quote) {
+      setEditingQuote(quote);
+      setFormData({
+        client_id: quote.client_id || "",
+        seller_id: quote.seller_id || "",
+        validity_days: quote.validity_days || 3,
+        delivery_date: quote.delivery_date || "",
+        notes: quote.notes || "",
+        internal_notes: quote.internal_notes || "",
+        status: quote.status || "draft",
+      });
+      setItems([]);
+    } else {
+      setEditingQuote(null);
+      setFormData({
+        client_id: "",
+        seller_id: "",
+        validity_days: 3,
+        delivery_date: "",
+        notes: "",
+        internal_notes: "",
+        status: "draft",
+      });
+      setItems([]);
+    }
+    setDialogOpen(true);
+  };
+
+  const handleAddItem = (type: "product" | "service") => {
+    setItems([...items, {
+      item_type: type,
+      product_id: null,
+      service_id: null,
+      name: "",
+      unit: "UN",
+      quantity: 1,
+      unit_price: 0,
+      discount: 0,
+      subtotal: 0,
+    }]);
+  };
+
+  const handleItemChange = (index: number, field: string, value: any) => {
+    const newItems = [...items];
+    (newItems[index] as any)[field] = value;
+
+    if (field === "product_id" && value) {
+      const product = products.find((p) => p.id === value);
+      if (product) {
+        newItems[index].name = product.name;
+        newItems[index].unit_price = product.sale_price || 0;
+        newItems[index].unit = product.unit || "UN";
+      }
+    }
+
+    if (field === "service_id" && value) {
+      const service = services.find((s) => s.id === value);
+      if (service) {
+        newItems[index].name = service.name;
+        newItems[index].unit_price = service.sale_price || 0;
+      }
+    }
+
+    // Calculate subtotal
+    const item = newItems[index];
+    item.subtotal = (item.quantity * item.unit_price) - item.discount;
+
+    setItems(newItems);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const calculateTotals = () => {
+    const productsTotal = items.filter((i) => i.item_type === "product").reduce((sum, i) => sum + i.subtotal, 0);
+    const servicesTotal = items.filter((i) => i.item_type === "service").reduce((sum, i) => sum + i.subtotal, 0);
+    const discountTotal = items.reduce((sum, i) => sum + i.discount, 0);
+    const total = productsTotal + servicesTotal;
+    return { productsTotal, servicesTotal, discountTotal, total };
+  };
+
+  const handleSave = async () => {
+    if (!formData.client_id) return;
+
+    const totals = calculateTotals();
+    const quoteData = {
+      ...formData,
+      products_total: totals.productsTotal,
+      services_total: totals.servicesTotal,
+      discount_total: totals.discountTotal,
+      total_amount: totals.total,
+    };
+
+    if (editingQuote) {
+      updateQuote({ id: editingQuote.id, ...quoteData } as any);
+    } else {
+      await createQuote(quoteData as any);
+    }
+    setDialogOpen(false);
+  };
+
+  const getClientName = (id: string | null) => {
+    if (!id) return "-";
+    const client = clients.find((c) => c.id === id);
+    return client?.name || "-";
+  };
+
+  const totals = calculateTotals();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Orçamentos</h1>
+          <p className="text-muted-foreground mt-1">Gerencie seus orçamentos</p>
+        </div>
+        <Button onClick={() => handleOpenDialog()}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Orçamento
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por número ou cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nº</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Validade</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    <Loader className="h-6 w-6 animate-spin mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : filteredQuotes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    Nenhum orçamento encontrado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredQuotes.map((quote: any) => (
+                  <TableRow key={quote.id}>
+                    <TableCell className="font-medium">#{quote.quote_number}</TableCell>
+                    <TableCell>{quote.clients?.name || "-"}</TableCell>
+                    <TableCell>{format(new Date(quote.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
+                    <TableCell>{quote.validity_days} dias</TableCell>
+                    <TableCell className="font-medium">
+                      {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(quote.total_amount || 0)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[quote.status || "draft"]}>
+                        {statusLabels[quote.status || "draft"]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(quote)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteQuote(quote.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingQuote ? `Editar Orçamento #${editingQuote.quote_number}` : "Novo Orçamento"}</DialogTitle>
+          </DialogHeader>
+
+          <Tabs defaultValue="dados" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="dados">Dados</TabsTrigger>
+              <TabsTrigger value="itens">Itens</TabsTrigger>
+              <TabsTrigger value="observacoes">Observações</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dados" className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Cliente *</label>
+                  <Select value={formData.client_id} onValueChange={(value) => setFormData({ ...formData, client_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Vendedor</label>
+                  <Select value={formData.seller_id} onValueChange={(value) => setFormData({ ...formData, seller_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o vendedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map((emp) => (
+                        <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Validade (dias)</label>
+                  <Input
+                    type="number"
+                    value={formData.validity_days}
+                    onChange={(e) => setFormData({ ...formData, validity_days: parseInt(e.target.value) || 3 })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Previsão de Entrega</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.delivery_date ? format(new Date(formData.delivery_date), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={formData.delivery_date ? new Date(formData.delivery_date) : undefined}
+                        onSelect={(date) => setFormData({ ...formData, delivery_date: date?.toISOString().split("T")[0] || "" })}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Rascunho</SelectItem>
+                      <SelectItem value="sent">Enviado</SelectItem>
+                      <SelectItem value="approved">Aprovado</SelectItem>
+                      <SelectItem value="rejected">Rejeitado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="itens" className="space-y-4 mt-4">
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => handleAddItem("product")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Produto
+                </Button>
+                <Button variant="outline" onClick={() => handleAddItem("service")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Serviço
+                </Button>
+              </div>
+
+              {items.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Qtd</TableHead>
+                      <TableHead>Valor Unit.</TableHead>
+                      <TableHead>Desc.</TableHead>
+                      <TableHead>Subtotal</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {item.item_type === "product" ? "Produto" : "Serviço"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {item.item_type === "product" ? (
+                            <Select
+                              value={item.product_id || ""}
+                              onValueChange={(value) => handleItemChange(index, "product_id", value)}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {products.map((p) => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Select
+                              value={item.service_id || ""}
+                              onValueChange={(value) => handleItemChange(index, "service_id", value)}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {services.map((s) => (
+                                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(index, "quantity", parseFloat(e.target.value) || 0)}
+                            className="w-20"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.unit_price}
+                            onChange={(e) => handleItemChange(index, "unit_price", parseFloat(e.target.value) || 0)}
+                            className="w-24"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.discount}
+                            onChange={(e) => handleItemChange(index, "discount", parseFloat(e.target.value) || 0)}
+                            className="w-20"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.subtotal)}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Produtos:</span>
+                  <span>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.productsTotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Serviços:</span>
+                  <span>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.servicesTotal)}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Total:</span>
+                  <span>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.total)}</span>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="observacoes" className="space-y-4 mt-4">
+              <div>
+                <label className="text-sm font-medium">Observações (visível no orçamento)</label>
+                <Textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={4}
+                  placeholder="Condições de pagamento, prazo de entrega, etc."
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Notas Internas (não visível para o cliente)</label>
+                <Textarea
+                  value={formData.internal_notes}
+                  onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
+                  rows={3}
+                  placeholder="Anotações internas sobre este orçamento..."
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Orcamentos;
