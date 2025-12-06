@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { sendTaskNotification, sendTaskCommentNotification } from "@/services/whatsappService";
 
 export type Task = {
   id: string;
@@ -66,6 +69,7 @@ export const useTasks = () => {
       recurrence_type?: string;
       parent_task_id?: string;
       attachments?: any[];
+      sendWhatsAppNotification?: boolean;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
@@ -93,6 +97,44 @@ export const useTasks = () => {
         .single();
 
       if (error) throw error;
+
+      // Send WhatsApp notifications to assigned users
+      if (taskData.sendWhatsAppNotification && taskData.assigned_users?.length) {
+        const dueDate = taskData.due_date 
+          ? format(new Date(taskData.due_date), "dd/MM/yyyy", { locale: ptBR })
+          : undefined;
+
+        // Get user profile name
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .single();
+
+        // Get phone numbers of assigned users
+        const { data: assignedEmployees } = await supabase
+          .from("employees")
+          .select("phone")
+          .in("id", taskData.assigned_users);
+
+        if (assignedEmployees) {
+          for (const employee of assignedEmployees) {
+            if (employee.phone) {
+              try {
+                await sendTaskNotification(
+                  employee.phone,
+                  taskData.title,
+                  dueDate,
+                  profile?.full_name || undefined
+                );
+              } catch (err) {
+                console.error("Erro ao enviar WhatsApp:", err);
+              }
+            }
+          }
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -201,7 +243,13 @@ export const useTaskComments = (taskId?: string) => {
   });
 
   const addComment = useMutation({
-    mutationFn: async (commentData: { task_id: string; content: string; mentions?: string[] }) => {
+    mutationFn: async (commentData: { 
+      task_id: string; 
+      content: string; 
+      mentions?: string[];
+      taskTitle?: string;
+      sendWhatsAppNotification?: boolean;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
@@ -217,6 +265,38 @@ export const useTaskComments = (taskId?: string) => {
         .single();
 
       if (error) throw error;
+
+      // Send WhatsApp notifications to mentioned users
+      if (commentData.sendWhatsAppNotification && commentData.mentions?.length && commentData.taskTitle) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .single();
+
+        const { data: mentionedEmployees } = await supabase
+          .from("employees")
+          .select("phone")
+          .in("id", commentData.mentions);
+
+        if (mentionedEmployees) {
+          for (const employee of mentionedEmployees) {
+            if (employee.phone) {
+              try {
+                await sendTaskCommentNotification(
+                  employee.phone,
+                  commentData.taskTitle,
+                  profile?.full_name || "Usuário",
+                  commentData.content
+                );
+              } catch (err) {
+                console.error("Erro ao enviar WhatsApp:", err);
+              }
+            }
+          }
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
