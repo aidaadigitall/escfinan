@@ -1405,6 +1405,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          owner_user_id: string | null
           phone: string | null
           role: string
           updated_at: string
@@ -1416,6 +1417,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          owner_user_id?: string | null
           phone?: string | null
           role?: string
           updated_at?: string
@@ -1427,6 +1429,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          owner_user_id?: string | null
           phone?: string | null
           role?: string
           updated_at?: string
@@ -1620,6 +1623,198 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_permissions: {
+        Row: {
+          can_manage_bank_accounts: boolean | null
+          can_manage_cash: boolean | null
+          can_manage_categories: boolean | null
+          can_manage_chart_of_accounts: boolean | null
+          can_manage_clients: boolean | null
+          can_manage_cost_centers: boolean | null
+          can_manage_credit_cards: boolean | null
+          can_manage_daily_entries: boolean | null
+          can_manage_employees: boolean | null
+          can_manage_fixed_expenses: boolean | null
+          can_manage_fixed_income: boolean | null
+          can_manage_payables: boolean | null
+          can_manage_payment_methods: boolean | null
+          can_manage_products: boolean | null
+          can_manage_quotes: boolean | null
+          can_manage_receivables: boolean | null
+          can_manage_sales: boolean | null
+          can_manage_service_orders: boolean | null
+          can_manage_services: boolean | null
+          can_manage_settings: boolean | null
+          can_manage_stock: boolean | null
+          can_manage_stock_movements: boolean | null
+          can_manage_suppliers: boolean | null
+          can_manage_tasks: boolean | null
+          can_manage_transfers: boolean | null
+          can_manage_users: boolean | null
+          can_view_bank_accounts: boolean | null
+          can_view_calendar: boolean | null
+          can_view_cash: boolean | null
+          can_view_cashflow: boolean | null
+          can_view_categories: boolean | null
+          can_view_chart_of_accounts: boolean | null
+          can_view_clients: boolean | null
+          can_view_cost_centers: boolean | null
+          can_view_credit_cards: boolean | null
+          can_view_daily_entries: boolean | null
+          can_view_dre: boolean | null
+          can_view_employees: boolean | null
+          can_view_fixed_expenses: boolean | null
+          can_view_fixed_income: boolean | null
+          can_view_payables: boolean | null
+          can_view_payment_methods: boolean | null
+          can_view_products: boolean | null
+          can_view_quotes: boolean | null
+          can_view_receivables: boolean | null
+          can_view_reports: boolean | null
+          can_view_sales: boolean | null
+          can_view_service_orders: boolean | null
+          can_view_services: boolean | null
+          can_view_settings: boolean | null
+          can_view_stock: boolean | null
+          can_view_stock_movements: boolean | null
+          can_view_suppliers: boolean | null
+          can_view_tasks: boolean | null
+          can_view_transfers: boolean | null
+          can_view_users: boolean | null
+          created_at: string
+          id: string
+          owner_user_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_manage_bank_accounts?: boolean | null
+          can_manage_cash?: boolean | null
+          can_manage_categories?: boolean | null
+          can_manage_chart_of_accounts?: boolean | null
+          can_manage_clients?: boolean | null
+          can_manage_cost_centers?: boolean | null
+          can_manage_credit_cards?: boolean | null
+          can_manage_daily_entries?: boolean | null
+          can_manage_employees?: boolean | null
+          can_manage_fixed_expenses?: boolean | null
+          can_manage_fixed_income?: boolean | null
+          can_manage_payables?: boolean | null
+          can_manage_payment_methods?: boolean | null
+          can_manage_products?: boolean | null
+          can_manage_quotes?: boolean | null
+          can_manage_receivables?: boolean | null
+          can_manage_sales?: boolean | null
+          can_manage_service_orders?: boolean | null
+          can_manage_services?: boolean | null
+          can_manage_settings?: boolean | null
+          can_manage_stock?: boolean | null
+          can_manage_stock_movements?: boolean | null
+          can_manage_suppliers?: boolean | null
+          can_manage_tasks?: boolean | null
+          can_manage_transfers?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_bank_accounts?: boolean | null
+          can_view_calendar?: boolean | null
+          can_view_cash?: boolean | null
+          can_view_cashflow?: boolean | null
+          can_view_categories?: boolean | null
+          can_view_chart_of_accounts?: boolean | null
+          can_view_clients?: boolean | null
+          can_view_cost_centers?: boolean | null
+          can_view_credit_cards?: boolean | null
+          can_view_daily_entries?: boolean | null
+          can_view_dre?: boolean | null
+          can_view_employees?: boolean | null
+          can_view_fixed_expenses?: boolean | null
+          can_view_fixed_income?: boolean | null
+          can_view_payables?: boolean | null
+          can_view_payment_methods?: boolean | null
+          can_view_products?: boolean | null
+          can_view_quotes?: boolean | null
+          can_view_receivables?: boolean | null
+          can_view_reports?: boolean | null
+          can_view_sales?: boolean | null
+          can_view_service_orders?: boolean | null
+          can_view_services?: boolean | null
+          can_view_settings?: boolean | null
+          can_view_stock?: boolean | null
+          can_view_stock_movements?: boolean | null
+          can_view_suppliers?: boolean | null
+          can_view_tasks?: boolean | null
+          can_view_transfers?: boolean | null
+          can_view_users?: boolean | null
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_manage_bank_accounts?: boolean | null
+          can_manage_cash?: boolean | null
+          can_manage_categories?: boolean | null
+          can_manage_chart_of_accounts?: boolean | null
+          can_manage_clients?: boolean | null
+          can_manage_cost_centers?: boolean | null
+          can_manage_credit_cards?: boolean | null
+          can_manage_daily_entries?: boolean | null
+          can_manage_employees?: boolean | null
+          can_manage_fixed_expenses?: boolean | null
+          can_manage_fixed_income?: boolean | null
+          can_manage_payables?: boolean | null
+          can_manage_payment_methods?: boolean | null
+          can_manage_products?: boolean | null
+          can_manage_quotes?: boolean | null
+          can_manage_receivables?: boolean | null
+          can_manage_sales?: boolean | null
+          can_manage_service_orders?: boolean | null
+          can_manage_services?: boolean | null
+          can_manage_settings?: boolean | null
+          can_manage_stock?: boolean | null
+          can_manage_stock_movements?: boolean | null
+          can_manage_suppliers?: boolean | null
+          can_manage_tasks?: boolean | null
+          can_manage_transfers?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_bank_accounts?: boolean | null
+          can_view_calendar?: boolean | null
+          can_view_cash?: boolean | null
+          can_view_cashflow?: boolean | null
+          can_view_categories?: boolean | null
+          can_view_chart_of_accounts?: boolean | null
+          can_view_clients?: boolean | null
+          can_view_cost_centers?: boolean | null
+          can_view_credit_cards?: boolean | null
+          can_view_daily_entries?: boolean | null
+          can_view_dre?: boolean | null
+          can_view_employees?: boolean | null
+          can_view_fixed_expenses?: boolean | null
+          can_view_fixed_income?: boolean | null
+          can_view_payables?: boolean | null
+          can_view_payment_methods?: boolean | null
+          can_view_products?: boolean | null
+          can_view_quotes?: boolean | null
+          can_view_receivables?: boolean | null
+          can_view_reports?: boolean | null
+          can_view_sales?: boolean | null
+          can_view_service_orders?: boolean | null
+          can_view_services?: boolean | null
+          can_view_settings?: boolean | null
+          can_view_stock?: boolean | null
+          can_view_stock_movements?: boolean | null
+          can_view_suppliers?: boolean | null
+          can_view_tasks?: boolean | null
+          can_view_transfers?: boolean | null
+          can_view_users?: boolean | null
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
