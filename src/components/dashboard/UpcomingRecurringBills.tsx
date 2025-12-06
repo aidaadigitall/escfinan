@@ -5,7 +5,11 @@ import { Calendar, Loader2, TrendingDown, TrendingUp } from "lucide-react";
 import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export const UpcomingRecurringBills = () => {
+interface UpcomingRecurringBillsProps {
+  hideValues?: boolean;
+}
+
+export const UpcomingRecurringBills = ({ hideValues = false }: UpcomingRecurringBillsProps) => {
   const { data: recurringBills = [], isLoading } = useQuery({
     queryKey: ["recurring-bills-upcoming"],
     queryFn: async () => {
@@ -133,7 +137,10 @@ export const UpcomingRecurringBills = () => {
                 <div className={`font-semibold ${
                   occurrence.type === 'income' ? 'text-income' : 'text-expense'
                 }`}>
-                  R$ {parseFloat(occurrence.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  {hideValues 
+                    ? "••••••" 
+                    : `R$ ${parseFloat(occurrence.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                  }
                 </div>
               </div>
             ))}

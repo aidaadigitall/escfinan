@@ -9,6 +9,7 @@ import RecurringCalendar from "@/components/dashboard/RecurringCalendar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -24,6 +25,9 @@ const Dashboard = () => {
     currentMonth,
     isLoading
   } = useDashboardData();
+
+  const { permissions } = useCurrentUserPermissions();
+  const hideValues = !permissions.can_view_dashboard_values;
 
   if (isLoading) {
     return (
@@ -42,6 +46,7 @@ const Dashboard = () => {
           variant="income"
           linkText="Ir para contas a receber"
           onLinkClick={() => navigate("/receitas")}
+          hideValues={hideValues}
         />
         <StatCard
           title="A pagar hoje"
@@ -49,6 +54,7 @@ const Dashboard = () => {
           variant="expense"
           linkText="Ir para contas a pagar"
           onLinkClick={() => navigate("/despesas")}
+          hideValues={hideValues}
         />
         <ProgressCard
           title="Recebimentos do mês"
@@ -59,6 +65,7 @@ const Dashboard = () => {
           percentage={incomePercentage}
           linkText="Ir para fluxo de caixa"
           onLinkClick={() => navigate("/fluxo-de-caixa")}
+          hideValues={hideValues}
         />
         <ProgressCard
           title="Pagamentos do mês"
@@ -69,17 +76,18 @@ const Dashboard = () => {
           percentage={expensePercentage}
           linkText="Ir para fluxo de caixa"
           onLinkClick={() => navigate("/fluxo-de-caixa")}
+          hideValues={hideValues}
         />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <ErrorBoundary><CashFlowChart /></ErrorBoundary>
-        <ErrorBoundary><SalesChart /></ErrorBoundary>
+        <ErrorBoundary><CashFlowChart hideValues={hideValues} /></ErrorBoundary>
+        <ErrorBoundary><SalesChart hideValues={hideValues} /></ErrorBoundary>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <ErrorBoundary><BankAccountsCard /></ErrorBoundary>
-        <ErrorBoundary><UpcomingRecurringBills /></ErrorBoundary>
+        <ErrorBoundary><BankAccountsCard hideValues={hideValues} /></ErrorBoundary>
+        <ErrorBoundary><UpcomingRecurringBills hideValues={hideValues} /></ErrorBoundary>
       </div>
 
       <ErrorBoundary>

@@ -5,10 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
   Users, ShoppingCart, Package, DollarSign, Settings, Calendar, CheckSquare,
-  Eye, Pencil
+  Eye, Pencil, LayoutDashboard
 } from "lucide-react";
 
 export type UserPermissions = {
+  // Dashboard
+  can_view_dashboard_values: boolean;
+  
   // Cadastros
   can_view_clients: boolean;
   can_manage_clients: boolean;
@@ -79,6 +82,7 @@ export type UserPermissions = {
 };
 
 export const defaultPermissions: UserPermissions = {
+  can_view_dashboard_values: true,
   can_view_clients: true,
   can_manage_clients: true,
   can_view_suppliers: true,
@@ -148,6 +152,13 @@ type PermissionGroup = {
 };
 
 const permissionGroups: PermissionGroup[] = [
+  {
+    title: "Dashboard",
+    icon: <LayoutDashboard className="h-4 w-4" />,
+    items: [
+      { viewKey: "can_view_dashboard_values", label: "Ver Valores do Dashboard" },
+    ],
+  },
   {
     title: "Cadastros",
     icon: <Users className="h-4 w-4" />,
