@@ -12,12 +12,24 @@ export type Task = {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   responsible_id: string | null;
+  assigned_users: string[] | null;
   labels: string[] | null;
   reminder_date: string | null;
   completed_at: string | null;
   is_recurring: boolean;
   recurrence_type: string | null;
   parent_task_id: string | null;
+  attachments: any[] | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TaskComment = {
+  id: string;
+  task_id: string;
+  user_id: string;
+  content: string;
+  mentions: string[] | null;
   created_at: string;
   updated_at: string;
 };
@@ -47,11 +59,13 @@ export const useTasks = () => {
       priority?: string;
       status?: string;
       responsible_id?: string;
+      assigned_users?: string[];
       labels?: string[];
       reminder_date?: string;
       is_recurring?: boolean;
       recurrence_type?: string;
       parent_task_id?: string;
+      attachments?: any[];
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
@@ -66,11 +80,13 @@ export const useTasks = () => {
           priority: taskData.priority || 'medium',
           status: taskData.status || 'pending',
           responsible_id: taskData.responsible_id || null,
+          assigned_users: taskData.assigned_users || [],
           labels: taskData.labels || null,
           reminder_date: taskData.reminder_date || null,
           is_recurring: taskData.is_recurring || false,
           recurrence_type: taskData.recurrence_type || null,
           parent_task_id: taskData.parent_task_id || null,
+          attachments: taskData.attachments || [],
           user_id: user.id 
         }])
         .select()
@@ -160,5 +176,80 @@ export const useTasks = () => {
     updateTask: updateMutation.mutate,
     deleteTask: deleteMutation.mutate,
     toggleComplete: toggleComplete.mutate,
+  };
+};
+
+// Hook for task comments
+export const useTaskComments = (taskId?: string) => {
+  const queryClient = useQueryClient();
+
+  const { data: comments = [], isLoading } = useQuery({
+    queryKey: ["task_comments", taskId],
+    queryFn: async () => {
+      if (!taskId) return [];
+      
+      const { data, error } = await supabase
+        .from("task_comments")
+        .select("*")
+        .eq("task_id", taskId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return data as TaskComment[];
+    },
+    enabled: !!taskId,
+  });
+
+  const addComment = useMutation({
+    mutationFn: async (commentData: { task_id: string; content: string; mentions?: string[] }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { data, error } = await supabase
+        .from("task_comments")
+        .insert([{
+          task_id: commentData.task_id,
+          content: commentData.content,
+          mentions: commentData.mentions || [],
+          user_id: user.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["task_comments", taskId] });
+      toast.success("Comentário adicionado!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao adicionar comentário");
+    },
+  });
+
+  const deleteComment = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("task_comments")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["task_comments", taskId] });
+      toast.success("Comentário removido!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao remover comentário");
+    },
+  });
+
+  return {
+    comments,
+    isLoading,
+    addComment: addComment.mutate,
+    deleteComment: deleteComment.mutate,
   };
 };
