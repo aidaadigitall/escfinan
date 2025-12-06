@@ -18,8 +18,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Calendar as CalendarIcon, Search, Edit, Trash2, Loader, ShoppingCart } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Search, Loader, ShoppingCart, Trash2 } from "lucide-react";
 import { DiscountInput } from "@/components/DiscountInput";
+import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
 
 interface SaleItem {
   id?: string;
@@ -293,14 +294,14 @@ const Vendas = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(sale)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteSale(sale.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                      <DocumentActionsMenu
+                        document={sale}
+                        documentType="sale"
+                        onEdit={() => handleOpenDialog(sale)}
+                        onDelete={() => deleteSale(sale.id)}
+                        client={sale.clients}
+                        items={[]}
+                      />
                     </TableCell>
                   </TableRow>
                 ))

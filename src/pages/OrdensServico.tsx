@@ -16,8 +16,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Search, Edit, Trash2, Loader, Wrench, Monitor } from "lucide-react";
+import { Plus, Search, Loader, Wrench, Monitor, Trash2 } from "lucide-react";
 import { DiscountInput } from "@/components/DiscountInput";
+import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
 
 interface OrderItem {
   id?: string;
@@ -307,14 +308,14 @@ const OrdensServico = () => {
                       {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(order.total_amount || 0)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(order)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteServiceOrder(order.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                      <DocumentActionsMenu
+                        document={order}
+                        documentType="service_order"
+                        onEdit={() => handleOpenDialog(order)}
+                        onDelete={() => deleteServiceOrder(order.id)}
+                        client={order.clients}
+                        items={[]}
+                      />
                     </TableCell>
                   </TableRow>
                 ))

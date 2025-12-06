@@ -17,9 +17,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Calendar as CalendarIcon, Search, Edit, Trash2, Loader } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Search, Loader, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiscountInput } from "@/components/DiscountInput";
+import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
 
 interface QuoteItem {
   id?: string;
@@ -275,14 +276,14 @@ const Orcamentos = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(quote)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteQuote(quote.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                      <DocumentActionsMenu
+                        document={quote}
+                        documentType="quote"
+                        onEdit={() => handleOpenDialog(quote)}
+                        onDelete={() => deleteQuote(quote.id)}
+                        client={quote.clients}
+                        items={[]}
+                      />
                     </TableCell>
                   </TableRow>
                 ))
