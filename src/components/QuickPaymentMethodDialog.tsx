@@ -20,7 +20,7 @@ export function QuickPaymentMethodDialog({ open, onOpenChange, onSuccess }: Quic
     
     if (!name.trim()) return;
 
-    createPaymentMethod(name.trim(), {
+    createPaymentMethod({ name: name.trim() }, {
       onSuccess: (data) => {
         setName("");
         onOpenChange(false);

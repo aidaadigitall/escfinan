@@ -2,96 +2,189 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash } from "lucide-react";
+import { Plus, Edit, Trash2, Percent } from "lucide-react";
+import { usePaymentMethods, PaymentMethod } from "@/hooks/usePaymentMethods";
+import { Badge } from "@/components/ui/badge";
 
 const PaymentMethods = () => {
-  const [methods, setMethods] = useState([
-    { id: "1", name: "PIX" },
-    { id: "2", name: "Boleto" },
-    { id: "3", name: "Cartão de Crédito" },
-  ]);
+  const { paymentMethods, isLoading, createPaymentMethod, updatePaymentMethod, deletePaymentMethod } = usePaymentMethods();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [currentMethod, setCurrentMethod] = useState<{ id: string; name: string } | null>(null);
-  const [methodName, setMethodName] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [methodToEdit, setMethodToEdit] = useState<PaymentMethod | undefined>(undefined);
+  const [methodToDelete, setMethodToDelete] = useState<string | null>(null);
 
-  const handleSave = () => {
-    if (currentMethod) {
-      setMethods(methods.map(m => m.id === currentMethod.id ? { ...m, name: methodName } : m));
+  const [formData, setFormData] = useState({
+    name: "",
+    fee_percentage: 0,
+  });
+
+  const handleOpenDialog = (method?: PaymentMethod) => {
+    if (method) {
+      setMethodToEdit(method);
+      setFormData({
+        name: method.name,
+        fee_percentage: method.fee_percentage || 0,
+      });
     } else {
-      setMethods([...methods, { id: (methods.length + 1).toString(), name: methodName }]);
+      setMethodToEdit(undefined);
+      setFormData({
+        name: "",
+        fee_percentage: 0,
+      });
     }
-    setDialogOpen(false);
-    setCurrentMethod(null);
-    setMethodName("");
-  };
-
-  const handleEdit = (method: { id: string; name: string }) => {
-    setCurrentMethod(method);
-    setMethodName(method.name);
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setMethods(methods.filter(m => m.id !== id));
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (methodToEdit) {
+      updatePaymentMethod({ id: methodToEdit.id, ...formData });
+    } else {
+      createPaymentMethod(formData);
+    }
+    setDialogOpen(false);
+    setFormData({ name: "", fee_percentage: 0 });
+    setMethodToEdit(undefined);
   };
+
+  const handleDelete = (id: string) => {
+    setMethodToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (methodToDelete) {
+      deletePaymentMethod(methodToDelete);
+    }
+    setDeleteDialogOpen(false);
+    setMethodToDelete(null);
+  };
+
+  if (isLoading) {
+    return <div className="p-4">Carregando...</div>;
+  }
 
   return (
     <div className="p-4 space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Formas de Pagamento</CardTitle>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { setCurrentMethod(null); setMethodName(""); }}>
-                <Plus className="mr-2 h-4 w-4" /> Adicionar
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{currentMethod ? "Editar" : "Adicionar"} Forma de Pagamento</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input id="name" value={methodName} onChange={(e) => setMethodName(e.target.value)} />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={handleSave}>Salvar</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" /> Adicionar
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead className="text-center">Taxa (%)</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {methods.map((method) => (
-                <TableRow key={method.id}>
-                  <TableCell>{method.name}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(method)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(method.id)}>
-                      <Trash className="h-4 w-4" />
-                    </Button>
+              {paymentMethods.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                    Nenhuma forma de pagamento cadastrada
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                paymentMethods.map((method) => (
+                  <TableRow key={method.id}>
+                    <TableCell className="font-medium">{method.name}</TableCell>
+                    <TableCell className="text-center">
+                      {method.fee_percentage > 0 ? (
+                        <Badge variant="secondary" className="gap-1">
+                          <Percent className="h-3 w-3" />
+                          {method.fee_percentage.toFixed(2)}%
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">Sem taxa</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(method)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(method.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{methodToEdit ? "Editar" : "Adicionar"} Forma de Pagamento</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome *</Label>
+              <Input 
+                id="name" 
+                value={formData.name} 
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Cartão de Crédito"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fee_percentage">Taxa da Operadora (%)</Label>
+              <div className="relative">
+                <Input 
+                  id="fee_percentage" 
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={formData.fee_percentage} 
+                  onChange={(e) => setFormData({ ...formData, fee_percentage: parseFloat(e.target.value) || 0 })}
+                  placeholder="Ex: 2.50"
+                  className="pr-8"
+                />
+                <Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Taxa cobrada pela operadora que será deduzida do valor recebido
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">Salvar</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta forma de pagamento?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
