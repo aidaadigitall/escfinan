@@ -37,6 +37,7 @@ import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { 
   generateA4PDF, 
   generateCouponPDF, 
+  generateServiceOrderPDF,
   openPrintWindow, 
   openViewWindow,
   generateWhatsAppMessage,
@@ -123,7 +124,14 @@ export const DocumentActionsMenu = ({
     const docData = prepareDocumentData();
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
-    const html = generateA4PDF(docData, companySettings || {}, qrCode);
+    
+    // Use specific format for service orders
+    let html: string;
+    if (documentType === "service_order") {
+      html = generateServiceOrderPDF(docData, companySettings || {});
+    } else {
+      html = generateA4PDF(docData, companySettings || {}, qrCode);
+    }
     openViewWindow(html);
   };
 
@@ -131,7 +139,14 @@ export const DocumentActionsMenu = ({
     const docData = prepareDocumentData();
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
-    const html = generateA4PDF(docData, companySettings || {}, qrCode);
+    
+    // Use specific format for service orders
+    let html: string;
+    if (documentType === "service_order") {
+      html = generateServiceOrderPDF(docData, companySettings || {});
+    } else {
+      html = generateA4PDF(docData, companySettings || {}, qrCode);
+    }
     openPrintWindow(html, "a4");
   };
 
@@ -170,7 +185,14 @@ export const DocumentActionsMenu = ({
     // First open the PDF with QR code
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
-    const html = generateA4PDF(docData, companySettings || {}, qrCode);
+    
+    // Use specific format for service orders
+    let html: string;
+    if (documentType === "service_order") {
+      html = generateServiceOrderPDF(docData, companySettings || {});
+    } else {
+      html = generateA4PDF(docData, companySettings || {}, qrCode);
+    }
     openViewWindow(html);
     
     // Then open WhatsApp

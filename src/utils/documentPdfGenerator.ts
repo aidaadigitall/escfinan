@@ -140,6 +140,330 @@ const statusLabels: Record<string, string> = {
   expired: "Expirado",
 };
 
+export const generateServiceOrderPDF = (
+  document: DocumentData,
+  company: CompanyInfo,
+  responsibleName?: string,
+  technicianName?: string
+): string => {
+  const currentDate = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
+  
+  const services = document.items?.filter(i => i.item_type === "service") || [];
+  const products = document.items?.filter(i => i.item_type === "product") || [];
+  const allItems = [...services, ...products];
+
+  const formatNumber = (value: number) => {
+    return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>ORDEM DE SERVIÇO Nº ${document.number}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; }
+        .container { max-width: 210mm; margin: 0 auto; padding: 10mm; }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 2px solid #000; margin-bottom: 0; }
+        .header-left { display: flex; align-items: flex-start; gap: 10px; }
+        .logo { width: 70px; height: 70px; object-fit: contain; }
+        .company-info { font-size: 10px; line-height: 1.4; }
+        .company-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
+        .header-right { text-align: right; font-size: 10px; line-height: 1.5; }
+        .header-right a { color: #000; text-decoration: none; }
+        
+        /* Title Bar */
+        .title-bar { background: #000; color: #fff; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .title-bar h1 { font-size: 14px; font-weight: bold; margin: 0; }
+        .title-bar .date { font-size: 14px; font-weight: bold; }
+        
+        /* Section */
+        .section { border: 1px solid #000; margin-bottom: -1px; }
+        .section-header { background: #e0e0e0; padding: 4px 8px; font-weight: bold; font-size: 11px; border-bottom: 1px solid #000; }
+        .section-content { padding: 8px; }
+        
+        /* Grid Layout */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; }
+        .grid-item { padding: 4px 8px; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; }
+        .grid-item:last-child { border-right: none; }
+        .grid-item label { font-weight: bold; font-size: 10px; display: block; margin-bottom: 2px; }
+        .grid-item span { font-size: 11px; }
+        
+        /* Equipment grid */
+        .equip-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; }
+        
+        /* Text blocks */
+        .text-block { padding: 8px; font-size: 11px; line-height: 1.5; white-space: pre-wrap; }
+        .text-block-title { font-weight: bold; margin-bottom: 4px; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 5px 8px; font-size: 10px; }
+        th { background: #e0e0e0; font-weight: bold; text-align: center; }
+        td.text-center { text-align: center; }
+        td.text-right { text-align: right; }
+        .total-row { background: #f5f5f5; font-weight: bold; }
+        
+        /* Totals */
+        .totals-box { text-align: right; padding: 8px; border: 1px solid #000; border-top: none; }
+        .totals-line { font-size: 12px; margin: 2px 0; }
+        .totals-line.grand { font-size: 14px; font-weight: bold; }
+        
+        /* Payment section */
+        .payment-table th, .payment-table td { border: 1px solid #000; }
+        
+        @media print { 
+          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } 
+          .container { padding: 5mm; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-left">
+            ${company.logo_header_url ? `<img src="${company.logo_header_url}" class="logo" alt="Logo">` : ''}
+            <div class="company-info">
+              <div class="company-name">${company.company_name || company.trading_name || 'Empresa'}</div>
+              <div>CNPJ: ${company.cnpj || '-'}</div>
+              <div>${company.address || ''}</div>
+              <div>${company.city || ''}/${company.state || ''} - CEP: ${company.zipcode || ''}</div>
+            </div>
+          </div>
+          <div class="header-right">
+            <div>${company.phone || ''}${company.phone2 ? ' - ' + company.phone2 : ''}</div>
+            <div>${company.email || ''}</div>
+            <div>${company.website || ''}</div>
+            <div style="margin-top: 5px;"><strong>Responsável:</strong> ${responsibleName || '-'}</div>
+            <div><strong>Técnico:</strong> ${technicianName || '-'}</div>
+          </div>
+        </div>
+
+        <!-- Title Bar -->
+        <div class="title-bar">
+          <h1>ORDEM DE SERVIÇO Nº ${document.number}</h1>
+          <span class="date">${currentDate}</span>
+        </div>
+
+        <!-- Período de Execução -->
+        <div class="section">
+          <div class="section-header">PERÍODO DE EXECUÇÃO</div>
+          <div class="section-content">
+            <div class="grid-2">
+              <div class="grid-item">
+                <label>Entrada:</label>
+                <span>${document.entry_date ? format(new Date(document.entry_date), "dd/MM/yyyy - HH:mm", { locale: ptBR }) : '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>Saída:</label>
+                <span>${document.exit_date ? format(new Date(document.exit_date), "dd/MM/yyyy", { locale: ptBR }) : '-'}</span>
+              </div>
+            </div>
+            <div class="grid-3" style="border-top: 1px solid #ccc;">
+              <div class="grid-item">
+                <label>Memória:</label>
+                <span>${document.equipment_memory || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>HDD / SSD:</label>
+                <span>${document.equipment_storage || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>SSD:</label>
+                <span>-</span>
+              </div>
+            </div>
+            <div style="padding: 4px 8px; border-top: 1px solid #ccc;">
+              <label style="font-weight: bold; font-size: 10px;">Processador:</label>
+              <span style="font-size: 11px; margin-left: 5px;">${document.equipment_processor || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dados do Cliente -->
+        <div class="section">
+          <div class="section-header">DADOS DO CLIENTE</div>
+          <div class="section-content" style="padding: 0;">
+            <div class="grid-2">
+              <div class="grid-item">
+                <label>Razão social:</label>
+                <span>${document.client?.company_name || document.client?.name || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>Nome fantasia:</label>
+                <span>${document.client?.name || '-'}</span>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="grid-item">
+                <label>CNPJ/CPF:</label>
+                <span>${document.client?.cnpj || document.client?.cpf || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>Endereço:</label>
+                <span>${document.client?.address || '-'}</span>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="grid-item">
+                <label>CEP:</label>
+                <span>${document.client?.zipcode || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>Cidade/UF:</label>
+                <span>${document.client?.city || ''}/${document.client?.state || ''}</span>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="grid-item">
+                <label>Telefone:</label>
+                <span>${document.client?.phone || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>E-mail:</label>
+                <span>${document.client?.email || '-'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equipamento -->
+        <div class="section">
+          <div class="section-header">EQUIPAMENTO</div>
+          <div class="section-content" style="padding: 0;">
+            <div class="equip-grid">
+              <div class="grid-item">
+                <label>Nome do equipamento:</label>
+                <span>${document.equipment_name || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>Marca:</label>
+                <span>${document.equipment_brand || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>Modelo:</label>
+                <span>${document.equipment_model || '-'}</span>
+              </div>
+              <div class="grid-item">
+                <label>Série:</label>
+                <span>${document.equipment_serial || '-'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Defeitos -->
+        ${document.defects ? `
+        <div class="section">
+          <div class="text-block">
+            <div class="text-block-title">Defeitos</div>
+            ${document.defects}
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Laudo Técnico -->
+        ${document.technical_report ? `
+        <div class="section">
+          <div class="text-block">
+            <div class="text-block-title">Laudo técnico</div>
+            ${document.technical_report}
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Termos de Garantia -->
+        ${document.warranty_terms ? `
+        <div class="section">
+          <div class="text-block">
+            <div class="text-block-title">Termos de garantia</div>
+            ${document.warranty_terms}
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Serviços Table -->
+        ${allItems.length > 0 ? `
+        <div class="section">
+          <div class="section-header">SERVIÇOS</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;">ITEM</th>
+                <th>NOME</th>
+                <th style="width: 60px;">QTD.</th>
+                <th style="width: 80px;">VR. UNIT.</th>
+                <th style="width: 60px;">DESC.</th>
+                <th style="width: 90px;">SUBTOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allItems.map((item, i) => `
+                <tr>
+                  <td class="text-center">${i + 1}</td>
+                  <td>${item.name}</td>
+                  <td class="text-center">${formatNumber(item.quantity)}</td>
+                  <td class="text-right">${formatNumber(item.unit_price)}</td>
+                  <td class="text-right">${formatNumber(item.discount || 0)}</td>
+                  <td class="text-right">${formatNumber(item.subtotal)}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="2"><strong>TOTAL</strong></td>
+                <td class="text-center">${formatNumber(allItems.reduce((s, i) => s + i.quantity, 0))}</td>
+                <td class="text-right">${formatNumber(allItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0))}</td>
+                <td class="text-right">${formatNumber(allItems.reduce((s, i) => s + (i.discount || 0), 0))}</td>
+                <td class="text-right">${formatNumber(allItems.reduce((s, i) => s + i.subtotal, 0))}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        ` : ''}
+
+        <!-- Totals -->
+        <div class="totals-box">
+          <div class="totals-line"><strong>SERVIÇOS:</strong> ${formatNumber(document.services_total || 0)}</div>
+          <div class="totals-line grand"><strong>TOTAL: R$ ${formatNumber(document.total_amount || 0)}</strong></div>
+        </div>
+
+        <!-- Dados do Pagamento -->
+        <div class="section" style="margin-top: 15px;">
+          <div class="section-header">DADOS DO PAGAMENTO</div>
+          <table class="payment-table">
+            <thead>
+              <tr>
+                <th>VENCIMENTO</th>
+                <th>VALOR</th>
+                <th>FORMA DE PAGAMENTO</th>
+                <th>OBSERVAÇÃO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${document.delivery_date ? format(new Date(document.delivery_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : '-'}</td>
+                <td>${formatNumber(document.total_amount || 0)}</td>
+                <td>${document.payment_method || '-'}</td>
+                <td>${document.notes || '-'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `;
+
+  return html;
+};
+
 export const generateA4PDF = (
   document: DocumentData,
   company: CompanyInfo,
