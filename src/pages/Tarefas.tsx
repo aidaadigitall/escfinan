@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useUsers } from "@/hooks/useUsers";
+import { useTaskDueNotifications } from "@/hooks/useTaskDueNotifications";
 import { TaskDialog } from "@/components/TaskDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,19 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Time counter component for tasks
+// Time counter component for tasks with real-time updates
 const TaskTimeCounter = ({ dueDate, dueTime, status }: { dueDate: string; dueTime?: string | null; status?: string | null }) => {
+  const [, setTick] = useState(0);
+  
+  // Update every minute for real-time display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+  
   if (status === "completed" || status === "cancelled") return null;
   
   const now = new Date();
@@ -32,9 +44,10 @@ const TaskTimeCounter = ({ dueDate, dueTime, status }: { dueDate: string; dueTim
   }
   
   const isOverdue = isPast(targetDate);
-  const daysDiff = Math.abs(differenceInDays(targetDate, now));
-  const hoursDiff = Math.abs(differenceInHours(targetDate, now) % 24);
-  const minutesDiff = Math.abs(differenceInMinutes(targetDate, now) % 60);
+  const totalMinutesDiff = Math.abs(differenceInMinutes(targetDate, now));
+  const daysDiff = Math.floor(totalMinutesDiff / (24 * 60));
+  const hoursDiff = Math.floor((totalMinutesDiff % (24 * 60)) / 60);
+  const minutesDiff = totalMinutesDiff % 60;
   
   let timeText = "";
   let colorClass = "";
@@ -42,23 +55,34 @@ const TaskTimeCounter = ({ dueDate, dueTime, status }: { dueDate: string; dueTim
   if (isOverdue) {
     colorClass = "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 border-red-300";
     if (daysDiff === 0) {
-      timeText = `Atrasado ${hoursDiff}h ${minutesDiff}m`;
+      if (hoursDiff === 0) {
+        timeText = `Atrasado ${minutesDiff}m`;
+      } else {
+        timeText = `Atrasado ${hoursDiff}h ${minutesDiff}m`;
+      }
     } else if (daysDiff === 1) {
-      timeText = `Atrasado 1 dia`;
+      timeText = `Atrasado 1 dia ${hoursDiff}h`;
     } else {
       timeText = `Atrasado ${daysDiff} dias`;
     }
   } else {
     if (daysDiff === 0) {
-      colorClass = "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 border-orange-300";
       if (hoursDiff === 0) {
+        colorClass = "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 border-red-300 animate-pulse";
         timeText = `Vence em ${minutesDiff}m`;
+      } else if (hoursDiff <= 1) {
+        colorClass = "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 border-orange-300";
+        timeText = `Vence em ${hoursDiff}h ${minutesDiff}m`;
       } else {
+        colorClass = "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 border-orange-300";
         timeText = `Vence em ${hoursDiff}h ${minutesDiff}m`;
       }
+    } else if (daysDiff === 1) {
+      colorClass = "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-300";
+      timeText = `Vence amanhã ${hoursDiff > 0 ? `em ${hoursDiff}h` : ""}`.trim();
     } else if (daysDiff <= 3) {
       colorClass = "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-300";
-      timeText = daysDiff === 1 ? `Vence amanhã` : `Vence em ${daysDiff} dias`;
+      timeText = `Vence em ${daysDiff} dias`;
     } else {
       colorClass = "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 border-green-300";
       timeText = `Vence em ${daysDiff} dias`;
@@ -91,6 +115,9 @@ const Tarefas = () => {
   const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
   const { employees } = useEmployees();
   const { users } = useUsers();
+  
+  // Enable due notifications for tasks
+  useTaskDueNotifications(tasks);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
