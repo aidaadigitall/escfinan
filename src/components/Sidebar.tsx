@@ -1,7 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import escSolutionsLogo from "@/assets/esc_solutions_logo.png";
 import { cn } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Home,
   TrendingUp,
@@ -126,9 +128,41 @@ const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
 export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { permissions } = useCurrentUserPermissions();
+  const [sidebarLogoUrl, setSidebarLogoUrl] = useState<string | null>(null);
   
   const menuItems = useMemo(() => getMenuItems(permissions), [permissions]);
+  
+  // Fetch sidebar logo from company settings
+  useEffect(() => {
+    const fetchSidebarLogo = async () => {
+      if (!user) return;
+
+      // Get effective owner ID for the current user
+      const { data: effectiveOwnerData } = await supabase
+        .rpc('get_effective_owner_id', { _user_id: user.id });
+      
+      const effectiveUserId = effectiveOwnerData || user.id;
+
+      const { data: companyData } = await supabase
+        .from("company_settings")
+        .select("logo_sidebar_url")
+        .eq("user_id", effectiveUserId)
+        .maybeSingle();
+      
+      if (companyData?.logo_sidebar_url) {
+        setSidebarLogoUrl(companyData.logo_sidebar_url);
+        localStorage.setItem("logo_sidebar_url", companyData.logo_sidebar_url);
+      } else {
+        // Fallback to localStorage
+        const storedLogo = localStorage.getItem("logo_sidebar_url");
+        if (storedLogo) setSidebarLogoUrl(storedLogo);
+      }
+    };
+
+    fetchSidebarLogo();
+  }, [user]);
   
   // Initialize expanded menus based on current route
   const getInitialExpandedMenus = () => {
@@ -236,7 +270,11 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
           onClick={() => navigate("/")}
           className={cn("flex items-center justify-center", collapsed ? "w-full" : "w-auto")}
         >
-          <img src={escSolutionsLogo} alt="ESC Solutions Logo" className={cn("transition-all duration-200", collapsed ? "w-8 h-8" : "w-40")} />
+          <img 
+            src={sidebarLogoUrl || escSolutionsLogo} 
+            alt="Logo" 
+            className={cn("transition-all duration-200 object-contain", collapsed ? "w-8 h-8" : "w-40 max-h-16")} 
+          />
         </button>
         
         {onToggle && (

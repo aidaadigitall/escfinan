@@ -41,31 +41,44 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   };
 
   useEffect(() => {
-    if (user) {
+    const fetchUserData = async () => {
+      if (!user) return;
+
       // Buscar nome do usuário
-      supabase
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("user_id", user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.full_name) {
-            setUserName(data.full_name);
-          }
-        });
+        .maybeSingle();
+      
+      if (profileData?.full_name) {
+        setUserName(profileData.full_name);
+      }
 
-      // Buscar logo do sistema
-      supabase
-        .from("system_settings")
-        .select("logo_url")
-        .eq("user_id", user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.logo_url) {
-            setLogoUrl(data.logo_url);
-          }
-        });
-    }
+      // Get effective owner ID for the current user
+      const { data: effectiveOwnerData } = await supabase
+        .rpc('get_effective_owner_id', { _user_id: user.id });
+      
+      const effectiveUserId = effectiveOwnerData || user.id;
+
+      // Buscar logo do header de company_settings
+      const { data: companyData } = await supabase
+        .from("company_settings")
+        .select("logo_header_url")
+        .eq("user_id", effectiveUserId)
+        .maybeSingle();
+      
+      if (companyData?.logo_header_url) {
+        setLogoUrl(companyData.logo_header_url);
+        localStorage.setItem("logo_header_url", companyData.logo_header_url);
+      } else {
+        // Fallback to localStorage
+        const storedLogo = localStorage.getItem("logo_header_url");
+        if (storedLogo) setLogoUrl(storedLogo);
+      }
+    };
+
+    fetchUserData();
   }, [user]);
 
   return (
