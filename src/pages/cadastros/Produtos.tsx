@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, Search, Loader, Package, DollarSign, TrendingUp } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Edit, Trash2, Search, Loader, Package, DollarSign, TrendingUp, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { UnitManagerDialog, getUnits } from "@/components/UnitManagerDialog";
 
 const Produtos = () => {
   const { products, isLoading, createProduct, updateProduct, deleteProduct } = useProducts();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [unitManagerOpen, setUnitManagerOpen] = useState(false);
+  const [units, setUnits] = useState(getUnits());
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -41,6 +45,10 @@ const Produtos = () => {
     is_active: true,
   });
   const [searchTerm, setSearchTerm] = useState("");
+
+  const refreshUnits = () => {
+    setUnits(getUnits());
+  };
 
   const filteredProducts = products.filter(
     (p) =>
@@ -277,13 +285,33 @@ const Produtos = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="unit">Unidade</Label>
-                  <Input
-                    id="unit"
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="unit">Unidade</Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setUnitManagerOpen(true)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Settings2 className="h-3 w-3 mr-1" />
+                      Gerenciar
+                    </Button>
+                  </div>
+                  <Select
                     value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    placeholder="UN, KG, L, etc"
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, unit: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {units.map((unit) => (
+                        <SelectItem key={unit.sigla} value={unit.sigla}>
+                          {unit.sigla} - {unit.descricao}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -422,6 +450,12 @@ const Produtos = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UnitManagerDialog 
+        open={unitManagerOpen} 
+        onOpenChange={setUnitManagerOpen}
+        onUnitsChange={refreshUnits}
+      />
     </div>
   );
 };

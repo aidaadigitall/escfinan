@@ -73,7 +73,7 @@ const App = () => (
             <Route path="/orcamentos" element={<ProtectedRoute><Layout><Orcamentos /></Layout></ProtectedRoute>} />
             <Route path="/ordens-servico" element={<ProtectedRoute><Layout><OrdensServico /></Layout></ProtectedRoute>} />
             <Route path="/vendas" element={<ProtectedRoute><Layout><Vendas /></Layout></ProtectedRoute>} />
-            <Route path="/estoque/movimentacoes" element={<ProtectedRoute><Layout><div className="text-center py-20"><h1 className="text-2xl font-bold">Movimentações de Estoque</h1><p className="text-muted-foreground mt-2">Em desenvolvimento</p></div></Layout></ProtectedRoute>} />
+            <Route path="/estoque/movimentacoes" element={<ProtectedRoute><Layout><Movimentacoes /></Layout></ProtectedRoute>} />
             <Route path="/auxiliares/caixas" element={<ProtectedRoute><Layout><Caixa /></Layout></ProtectedRoute>} />
             <Route path="/auxiliares/contas-bancarias" element={<ProtectedRoute><Layout><ContasBancarias /></Layout></ProtectedRoute>} />
             <Route path="/auxiliares/cartoes-credito" element={<ProtectedRoute><Layout><CartoesCredito /></Layout></ProtectedRoute>} />
