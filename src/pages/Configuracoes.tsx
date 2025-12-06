@@ -3,17 +3,22 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft, ShieldAlert } from "lucide-react";
+import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft, ShieldAlert, History } from "lucide-react";
 import { DataManagementDialog } from "@/components/DataManagementDialog";
 import { DataMigrationDialog } from "@/components/DataMigrationDialog";
 import { MaskedInput } from "@/components/ui/masked-input";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Configuracoes = () => {
   const { user } = useAuth();
@@ -535,6 +540,8 @@ const Configuracoes = () => {
         </CardContent>
       </Card>
 
+      <SettingsAuditLog />
+
       <DataManagementDialog 
         open={dataManagementOpen} 
         onOpenChange={setDataManagementOpen} 
@@ -545,6 +552,111 @@ const Configuracoes = () => {
         onOpenChange={setDataMigrationOpen}
       />
     </div>
+  );
+};
+
+const fieldLabels: Record<string, string> = {
+  company_name: "Razão Social",
+  trading_name: "Nome Fantasia",
+  cnpj: "CNPJ",
+  ie: "Inscrição Estadual",
+  im: "Inscrição Municipal",
+  phone: "Telefone Principal",
+  phone2: "Telefone Secundário",
+  email: "Email",
+  website: "Website",
+  address: "Endereço",
+  city: "Cidade",
+  state: "Estado",
+  zipcode: "CEP",
+  logo_header_url: "Logo Header",
+  logo_sidebar_url: "Logo Sidebar",
+  warranty_terms: "Termos de Garantia",
+};
+
+const SettingsAuditLog = () => {
+  const { data: auditLogs, isLoading } = useQuery({
+    queryKey: ["company_settings_audit"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("company_settings_audit")
+        .select("*")
+        .order("changed_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="rounded-2xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Histórico de Alterações
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <History className="h-5 w-5" />
+          Histórico de Alterações
+        </CardTitle>
+        <CardDescription>
+          Registro de todas as alterações realizadas nas configurações
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {auditLogs && auditLogs.length > 0 ? (
+          <ScrollArea className="h-[300px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data/Hora</TableHead>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Campo</TableHead>
+                  <TableHead>Valor Anterior</TableHead>
+                  <TableHead>Novo Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {auditLogs.map((log: any) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="whitespace-nowrap">
+                      {format(new Date(log.changed_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell>{log.user_name || "Sistema"}</TableCell>
+                    <TableCell>{fieldLabels[log.changed_field] || log.changed_field}</TableCell>
+                    <TableCell className="max-w-[150px] truncate" title={log.old_value}>
+                      {log.old_value || "-"}
+                    </TableCell>
+                    <TableCell className="max-w-[150px] truncate" title={log.new_value}>
+                      {log.new_value || "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        ) : (
+          <p className="text-muted-foreground text-center py-4">
+            Nenhuma alteração registrada ainda.
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

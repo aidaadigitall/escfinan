@@ -313,6 +313,39 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings_audit: {
+        Row: {
+          changed_at: string
+          changed_field: string
+          company_settings_id: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_field: string
+          company_settings_id: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_field?: string
+          company_settings_id?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       cost_centers: {
         Row: {
           created_at: string
