@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useUsers } from "@/hooks/useUsers";
@@ -13,7 +14,7 @@ import { format, differenceInDays, differenceInHours, differenceInMinutes, isPas
 import { ptBR } from "date-fns/locale";
 import { 
   Plus, Calendar as CalendarIcon, Flag, Tag, Trash2, Edit, 
-  CheckCircle2, Circle, Clock, User, Filter, ChevronDown, ChevronRight, Users, Timer, AlertTriangle
+  CheckCircle2, Circle, Clock, User, Filter, ChevronDown, ChevronRight, Users, Timer, AlertTriangle, BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -112,6 +113,7 @@ const priorityLabels = {
 };
 
 const Tarefas = () => {
+  const navigate = useNavigate();
   const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
   const { employees } = useEmployees();
   const { users } = useUsers();
@@ -295,10 +297,16 @@ const Tarefas = () => {
           <h1 className="text-3xl font-bold">Tarefas</h1>
           <p className="text-muted-foreground mt-1">Gerencie suas tarefas e compromissos</p>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Tarefa
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/relatorio-tarefas")}>
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Relatório
+          </Button>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Tarefa
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4 flex-wrap">
