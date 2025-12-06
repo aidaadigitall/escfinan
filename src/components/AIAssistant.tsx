@@ -131,7 +131,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed bottom-6 right-6 z-40 rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110",
+          "fixed bottom-6 right-6 z-30 rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110",
           isOpen
             ? "bg-red-500 hover:bg-red-600"
             : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -147,7 +147,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-24 right-6 z-40 w-96 max-h-[600px] flex flex-col shadow-2xl border-2 border-blue-200 bg-white">
+        <Card className="fixed bottom-24 right-6 z-30 w-96 max-h-[500px] flex flex-col shadow-2xl border-2 border-blue-200 bg-white">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
             <h3 className="font-bold text-lg flex items-center gap-2">
