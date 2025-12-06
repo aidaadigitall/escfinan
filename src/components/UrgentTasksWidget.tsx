@@ -113,7 +113,7 @@ export const UrgentTasksWidget = () => {
                   "flex items-center justify-between p-2 rounded-lg text-sm cursor-pointer hover:bg-muted/50 transition-colors",
                   isOverdue ? "bg-red-100/50 dark:bg-red-900/20" : "bg-orange-100/50 dark:bg-orange-900/20"
                 )}
-                onClick={() => navigate("/tarefas")}
+                onClick={() => navigate(`/tarefas?task=${task.id}`)}
               >
                 <div className="flex-1 min-w-0">
                   <p className={cn("truncate font-medium", isOverdue ? "text-red-700 dark:text-red-400" : "text-orange-700 dark:text-orange-400")}>

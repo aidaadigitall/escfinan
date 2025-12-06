@@ -42,6 +42,7 @@ import RelatorioTarefas from "./pages/RelatorioTarefas";
 import Orcamentos from "./pages/Orcamentos";
 import OrdensServico from "./pages/OrdensServico";
 import Vendas from "./pages/Vendas";
+import PublicBilling from "./pages/PublicBilling";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,8 +61,12 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
+        <Routes>
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Public billing page - no auth required */}
+            <Route path="/cobranca/:type/:id" element={<PublicBilling />} />
+            
             <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
             
             {/* Financial routes with permission protection */}
