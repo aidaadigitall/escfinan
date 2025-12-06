@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getEffectiveUserId } from "./useEffectiveUserId";
 
 export type Product = {
   id: string;
@@ -51,8 +52,7 @@ export const useProducts = () => {
       category?: string;
       is_active?: boolean;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      const effectiveUserId = await getEffectiveUserId();
 
       const { data, error } = await supabase
         .from("products")
@@ -67,7 +67,7 @@ export const useProducts = () => {
           min_stock: productData.min_stock || 0,
           category: productData.category || null,
           is_active: productData.is_active ?? true,
-          user_id: user.id 
+          user_id: effectiveUserId 
         }])
         .select()
         .single();

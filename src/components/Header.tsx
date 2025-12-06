@@ -44,22 +44,33 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
     const fetchUserData = async () => {
       if (!user) return;
 
-      // Buscar nome do usuário
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (profileData?.full_name) {
-        setUserName(profileData.full_name);
-      }
-
       // Get effective owner ID for the current user
       const { data: effectiveOwnerData } = await supabase
         .rpc('get_effective_owner_id', { _user_id: user.id });
       
       const effectiveUserId = effectiveOwnerData || user.id;
+
+      // Buscar nome do usuário - primeiro de system_users, depois de profiles
+      const { data: systemUserData } = await supabase
+        .from("system_users")
+        .select("name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (systemUserData?.name) {
+        setUserName(systemUserData.name);
+      } else {
+        // Fallback para profiles
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (profileData?.full_name) {
+          setUserName(profileData.full_name);
+        }
+      }
 
       // Buscar logo do header de company_settings
       const { data: companyData } = await supabase
