@@ -144,7 +144,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
             <TabsTrigger value="details">Detalhes</TabsTrigger>
             <TabsTrigger value="assign">Delegação</TabsTrigger>
             <TabsTrigger value="attachments">Anexos</TabsTrigger>
-            <TabsTrigger value="comments" disabled={!task}>Comentários</TabsTrigger>
+            <TabsTrigger value="comments" disabled={!task?.id}>Comentários</TabsTrigger>
           </TabsList>
 
           <ScrollArea className="flex-1 mt-4">
@@ -372,77 +372,88 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
             </TabsContent>
 
             <TabsContent value="comments" className="space-y-4 m-0 p-1">
-              <div>
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Comentários
-                </label>
-                
-                <div className="space-y-3 mt-3 max-h-48 overflow-y-auto">
-                  {comments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Nenhum comentário ainda
-                    </p>
-                  ) : (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="bg-muted/50 rounded-lg p-3">
-                        <div className="flex justify-between items-start">
-                          <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => deleteComment(comment.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(new Date(comment.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                        </p>
-                      </div>
-                    ))
-                  )}
+              {!task?.id ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    Salve a tarefa primeiro para adicionar comentários
+                  </p>
                 </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Comentários
+                  </label>
+                  
+                  <div className="space-y-3 mt-3 max-h-48 overflow-y-auto">
+                    {comments.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Nenhum comentário ainda
+                      </p>
+                    ) : (
+                      comments.map((comment) => (
+                        <div key={comment.id} className="bg-muted/50 rounded-lg p-3">
+                          <div className="flex justify-between items-start">
+                            <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => deleteComment(comment.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(comment.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
 
-                <div className="mt-4 relative">
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <Textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Adicione um comentário... Use @ para mencionar"
-                        rows={2}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-2 h-6 w-6"
-                        onClick={() => setShowMentions(!showMentions)}
-                      >
-                        <AtSign className="h-4 w-4" />
+                  <div className="mt-4 relative">
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <Textarea
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          placeholder="Adicione um comentário... Use @ para mencionar"
+                          rows={2}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-2 h-6 w-6"
+                          onClick={() => setShowMentions(!showMentions)}
+                        >
+                          <AtSign className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Button type="button" onClick={handleAddComment} size="icon" disabled={!newComment.trim()}>
+                        <Send className="h-4 w-4" />
                       </Button>
                     </div>
-                    <Button onClick={handleAddComment} size="icon">
-                      <Send className="h-4 w-4" />
-                    </Button>
+                    
+                    {showMentions && (
+                      <div className="absolute left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-[200] max-h-32 overflow-y-auto">
+                        {allUsers.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+                            onClick={() => insertMention(user.id, user.name)}
+                          >
+                            {user.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  
-                  {showMentions && (
-                    <div className="absolute left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-50 max-h-32 overflow-y-auto">
-                      {allUsers.map((user) => (
-                        <button
-                          key={user.id}
-                          className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
-                          onClick={() => insertMention(user.id, user.name)}
-                        >
-                          {user.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
+              )}
             </TabsContent>
           </ScrollArea>
         </Tabs>

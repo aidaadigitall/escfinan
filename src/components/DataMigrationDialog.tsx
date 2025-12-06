@@ -25,41 +25,124 @@ const MIGRATION_TEMPLATES = {
     name: "Clientes",
     fields: ["name", "email", "phone", "document_type", "cpf", "cnpj", "company_name", "address", "city", "state", "zipcode", "notes"],
     required: ["name"],
+    aliases: {
+      name: ["nome", "cliente", "razao_social", "razão social", "nome_fantasia", "Nome", "Cliente", "NOME", "CLIENTE", "Nome do Cliente", "Nome Cliente"],
+      email: ["e-mail", "e_mail", "correio", "Email", "E-mail", "EMAIL", "E-MAIL"],
+      phone: ["telefone", "tel", "celular", "fone", "Telefone", "Celular", "TELEFONE", "CELULAR", "Fone"],
+      cpf: ["CPF", "documento_cpf", "CPF/CNPJ", "Documento"],
+      cnpj: ["CNPJ", "documento_cnpj"],
+      company_name: ["razao_social", "razão social", "empresa", "Razão Social", "Empresa", "RAZÃO SOCIAL"],
+      address: ["endereco", "endereço", "logradouro", "Endereço", "Endereco", "ENDEREÇO", "Logradouro"],
+      city: ["cidade", "municipio", "município", "Cidade", "CIDADE", "Município"],
+      state: ["estado", "uf", "UF", "Estado", "ESTADO"],
+      zipcode: ["cep", "CEP", "codigo_postal", "Cep", "Código Postal"],
+      notes: ["observacoes", "observações", "obs", "Observações", "OBS", "Observacao", "Observação"],
+    }
   },
   suppliers: {
     name: "Fornecedores",
     fields: ["name", "email", "phone", "document_type", "cpf", "cnpj", "company_name", "address", "city", "state", "zipcode", "notes"],
     required: ["name"],
+    aliases: {
+      name: ["nome", "fornecedor", "razao_social", "razão social", "Nome", "Fornecedor", "NOME", "FORNECEDOR"],
+      email: ["e-mail", "e_mail", "correio", "Email", "E-mail", "EMAIL"],
+      phone: ["telefone", "tel", "celular", "fone", "Telefone", "Celular", "TELEFONE"],
+      cpf: ["CPF", "documento_cpf", "CPF/CNPJ"],
+      cnpj: ["CNPJ", "documento_cnpj"],
+      company_name: ["razao_social", "razão social", "empresa", "Razão Social", "Empresa"],
+      address: ["endereco", "endereço", "logradouro", "Endereço", "ENDEREÇO"],
+      city: ["cidade", "municipio", "município", "Cidade", "CIDADE"],
+      state: ["estado", "uf", "UF", "Estado", "ESTADO"],
+      zipcode: ["cep", "CEP", "codigo_postal", "Cep"],
+      notes: ["observacoes", "observações", "obs", "Observações", "OBS"],
+    }
   },
   products: {
     name: "Produtos",
     fields: ["name", "description", "sku", "unit", "cost_price", "sale_price", "stock_quantity", "min_stock", "category"],
     required: ["name"],
+    aliases: {
+      name: ["nome", "produto", "Nome", "Produto", "NOME", "PRODUTO", "Descrição do Produto", "Nome do Produto"],
+      description: ["descricao", "descrição", "desc", "Descrição", "Descricao", "DESCRIÇÃO", "Detalhes"],
+      sku: ["codigo", "código", "cod", "ref", "referencia", "referência", "Código", "SKU", "COD", "REF", "Codigo", "Referência"],
+      unit: ["unidade", "un", "Unidade", "UNIDADE", "UN", "Und"],
+      cost_price: ["preco_custo", "preço_custo", "custo", "valor_custo", "Custo", "Preço de Custo", "CUSTO", "Valor Custo", "Preço Custo"],
+      sale_price: ["preco_venda", "preço_venda", "venda", "preco", "preço", "valor", "Preço", "Venda", "Preço de Venda", "PREÇO", "VENDA", "Valor Venda", "Preço Venda"],
+      stock_quantity: ["estoque", "quantidade", "qtd", "saldo", "Estoque", "Quantidade", "QTD", "ESTOQUE", "QUANTIDADE", "Saldo", "Qtde"],
+      min_stock: ["estoque_minimo", "minimo", "min", "Estoque Mínimo", "Mínimo", "MIN"],
+      category: ["categoria", "grupo", "Categoria", "Grupo", "CATEGORIA"],
+    }
   },
   services: {
     name: "Serviços",
     fields: ["name", "description", "cost_price", "sale_price", "estimated_hours", "category"],
     required: ["name"],
+    aliases: {
+      name: ["nome", "servico", "serviço", "Nome", "Serviço", "Servico", "NOME", "SERVIÇO"],
+      description: ["descricao", "descrição", "desc", "Descrição", "Descricao", "DESCRIÇÃO"],
+      cost_price: ["preco_custo", "preço_custo", "custo", "Custo", "Preço de Custo", "CUSTO"],
+      sale_price: ["preco_venda", "preço_venda", "venda", "preco", "preço", "valor", "Preço", "Venda", "Preço de Venda", "PREÇO"],
+      estimated_hours: ["horas", "tempo", "duracao", "duração", "Horas", "Tempo", "Duração"],
+      category: ["categoria", "grupo", "Categoria", "Grupo", "CATEGORIA"],
+    }
   },
   categories: {
     name: "Categorias",
     fields: ["name", "type"],
     required: ["name", "type"],
+    aliases: {
+      name: ["nome", "categoria", "Nome", "Categoria", "NOME", "CATEGORIA"],
+      type: ["tipo", "Tipo", "TIPO"],
+    }
   },
   payment_methods: {
     name: "Formas de Pagamento",
-    fields: ["name"],
+    fields: ["name", "fee_percentage"],
     required: ["name"],
+    aliases: {
+      name: ["nome", "forma", "metodo", "método", "Nome", "Forma", "NOME", "Forma de Pagamento"],
+      fee_percentage: ["taxa", "percentual", "fee", "Taxa", "Percentual"],
+    }
   },
   bank_accounts: {
     name: "Contas Bancárias",
     fields: ["name", "bank_name", "agency", "account_number", "account_type", "initial_balance"],
     required: ["name"],
+    aliases: {
+      name: ["nome", "conta", "Nome", "Conta", "NOME", "Nome da Conta"],
+      bank_name: ["banco", "nome_banco", "Banco", "Nome do Banco", "BANCO"],
+      agency: ["agencia", "agência", "Agência", "Agencia", "AGÊNCIA"],
+      account_number: ["numero_conta", "número_conta", "conta", "Número da Conta", "Numero Conta", "CONTA"],
+      account_type: ["tipo_conta", "tipo", "Tipo de Conta", "Tipo", "TIPO"],
+      initial_balance: ["saldo_inicial", "saldo", "Saldo Inicial", "Saldo", "SALDO"],
+    }
   },
   employees: {
     name: "Funcionários",
     fields: ["name", "email", "phone", "cpf", "position", "salary"],
     required: ["name"],
+    aliases: {
+      name: ["nome", "funcionario", "funcionário", "Nome", "Funcionário", "NOME", "FUNCIONÁRIO"],
+      email: ["e-mail", "e_mail", "Email", "E-mail", "EMAIL"],
+      phone: ["telefone", "tel", "celular", "fone", "Telefone", "Celular", "TELEFONE"],
+      cpf: ["CPF", "documento", "Documento"],
+      position: ["cargo", "funcao", "função", "Cargo", "Função", "CARGO"],
+      salary: ["salario", "salário", "Salário", "Salario", "SALÁRIO"],
+    }
+  },
+  transactions: {
+    name: "Transações Financeiras",
+    fields: ["description", "amount", "due_date", "type", "status", "category_id", "payment_method", "notes"],
+    required: ["description", "amount", "due_date", "type"],
+    aliases: {
+      description: ["descricao", "descrição", "desc", "historico", "histórico", "Descrição", "Descricao", "DESCRIÇÃO", "Histórico", "Historico"],
+      amount: ["valor", "montante", "quantia", "Valor", "VALOR", "Montante", "Quantia"],
+      due_date: ["data_vencimento", "vencimento", "data", "Data Vencimento", "Vencimento", "DATA", "Data"],
+      type: ["tipo", "Tipo", "TIPO"],
+      status: ["situacao", "situação", "estado", "Status", "Situação", "SITUAÇÃO"],
+      payment_method: ["forma_pagamento", "pagamento", "Forma de Pagamento", "Pagamento"],
+      notes: ["observacoes", "observações", "obs", "Observações", "OBS"],
+    }
   },
 };
 
@@ -94,49 +177,72 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
 
   const mapFields = (data: Record<string, any>[], type: keyof typeof MIGRATION_TEMPLATES): any[] => {
     const template = MIGRATION_TEMPLATES[type];
+    const aliases = (template as any).aliases || {};
     
     return data.map((row) => {
       const mapped: Record<string, any> = {};
       
       template.fields.forEach((field) => {
-        // Try direct match
-        if (row[field] !== undefined && row[field] !== "") {
-          mapped[field] = row[field];
+        // Try direct match first (case insensitive)
+        const rowKeys = Object.keys(row);
+        const directMatch = rowKeys.find(k => k.toLowerCase() === field.toLowerCase());
+        
+        if (directMatch && row[directMatch] !== undefined && row[directMatch] !== "") {
+          mapped[field] = row[directMatch];
+          return;
         }
-        // Try common alternative names
-        const alternatives: Record<string, string[]> = {
-          name: ["nome", "razao_social", "razão social", "nome_fantasia"],
-          email: ["e-mail", "e_mail", "correio"],
-          phone: ["telefone", "tel", "celular", "fone"],
-          cpf: ["CPF", "documento_cpf"],
-          cnpj: ["CNPJ", "documento_cnpj"],
-          company_name: ["razao_social", "razão social", "empresa"],
-          address: ["endereco", "endereço", "logradouro"],
-          city: ["cidade", "municipio", "município"],
-          state: ["estado", "uf", "UF"],
-          zipcode: ["cep", "CEP", "codigo_postal"],
-          notes: ["observacoes", "observações", "obs"],
-          cost_price: ["preco_custo", "preço_custo", "custo"],
-          sale_price: ["preco_venda", "preço_venda", "venda", "preco", "preço"],
-          stock_quantity: ["estoque", "quantidade", "qtd"],
-          description: ["descricao", "descrição", "desc"],
-        };
-
-        if (!mapped[field] && alternatives[field]) {
-          for (const alt of alternatives[field]) {
-            if (row[alt] !== undefined && row[alt] !== "") {
-              mapped[field] = row[alt];
-              break;
-            }
+        
+        // Try aliases from template
+        const fieldAliases = aliases[field] || [];
+        for (const alt of fieldAliases) {
+          // Case-insensitive match for aliases
+          const aliasMatch = rowKeys.find(k => k.toLowerCase() === alt.toLowerCase());
+          if (aliasMatch && row[aliasMatch] !== undefined && row[aliasMatch] !== "") {
+            mapped[field] = row[aliasMatch];
+            break;
           }
         }
       });
 
-      // Convert numeric fields
-      ["cost_price", "sale_price", "stock_quantity", "min_stock", "initial_balance", "salary", "estimated_hours"].forEach((numField) => {
+      // Convert numeric fields - handle Brazilian number format (1.234,56)
+      ["cost_price", "sale_price", "stock_quantity", "min_stock", "initial_balance", "salary", "estimated_hours", "amount", "fee_percentage"].forEach((numField) => {
         if (mapped[numField]) {
-          const value = String(mapped[numField]).replace(",", ".").replace(/[^\d.-]/g, "");
+          let value = String(mapped[numField]);
+          // Handle Brazilian format: 1.234,56 -> 1234.56
+          if (value.includes(',') && value.includes('.')) {
+            value = value.replace(/\./g, '').replace(',', '.');
+          } else if (value.includes(',')) {
+            value = value.replace(',', '.');
+          }
+          value = value.replace(/[^\d.-]/g, "");
           mapped[numField] = parseFloat(value) || 0;
+        }
+      });
+
+      // Handle date fields - accept multiple formats
+      ["due_date", "paid_date"].forEach((dateField) => {
+        if (mapped[dateField]) {
+          const dateValue = String(mapped[dateField]).trim();
+          // Try to parse different date formats
+          let parsedDate: Date | null = null;
+          
+          // DD/MM/YYYY format
+          const brMatch = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (brMatch) {
+            parsedDate = new Date(parseInt(brMatch[3]), parseInt(brMatch[2]) - 1, parseInt(brMatch[1]));
+          }
+          
+          // YYYY-MM-DD format
+          const isoMatch = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (isoMatch) {
+            parsedDate = new Date(dateValue);
+          }
+          
+          if (parsedDate && !isNaN(parsedDate.getTime())) {
+            mapped[dateField] = parsedDate.toISOString().split('T')[0];
+          } else {
+            delete mapped[dateField];
+          }
         }
       });
 
@@ -155,6 +261,7 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
 
       if (type === "bank_accounts") {
         mapped.initial_balance = mapped.initial_balance || 0;
+        mapped.current_balance = mapped.initial_balance;
       }
 
       if (type === "categories") {
@@ -163,6 +270,11 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
 
       if (type === "clients" || type === "suppliers") {
         mapped.document_type = mapped.cnpj ? "cnpj" : "cpf";
+      }
+
+      if (type === "transactions") {
+        mapped.status = mapped.status || "pending";
+        mapped.type = mapped.type || "expense";
       }
 
       return mapped;
@@ -380,13 +492,16 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
 
             <TabsContent value="csv" className="space-y-4 mt-4">
               <div>
-                <Label>Arquivo CSV</Label>
+              <Label>Arquivo CSV/Excel</Label>
                 <Input
                   type="file"
-                  accept=".csv,.txt"
+                  accept=".csv,.txt,.xls,.xlsx"
                   onChange={(e) => handleFileUpload(e, "csv")}
                   className="rounded-xl mt-1"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Aceita arquivos CSV, TXT ou planilhas salvas como CSV
+                </p>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
