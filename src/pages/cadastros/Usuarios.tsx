@@ -51,7 +51,7 @@ const Usuarios = () => {
   const [permissions, setPermissions] = useState<UserPermissions>(defaultPermissions);
   const [searchTerm, setSearchTerm] = useState("");
   
-  const { permissions: editingUserPermissions, upsertPermissions } = useUserPermissions(editingUser?.id);
+  const { permissions: editingUserPermissions, upsertPermissions } = useUserPermissions(editingUser?.user_id);
   
   // Load permissions when editing user changes
   useEffect(() => {
@@ -115,10 +115,10 @@ const Usuarios = () => {
     if (editingUser) {
       updateUser({ id: editingUser.id, ...dataToSave });
       
-      // Save permissions
-      if (user?.id) {
+      // Save permissions using user_id (from auth.users), not the record id
+      if (user?.id && editingUser.user_id) {
         upsertPermissions({
-          userId: editingUser.id,
+          userId: editingUser.user_id,
           ownerUserId: user.id,
           permissions,
         });

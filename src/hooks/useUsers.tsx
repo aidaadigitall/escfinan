@@ -5,6 +5,7 @@ import { UserPermissions, defaultPermissions } from "@/components/UserPermission
 
 export type UserProfile = {
   id: string;
+  user_id: string;
   email: string;
   name: string;
   phone?: string;
