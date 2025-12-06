@@ -38,6 +38,7 @@ import Categorias from "./pages/Categorias";
 import PlanoContas from "./pages/PlanoContas";
 import LancamentosDiarios from "./pages/LancamentosDiarios";
 import Tarefas from "./pages/Tarefas";
+import RelatorioTarefas from "./pages/RelatorioTarefas";
 import Orcamentos from "./pages/Orcamentos";
 import OrdensServico from "./pages/OrdensServico";
 import Vendas from "./pages/Vendas";
@@ -107,6 +108,11 @@ const App = () => (
             <Route path="/tarefas" element={
               <PermissionProtectedRoute permission="can_view_tasks">
                 <Layout><Tarefas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/relatorio-tarefas" element={
+              <PermissionProtectedRoute permission="can_view_tasks">
+                <Layout><RelatorioTarefas /></Layout>
               </PermissionProtectedRoute>
             } />
             <Route path="/contas-fixas" element={

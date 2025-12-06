@@ -1717,6 +1717,7 @@ export type Database = {
           can_manage_employees: boolean | null
           can_manage_fixed_expenses: boolean | null
           can_manage_fixed_income: boolean | null
+          can_manage_others_tasks: boolean | null
           can_manage_payables: boolean | null
           can_manage_payment_methods: boolean | null
           can_manage_products: boolean | null
@@ -1781,6 +1782,7 @@ export type Database = {
           can_manage_employees?: boolean | null
           can_manage_fixed_expenses?: boolean | null
           can_manage_fixed_income?: boolean | null
+          can_manage_others_tasks?: boolean | null
           can_manage_payables?: boolean | null
           can_manage_payment_methods?: boolean | null
           can_manage_products?: boolean | null
@@ -1845,6 +1847,7 @@ export type Database = {
           can_manage_employees?: boolean | null
           can_manage_fixed_expenses?: boolean | null
           can_manage_fixed_income?: boolean | null
+          can_manage_others_tasks?: boolean | null
           can_manage_payables?: boolean | null
           can_manage_payment_methods?: boolean | null
           can_manage_products?: boolean | null

@@ -78,6 +78,7 @@ export type UserPermissions = {
   // Tasks and Calendar
   can_view_tasks: boolean;
   can_manage_tasks: boolean;
+  can_manage_others_tasks: boolean;
   can_view_calendar: boolean;
 };
 
@@ -138,6 +139,7 @@ export const defaultPermissions: UserPermissions = {
   can_manage_settings: false,
   can_view_tasks: true,
   can_manage_tasks: true,
+  can_manage_others_tasks: false,
   can_view_calendar: true,
 };
 
@@ -222,6 +224,7 @@ const permissionGroups: PermissionGroup[] = [
     icon: <CheckSquare className="h-4 w-4" />,
     items: [
       { viewKey: "can_view_tasks", manageKey: "can_manage_tasks", label: "Tarefas" },
+      { viewKey: "can_manage_others_tasks", label: "Gerenciar Tarefas de Outros" },
       { viewKey: "can_view_calendar", label: "Calendário Financeiro" },
     ],
   },
