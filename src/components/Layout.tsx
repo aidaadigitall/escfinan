@@ -6,6 +6,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { AIAssistant } from "./AIAssistant";
 import { useAIAssistant } from "@/hooks/useAIAssistant";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useTaskDueNotifications } from "@/hooks/useTaskDueNotifications";
+import { useTasks } from "@/hooks/useTasks";
+import { UrgentTasksWidget } from "./UrgentTasksWidget";
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,9 +20,13 @@ export const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const { analyzeSystemData } = useAIAssistant();
   const systemData = analyzeSystemData();
+  const { tasks } = useTasks();
   
   // Enable realtime notifications for tasks and comments
   useRealtimeNotifications();
+  
+  // Enable task due notifications globally
+  useTaskDueNotifications(tasks);
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,6 +63,9 @@ export const Layout = ({ children }: LayoutProps) => {
           {children}
         </main>
       </div>
+
+      {/* Urgent Tasks Widget - global visibility */}
+      <UrgentTasksWidget />
 
       {/* AI Assistant */}
       <AIAssistant systemData={systemData} />

@@ -144,7 +144,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
             <TabsTrigger value="details">Detalhes</TabsTrigger>
             <TabsTrigger value="assign">Delegação</TabsTrigger>
             <TabsTrigger value="attachments">Anexos</TabsTrigger>
-            <TabsTrigger value="comments" disabled={!task?.id}>Comentários</TabsTrigger>
+            <TabsTrigger value="comments">Comentários</TabsTrigger>
           </TabsList>
 
           <ScrollArea className="flex-1 mt-4">

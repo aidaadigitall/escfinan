@@ -1,10 +1,11 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, Task } from "@/hooks/useTasks";
 import { useNavigate } from "react-router-dom";
-import { format, isToday, isTomorrow, isPast, differenceInDays } from "date-fns";
+import { format, isToday, isTomorrow, isPast, differenceInDays, differenceInMinutes, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   CheckCircle2, 
@@ -16,9 +17,61 @@ import {
   ListTodo,
   ArrowRight,
   Flag,
-  BarChart3
+  BarChart3,
+  Timer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Real-time time counter component for dashboard
+const TaskTimeCounter = ({ task, hideValues }: { task: Task; hideValues: boolean }) => {
+  const [, setTick] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  if (hideValues) return <span>••</span>;
+  if (!task.due_date) return null;
+  
+  const now = new Date();
+  let targetDate = new Date(task.due_date);
+  if (task.due_time) {
+    const [hours, minutes] = task.due_time.split(":");
+    targetDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  } else {
+    targetDate.setHours(23, 59, 59, 999);
+  }
+  
+  const isOverdue = isPast(targetDate);
+  const totalMinutesDiff = Math.abs(differenceInMinutes(targetDate, now));
+  const daysDiff = Math.floor(totalMinutesDiff / (24 * 60));
+  const hoursDiff = Math.floor((totalMinutesDiff % (24 * 60)) / 60);
+  const minutesDiff = totalMinutesDiff % 60;
+  
+  if (isOverdue) {
+    if (daysDiff === 0) {
+      return (
+        <span className="flex items-center gap-1 text-xs text-red-600">
+          <Timer className="h-3 w-3" />
+          {hoursDiff > 0 ? `${hoursDiff}h ${minutesDiff}m` : `${minutesDiff}m`}
+        </span>
+      );
+    }
+    return (
+      <span className="flex items-center gap-1 text-xs text-red-600">
+        <Timer className="h-3 w-3" />
+        {daysDiff} dia{daysDiff > 1 ? "s" : ""}
+      </span>
+    );
+  }
+  
+  return (
+    <span className="text-xs text-muted-foreground">
+      {format(targetDate, "dd/MM", { locale: ptBR })}
+    </span>
+  );
+};
 
 interface TasksDashboardProps {
   hideValues?: boolean;
@@ -296,23 +349,26 @@ export const TasksDashboard = ({ hideValues = false }: TasksDashboardProps) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {overdueTasks.slice(0, 3).map((task) => (
+                  {overdueTasks.slice(0, 5).map((task) => (
                     <div
                       key={task.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-red-100/50 dark:bg-red-900/20 text-sm"
+                      className="flex items-center justify-between p-2 rounded-lg bg-red-100/50 dark:bg-red-900/20 text-sm cursor-pointer hover:bg-red-200/50 dark:hover:bg-red-800/30 transition-colors"
+                      onClick={() => navigate("/tarefas")}
                     >
                       <span className="truncate flex-1 text-red-700 dark:text-red-400">
                         {hideValues ? "••••••" : task.title}
                       </span>
-                      <span className="text-xs text-red-600 ml-2">
-                        {hideValues ? "••" : `${Math.abs(differenceInDays(new Date(task.due_date!), today))} dias`}
-                      </span>
+                      <TaskTimeCounter task={task} hideValues={hideValues} />
                     </div>
                   ))}
-                  {overdueTasks.length > 3 && (
-                    <p className="text-xs text-red-600 text-center">
-                      +{overdueTasks.length - 3} mais
-                    </p>
+                  {overdueTasks.length > 5 && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-xs text-red-600 hover:text-red-700"
+                      onClick={() => navigate("/tarefas")}
+                    >
+                      +{overdueTasks.length - 5} mais atrasadas
+                    </Button>
                   )}
                 </div>
               </CardContent>
