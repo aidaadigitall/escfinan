@@ -327,12 +327,13 @@ const Tarefas = () => {
                         : "Selecionar"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={formData.due_date ? new Date(formData.due_date) : undefined}
                       onSelect={(date) => setFormData({ ...formData, due_date: date?.toISOString().split("T")[0] || null })}
                       locale={ptBR}
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -421,12 +422,13 @@ const Tarefas = () => {
                       : "Definir lembrete"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.reminder_date ? new Date(formData.reminder_date) : undefined}
                     onSelect={(date) => setFormData({ ...formData, reminder_date: date?.toISOString() || null })}
                     locale={ptBR}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
