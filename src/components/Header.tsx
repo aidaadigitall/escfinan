@@ -1,4 +1,4 @@
-import { Calendar, LogOut, Menu, TrendingUp, User, Settings, Plus } from "lucide-react";
+import { Calendar, LogOut, Menu, TrendingUp, User, Settings, Plus, Moon, Sun } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { DailyTransactionDialog } from "./DailyTransactionDialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { useTheme } from "@/hooks/useTheme";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -29,6 +30,7 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
   const [logoUrl, setLogoUrl] = useState("");
   const [dailyExpenseOpen, setDailyExpenseOpen] = useState(false);
   const { createTransaction } = useTransactions();
+  const { theme, toggleTheme } = useTheme();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -110,6 +112,15 @@ export const Header = ({ onMenuClick, showMenuButton = false }: HeaderProps = {}
           Despesa Rápida
         </Button>
         <NotificationsDropdown />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-white hover:bg-white/10"
+          onClick={toggleTheme}
+          title={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
+        >
+          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </Button>
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <Calendar className="h-5 w-5" />
         </Button>
