@@ -32,6 +32,9 @@ export type ServiceOrder = {
   updated_at: string;
 };
 
+// Statuses that trigger financial integration
+const FINANCIAL_STATUSES = ['completed', 'delivered'];
+
 export const useServiceOrders = () => {
   const queryClient = useQueryClient();
 
@@ -48,6 +51,58 @@ export const useServiceOrders = () => {
     },
   });
 
+  // Helper to create financial transaction
+  const createFinancialTransaction = async (order: any, clientName?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if transaction already exists
+      const { data: existing } = await supabase
+        .from("transactions")
+        .select("id")
+        .eq("notes", `service_order:${order.id}`)
+        .maybeSingle();
+
+      if (existing) return;
+
+      const dueDate = order.exit_date?.split("T")[0] || new Date().toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
+      let status = "pending";
+      if (dueDate < today) status = "overdue";
+
+      await supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          description: `OS #${order.order_number}${clientName ? ` - ${clientName}` : ""}`,
+          amount: order.total_amount || 0,
+          type: "income",
+          client: clientName || null,
+          status,
+          due_date: dueDate,
+          notes: `service_order:${order.id}`,
+        });
+
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    } catch (error) {
+      console.error("Error creating financial transaction from OS:", error);
+    }
+  };
+
+  // Helper to delete financial transaction
+  const deleteFinancialTransaction = async (orderId: string) => {
+    try {
+      await supabase
+        .from("transactions")
+        .delete()
+        .eq("notes", `service_order:${orderId}`);
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    } catch (error) {
+      console.error("Error deleting financial transaction:", error);
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: async (orderData: Partial<ServiceOrder>) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,14 +111,20 @@ export const useServiceOrders = () => {
       const { data, error } = await supabase
         .from("service_orders")
         .insert({ ...orderData, user_id: user.id })
-        .select()
+        .select("*, clients(name)")
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["service_orders"] });
+      
+      // Create financial transaction if status triggers it
+      if (FINANCIAL_STATUSES.includes(data.status || "")) {
+        await createFinancialTransaction(data, data.clients?.name);
+      }
+      
       toast.success("Ordem de serviço criada com sucesso!");
     },
     onError: (error: any) => {
@@ -79,14 +140,22 @@ export const useServiceOrders = () => {
         .from("service_orders")
         .update(updateData)
         .eq("id", id)
-        .select()
+        .select("*, clients(name)")
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["service_orders"] });
+      
+      // Handle financial integration based on status
+      if (FINANCIAL_STATUSES.includes(data.status || "")) {
+        await createFinancialTransaction(data, data.clients?.name);
+      } else if (data.status === "cancelled") {
+        await deleteFinancialTransaction(data.id);
+      }
+      
       toast.success("Ordem de serviço atualizada com sucesso!");
     },
     onError: (error: any) => {
@@ -96,6 +165,12 @@ export const useServiceOrders = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Delete associated financial transaction first
+      await supabase
+        .from("transactions")
+        .delete()
+        .eq("notes", `service_order:${id}`);
+
       const { error } = await supabase
         .from("service_orders")
         .delete()
@@ -105,6 +180,7 @@ export const useServiceOrders = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["service_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
       toast.success("Ordem de serviço excluída com sucesso!");
     },
     onError: (error: any) => {
