@@ -8,13 +8,70 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   Plus, Calendar as CalendarIcon, Flag, Tag, Trash2, Edit, 
-  CheckCircle2, Circle, Clock, User, Filter, ChevronDown, ChevronRight, Users
+  CheckCircle2, Circle, Clock, User, Filter, ChevronDown, ChevronRight, Users, Timer, AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Time counter component for tasks
+const TaskTimeCounter = ({ dueDate, dueTime, status }: { dueDate: string; dueTime?: string | null; status?: string | null }) => {
+  if (status === "completed" || status === "cancelled") return null;
+  
+  const now = new Date();
+  let targetDate = new Date(dueDate);
+  
+  // If due_time is provided, set the time
+  if (dueTime) {
+    const [hours, minutes] = dueTime.split(":");
+    targetDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  } else {
+    targetDate.setHours(23, 59, 59, 999);
+  }
+  
+  const isOverdue = isPast(targetDate);
+  const daysDiff = Math.abs(differenceInDays(targetDate, now));
+  const hoursDiff = Math.abs(differenceInHours(targetDate, now) % 24);
+  const minutesDiff = Math.abs(differenceInMinutes(targetDate, now) % 60);
+  
+  let timeText = "";
+  let colorClass = "";
+  
+  if (isOverdue) {
+    colorClass = "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 border-red-300";
+    if (daysDiff === 0) {
+      timeText = `Atrasado ${hoursDiff}h ${minutesDiff}m`;
+    } else if (daysDiff === 1) {
+      timeText = `Atrasado 1 dia`;
+    } else {
+      timeText = `Atrasado ${daysDiff} dias`;
+    }
+  } else {
+    if (daysDiff === 0) {
+      colorClass = "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 border-orange-300";
+      if (hoursDiff === 0) {
+        timeText = `Vence em ${minutesDiff}m`;
+      } else {
+        timeText = `Vence em ${hoursDiff}h ${minutesDiff}m`;
+      }
+    } else if (daysDiff <= 3) {
+      colorClass = "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-300";
+      timeText = daysDiff === 1 ? `Vence amanhã` : `Vence em ${daysDiff} dias`;
+    } else {
+      colorClass = "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 border-green-300";
+      timeText = `Vence em ${daysDiff} dias`;
+    }
+  }
+  
+  return (
+    <Badge variant="outline" className={cn("text-xs font-medium flex items-center gap-1", colorClass)}>
+      {isOverdue ? <AlertTriangle className="h-3 w-3" /> : <Timer className="h-3 w-3" />}
+      {timeText}
+    </Badge>
+  );
+};
 
 const priorityColors = {
   low: "bg-gray-100 text-gray-800 border-gray-300",
@@ -144,6 +201,9 @@ const Tarefas = () => {
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
             )}
             <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
+              {task.due_date && (
+                <TaskTimeCounter dueDate={task.due_date} dueTime={task.due_time} status={task.status} />
+              )}
               {task.due_date && (
                 <span className="flex items-center gap-1">
                   <CalendarIcon className="h-3 w-3" />
