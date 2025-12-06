@@ -353,7 +353,7 @@ const Tarefas = () => {
                 <label className="text-sm font-medium">Prioridade</label>
                 <Select
                   value={formData.priority || "medium"}
-                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                  onValueChange={(value: "low" | "medium" | "high" | "urgent") => setFormData({ ...formData, priority: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />

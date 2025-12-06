@@ -26,6 +26,12 @@ import {
   Package,
   Briefcase,
   PieChart,
+  ClipboardList,
+  Wrench,
+  ShoppingCart,
+  CheckSquare,
+  Calendar,
+  Boxes,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -51,7 +57,26 @@ const menuItems: MenuItem[] = [
       { icon: Briefcase, label: "Clientes", path: "/cadastros/clientes" },
       { icon: Building2, label: "Fornecedores", path: "/cadastros/fornecedores" },
       { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
+      { icon: Wrench, label: "Serviços", path: "/cadastros/servicos" },
       { icon: Users, label: "Funcionários", path: "/cadastros/funcionarios" },
+      { icon: User, label: "Usuários", path: "/cadastros/usuarios" },
+    ],
+  },
+  {
+    icon: ShoppingCart,
+    label: "Comercial",
+    submenu: [
+      { icon: ClipboardList, label: "Orçamentos", path: "/orcamentos" },
+      { icon: FileText, label: "Ordens de Serviço", path: "/ordens-servico" },
+      { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
+    ],
+  },
+  {
+    icon: Boxes,
+    label: "Estoque",
+    submenu: [
+      { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
+      { icon: ArrowRightLeft, label: "Movimentações", path: "/estoque/movimentacoes" },
     ],
   },
   {
@@ -70,7 +95,8 @@ const menuItems: MenuItem[] = [
       { icon: Wallet, label: "Caixa", path: "/caixa" },
     ],
   },
-  { icon: Target, label: "Calendário Financeiro", path: "/calendario-financeiro" },
+  { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
+  { icon: Calendar, label: "Calendário Financeiro", path: "/calendario-financeiro" },
   {
     icon: Settings,
     label: "Configurações Avançadas",

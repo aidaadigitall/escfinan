@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSuppliers, Supplier } from "@/hooks/useSuppliers";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Table,
   TableBody,
@@ -20,6 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Search, Loader } from "lucide-react";
 import { toast } from "sonner";
+import { MaskedInput } from "@/components/ui/masked-input";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 const Fornecedores = () => {
   const { suppliers, isLoading, createSupplier, updateSupplier, deleteSupplier } = useSuppliers();
@@ -27,28 +31,46 @@ const Fornecedores = () => {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
-  const [formData, setFormData] = useState({
-    cnpj: "",
-    name: "",
-    email: "",
-    phone: "",
-    zip_code: "",
-    address: "",
-    city: "",
-    state: "",
-    is_active: true,
+  const [formData, setFormData] = useState<Partial<Supplier> & { document_type?: string }>({
+    document_type: "cnpj",
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState<string | null>(null);
 
   const filteredSuppliers = suppliers.filter(
     (f) =>
       f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.cnpj.includes(searchTerm)
+      (f.cnpj && f.cnpj.includes(searchTerm)) ||
+      (f.cpf && f.cpf.includes(searchTerm))
   );
+
+  useEffect(() => {
+    if (editingSupplier) {
+      setFormData({
+        ...editingSupplier,
+        document_type: editingSupplier.cpf ? "cpf" : "cnpj",
+      });
+    } else {
+      setFormData({
+        name: "",
+        cpf: "",
+        cnpj: "",
+        email: "",
+        phone: "",
+        zipcode: "",
+        address: "",
+        city: "",
+        state: "",
+        is_active: true,
+        document_type: "cnpj",
+      });
+    }
+  }, [editingSupplier]);
 
   const handleCepChange = async (value: string) => {
     const cepNumbers = value.replace(/\D/g, "");
-    setFormData({ ...formData, zip_code: value });
+    setFormData({ ...formData, zipcode: value });
 
     if (cepNumbers.length === 8) {
       setLoadingCep(true);
@@ -93,11 +115,12 @@ const Fornecedores = () => {
           setFormData((prev) => ({
             ...prev,
             name: data.razao_social,
+            company_name: data.razao_social,
             address: `${data.logradouro}, ${data.numero}`,
             city: data.municipio,
             state: data.uf,
-            zip_code: data.cep,
-            phone: data.ddd_telefone_1 || ''
+            zipcode: data.cep,
+            phone: data.ddd_telefone_1 || ""
           }));
           toast.success("CNPJ encontrado com sucesso");
         } else {
@@ -112,66 +135,50 @@ const Fornecedores = () => {
   };
 
   const handleOpenDialog = (supplier?: Supplier) => {
-    if (supplier) {
-      setEditingSupplier(supplier);
-      setFormData({
-        cnpj: supplier.cnpj,
-        name: supplier.name,
-        email: supplier.email,
-        phone: supplier.phone || "",
-        zip_code: supplier.zipcode || "",
-        address: supplier.address || "",
-        city: supplier.city || "",
-        state: supplier.state || "",
-        is_active: supplier.is_active,
-      });
-    } else {
-      setEditingSupplier(null);
-      setFormData({
-        cnpj: "",
-        name: "",
-        email: "",
-        phone: "",
-        zip_code: "",
-        address: "",
-        city: "",
-        state: "",
-        is_active: true,
-      });
-    }
+    setEditingSupplier(supplier || null);
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    if (!formData.cnpj || !formData.name) {
-      toast.error("Preencha os campos obrigatórios");
+    if (!formData.name) {
+      toast.error("Preencha o nome do fornecedor");
       return;
     }
 
     const dataToSave = {
-      cnpj: formData.cnpj,
       name: formData.name,
+      company_name: formData.company_name,
+      cpf: formData.document_type === "cpf" ? formData.cpf : undefined,
+      cnpj: formData.document_type === "cnpj" ? formData.cnpj : undefined,
       email: formData.email,
       phone: formData.phone,
-      zip_code: formData.zip_code,
+      zipcode: formData.zipcode,
       address: formData.address,
       city: formData.city,
       state: formData.state,
-      is_active: formData.is_active,
+      is_active: formData.is_active ?? true,
     };
 
     if (editingSupplier) {
       updateSupplier({ id: editingSupplier.id, ...dataToSave });
     } else {
-      createSupplier(dataToSave);
+      createSupplier(dataToSave as any);
     }
     setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir este fornecedor?")) {
-      deleteSupplier(id);
+  const handleDeleteClick = (id: string) => {
+    setSupplierToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (supplierToDelete) {
+      deleteSupplier(supplierToDelete);
+      toast.success("Fornecedor excluído com sucesso!");
     }
+    setDeleteDialogOpen(false);
+    setSupplierToDelete(null);
   };
 
   return (
@@ -186,9 +193,9 @@ const Fornecedores = () => {
 
       <Card className="mb-6">
         <div className="p-4 border-b flex items-center gap-2">
-          <Search className="h-4 w-4 text-gray-400" />
+          <Search className="h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome ou CNPJ..."
+            placeholder="Buscar por nome, CPF ou CNPJ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="border-0"
@@ -199,7 +206,7 @@ const Fornecedores = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>CNPJ</TableHead>
+              <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Cidade</TableHead>
@@ -217,7 +224,7 @@ const Fornecedores = () => {
             ) : filteredSuppliers.map((fornecedor) => (
               <TableRow key={fornecedor.id}>
                 <TableCell>{fornecedor.name}</TableCell>
-                <TableCell>{fornecedor.cnpj}</TableCell>
+                <TableCell>{fornecedor.cpf || fornecedor.cnpj}</TableCell>
                 <TableCell>{fornecedor.email}</TableCell>
                 <TableCell>{fornecedor.phone}</TableCell>
                 <TableCell>{fornecedor.city}</TableCell>
@@ -244,9 +251,9 @@ const Fornecedores = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDelete(fornecedor.id)}
+                      onClick={() => handleDeleteClick(fornecedor.id)}
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </TableCell>
@@ -264,38 +271,82 @@ const Fornecedores = () => {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">CNPJ *</label>
-                <div className="flex gap-2">
-                  <Input
-                    value={formData.cnpj}
-                    onChange={(e) => handleCnpjChange(e.target.value)}
-                    placeholder="00.000.000/0000-00"
-                  />
-                  {loadingCnpj && <Loader className="h-5 w-5 animate-spin" />}
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Tipo de Documento</Label>
+              <RadioGroup
+                value={formData.document_type || "cnpj"}
+                onValueChange={(value) => setFormData({ ...formData, document_type: value, cpf: "", cnpj: "" })}
+                className="flex gap-4 mt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="cpf" id="cpf" />
+                  <Label htmlFor="cpf" className="cursor-pointer">CPF (Pessoa Física)</Label>
                 </div>
-              </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="cnpj" id="cnpj" />
+                  <Label htmlFor="cnpj" className="cursor-pointer">CNPJ (Pessoa Jurídica)</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {formData.document_type === "cpf" ? (
+                <div>
+                  <Label>CPF</Label>
+                  <MaskedInput
+                    mask="cpf"
+                    value={formData.cpf || ""}
+                    onChange={(value) => setFormData({ ...formData, cpf: value })}
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <Label>CNPJ *</Label>
+                  <div className="flex gap-2">
+                    <MaskedInput
+                      mask="cnpj"
+                      value={formData.cnpj || ""}
+                      onChange={(value) => handleCnpjChange(value)}
+                      placeholder="00.000.000/0000-00"
+                    />
+                    {loadingCnpj && <Loader className="h-5 w-5 animate-spin" />}
+                  </div>
+                </div>
+              )}
 
               <div>
-                <label className="text-sm font-medium">Nome *</label>
+                <Label>Nome *</Label>
                 <Input
-                  value={formData.name}
+                  value={formData.name || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="Nome da empresa"
+                  placeholder="Nome do fornecedor"
                 />
               </div>
             </div>
 
+            {formData.document_type === "cnpj" && (
+              <div>
+                <Label>Razão Social</Label>
+                <Input
+                  value={formData.company_name || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, company_name: e.target.value })
+                  }
+                  placeholder="Razão Social da empresa"
+                />
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Email</label>
+                <Label>Email</Label>
                 <Input
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
@@ -304,12 +355,11 @@ const Fornecedores = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium">Telefone</label>
-                <Input
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                <Label>Telefone</Label>
+                <MaskedInput
+                  mask="phone"
+                  value={formData.phone || ""}
+                  onChange={(value) => setFormData({ ...formData, phone: value })}
                   placeholder="(11) 98765-4321"
                 />
               </div>
@@ -317,11 +367,12 @@ const Fornecedores = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">CEP</label>
+                <Label>CEP</Label>
                 <div className="flex gap-2">
-                  <Input
-                    value={formData.zip_code}
-                    onChange={(e) => handleCepChange(e.target.value)}
+                  <MaskedInput
+                    mask="cep"
+                    value={formData.zipcode || ""}
+                    onChange={(value) => handleCepChange(value)}
                     placeholder="00000-000"
                   />
                   {loadingCep && <Loader className="h-5 w-5 animate-spin" />}
@@ -329,9 +380,9 @@ const Fornecedores = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium">Endereço</label>
+                <Label>Endereço</Label>
                 <Input
-                  value={formData.address}
+                  value={formData.address || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
@@ -342,9 +393,9 @@ const Fornecedores = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Cidade</label>
+                <Label>Cidade</Label>
                 <Input
-                  value={formData.city}
+                  value={formData.city || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, city: e.target.value })
                   }
@@ -353,9 +404,9 @@ const Fornecedores = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium">Estado</label>
+                <Label>Estado</Label>
                 <Input
-                  value={formData.state}
+                  value={formData.state || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, state: e.target.value })
                   }
@@ -374,9 +425,7 @@ const Fornecedores = () => {
                 }
                 id="is_active"
               />
-              <label htmlFor="is_active" className="text-sm font-medium">
-                Ativo
-              </label>
+              <Label htmlFor="is_active">Ativo</Label>
             </div>
           </div>
 
@@ -388,6 +437,17 @@ const Fornecedores = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Excluir Fornecedor"
+        description="Tem certeza que deseja excluir este fornecedor? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
     </div>
   );
 };
