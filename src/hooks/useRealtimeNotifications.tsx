@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { playNotificationSound } from '@/lib/notificationSound';
 
 export const useRealtimeNotifications = () => {
   const { user } = useAuth();
@@ -29,6 +30,9 @@ export const useRealtimeNotifications = () => {
             newTask.user_id !== user.id && // Not created by current user
             (assignedUsers.includes(user.id) || responsibleId === user.id)
           ) {
+            // Play notification sound
+            playNotificationSound();
+            
             toast.info('Nova tarefa atribuída', {
               description: `Você foi atribuído à tarefa: "${newTask.title}"`,
               duration: 5000,
@@ -60,6 +64,9 @@ export const useRealtimeNotifications = () => {
             oldTask.responsible_id !== user.id;
           
           if (newTask.user_id !== user.id && (wasNewlyAssigned || wasNewlyResponsible)) {
+            // Play notification sound
+            playNotificationSound();
+            
             toast.info('Tarefa atribuída', {
               description: `Você foi atribuído à tarefa: "${newTask.title}"`,
               duration: 5000,
@@ -84,6 +91,9 @@ export const useRealtimeNotifications = () => {
             newComment.user_id !== user.id && // Not created by current user
             mentions.includes(user.id)
           ) {
+            // Play notification sound
+            playNotificationSound();
+            
             toast.info('Você foi mencionado', {
               description: `Alguém mencionou você em um comentário de tarefa`,
               duration: 5000,
