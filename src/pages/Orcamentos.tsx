@@ -17,8 +17,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Calendar as CalendarIcon, Search, Edit, Trash2, Eye, FileText, Loader } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Search, Edit, Trash2, Loader } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DiscountInput } from "@/components/DiscountInput";
 
 interface QuoteItem {
   id?: string;
@@ -59,6 +60,7 @@ const Orcamentos = () => {
   const [editingQuote, setEditingQuote] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<QuoteItem[]>([]);
+  const [deliveryDateOpen, setDeliveryDateOpen] = useState(false);
   const [formData, setFormData] = useState({
     client_id: "",
     seller_id: "",
@@ -161,8 +163,25 @@ const Orcamentos = () => {
     if (!formData.client_id) return;
 
     const totals = calculateTotals();
+    
+    // Ensure delivery_date is in ISO format
+    let deliveryDate = formData.delivery_date;
+    if (deliveryDate && !deliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      try {
+        const date = new Date(deliveryDate);
+        if (!isNaN(date.getTime())) {
+          deliveryDate = date.toISOString().split("T")[0];
+        } else {
+          deliveryDate = "";
+        }
+      } catch {
+        deliveryDate = "";
+      }
+    }
+
     const quoteData = {
       ...formData,
+      delivery_date: deliveryDate || null,
       products_total: totals.productsTotal,
       services_total: totals.servicesTotal,
       discount_total: totals.discountTotal,
@@ -177,10 +196,14 @@ const Orcamentos = () => {
     setDialogOpen(false);
   };
 
-  const getClientName = (id: string | null) => {
-    if (!id) return "-";
-    const client = clients.find((c) => c.id === id);
-    return client?.name || "-";
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      const isoDate = format(date, "yyyy-MM-dd");
+      setFormData({ ...formData, delivery_date: isoDate });
+    } else {
+      setFormData({ ...formData, delivery_date: "" });
+    }
+    setDeliveryDateOpen(false);
   };
 
   const totals = calculateTotals();
@@ -325,19 +348,24 @@ const Orcamentos = () => {
 
                 <div>
                   <label className="text-sm font-medium">Previsão de Entrega</label>
-                  <Popover>
+                  <Popover open={deliveryDateOpen} onOpenChange={setDeliveryDateOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.delivery_date ? format(new Date(formData.delivery_date), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                        {formData.delivery_date 
+                          ? format(new Date(formData.delivery_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) 
+                          : "Selecionar"
+                        }
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={formData.delivery_date ? new Date(formData.delivery_date) : undefined}
-                        onSelect={(date) => setFormData({ ...formData, delivery_date: date?.toISOString().split("T")[0] || "" })}
+                        selected={formData.delivery_date ? new Date(formData.delivery_date + "T00:00:00") : undefined}
+                        onSelect={handleDateSelect}
                         locale={ptBR}
+                        className="pointer-events-auto"
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -441,11 +469,10 @@ const Orcamentos = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
+                          <DiscountInput
                             value={item.discount}
-                            onChange={(e) => handleItemChange(index, "discount", parseFloat(e.target.value) || 0)}
-                            className="w-20"
+                            onChange={(value) => handleItemChange(index, "discount", value)}
+                            baseValue={item.quantity * item.unit_price}
                           />
                         </TableCell>
                         <TableCell className="font-medium">
