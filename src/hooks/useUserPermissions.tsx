@@ -86,7 +86,7 @@ export const useCurrentUserPermissions = () => {
 
       // If user is admin or has no owner, they have full permissions
       if (!systemUser || systemUser.role === "Administrador" || !systemUser.owner_user_id) {
-        return { ...defaultPermissions, can_view_users: true, can_manage_users: true, can_view_settings: true, can_manage_settings: true };
+        return { ...defaultPermissions, can_view_users: true, can_manage_users: true, can_view_settings: true, can_manage_settings: true, can_view_dashboard_values: true };
       }
 
       // Get user's specific permissions

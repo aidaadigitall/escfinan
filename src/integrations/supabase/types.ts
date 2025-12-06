@@ -1662,6 +1662,7 @@ export type Database = {
           can_view_cost_centers: boolean | null
           can_view_credit_cards: boolean | null
           can_view_daily_entries: boolean | null
+          can_view_dashboard_values: boolean | null
           can_view_dre: boolean | null
           can_view_employees: boolean | null
           can_view_fixed_expenses: boolean | null
@@ -1725,6 +1726,7 @@ export type Database = {
           can_view_cost_centers?: boolean | null
           can_view_credit_cards?: boolean | null
           can_view_daily_entries?: boolean | null
+          can_view_dashboard_values?: boolean | null
           can_view_dre?: boolean | null
           can_view_employees?: boolean | null
           can_view_fixed_expenses?: boolean | null
@@ -1788,6 +1790,7 @@ export type Database = {
           can_view_cost_centers?: boolean | null
           can_view_credit_cards?: boolean | null
           can_view_daily_entries?: boolean | null
+          can_view_dashboard_values?: boolean | null
           can_view_dre?: boolean | null
           can_view_employees?: boolean | null
           can_view_fixed_expenses?: boolean | null

@@ -11,6 +11,7 @@ interface ProgressCardProps {
   percentage: number;
   linkText?: string;
   onLinkClick?: () => void;
+  hideValues?: boolean;
 }
 
 export const ProgressCard = ({
@@ -22,6 +23,7 @@ export const ProgressCard = ({
   percentage,
   linkText,
   onLinkClick,
+  hideValues = false,
 }: ProgressCardProps) => {
   return (
     <Card className="p-6 bg-primary text-primary-foreground hover:shadow-lg transition-all min-h-[280px] flex flex-col">
@@ -49,12 +51,12 @@ export const ProgressCard = ({
               strokeWidth="4"
               fill="none"
               strokeDasharray={`${2 * Math.PI * 28}`}
-              strokeDashoffset={`${2 * Math.PI * 28 * (1 - percentage / 100)}`}
+              strokeDashoffset={`${2 * Math.PI * 28 * (1 - (hideValues ? 0 : percentage) / 100)}`}
               className="transition-all duration-500"
             />
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
-            {Math.round(percentage)}%
+            {hideValues ? "••" : `${Math.round(percentage)}%`}
           </span>
         </div>
       </div>
@@ -62,15 +64,15 @@ export const ProgressCard = ({
       <div className="space-y-2 mb-4">
         <div className="flex justify-between text-sm">
           <span className="opacity-90">Realizado:</span>
-          <span className="font-semibold">{completed}</span>
+          <span className="font-semibold">{hideValues ? "••••••" : completed}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="opacity-90">Falta:</span>
-          <span className="font-semibold">{pending}</span>
+          <span className="font-semibold">{hideValues ? "••••••" : pending}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="opacity-90">Previsto:</span>
-          <span className="font-semibold">{expected}</span>
+          <span className="font-semibold">{hideValues ? "••••••" : expected}</span>
         </div>
       </div>
 

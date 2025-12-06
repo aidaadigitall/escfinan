@@ -8,6 +8,7 @@ interface StatCardProps {
   variant: "income" | "expense" | "info";
   linkText?: string;
   onLinkClick?: () => void;
+  hideValues?: boolean;
 }
 
 export const StatCard = ({
@@ -16,6 +17,7 @@ export const StatCard = ({
   variant,
   linkText,
   onLinkClick,
+  hideValues = false,
 }: StatCardProps) => {
   const variantClasses = {
     income: "bg-income text-income-foreground",
@@ -32,7 +34,9 @@ export const StatCard = ({
     >
       <div className="relative z-10">
         <h3 className="text-base font-medium opacity-90 mb-3">{title}</h3>
-        <p className="text-3xl font-bold mb-4">{amount}</p>
+        <p className="text-3xl font-bold mb-4">
+          {hideValues ? "••••••" : amount}
+        </p>
         {linkText && (
           <button
             onClick={onLinkClick}

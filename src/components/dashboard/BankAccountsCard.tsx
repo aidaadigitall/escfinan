@@ -6,7 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 
-export const BankAccountsCard = () => {
+interface BankAccountsCardProps {
+  hideValues?: boolean;
+}
+
+export const BankAccountsCard = ({ hideValues = false }: BankAccountsCardProps) => {
   const { accounts: bankAccounts, isLoading } = useBankAccounts();
   const navigate = useNavigate();
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>(
@@ -77,8 +81,8 @@ export const BankAccountsCard = () => {
           <div className="mb-6">
             <div className="h-48 flex items-end gap-2 mb-2">
               {visibleAccounts.map((account, index) => {
-                const balance = Math.abs(parseFloat(account.current_balance.toString()));
-                const heightPercentage = (balance / maxBalance) * 100;
+                const balance = hideValues ? 50 : Math.abs(parseFloat(account.current_balance.toString()));
+                const heightPercentage = hideValues ? 50 : (balance / maxBalance) * 100;
                 const color = accountColors[index % accountColors.length];
 
                 return (
@@ -106,7 +110,6 @@ export const BankAccountsCard = () => {
           <div className="border rounded-lg p-3 mb-4">
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {bankAccounts.map((account, index) => {
-                const balance = parseFloat(account.current_balance.toString());
                 const color = accountColors[index % accountColors.length];
                 
                 return (
@@ -147,7 +150,7 @@ export const BankAccountsCard = () => {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{account.name}</div>
                     <div className={`text-xs ${balance >= 0 ? 'text-income' : 'text-expense'}`}>
-                      ({balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      {hideValues ? "••••••" : `(${balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`}
                     </div>
                   </div>
                 </div>
