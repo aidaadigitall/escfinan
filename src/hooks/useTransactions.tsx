@@ -49,9 +49,15 @@ export const useTransactions = (type?: "income" | "expense") => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Get effective owner ID for the current user
+      const { data: effectiveOwnerData } = await supabase
+        .rpc('get_effective_owner_id', { _user_id: user.id });
+      
+      const effectiveUserId = effectiveOwnerData || user.id;
+
       const { data, error } = await supabase
         .from("transactions")
-        .insert({ ...transaction, user_id: user.id })
+        .insert({ ...transaction, user_id: effectiveUserId })
         .select()
         .single();
 

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getEffectiveUserId } from "./useEffectiveUserId";
 
 export type Category = {
   id: string;
@@ -33,12 +34,11 @@ export const useCategories = (type?: "income" | "expense") => {
 
   const createMutation = useMutation({
     mutationFn: async ({ name, type }: { name: string; type: "income" | "expense" }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      const effectiveUserId = await getEffectiveUserId();
 
       const { data, error } = await supabase
         .from("categories")
-        .insert({ name, type, user_id: user.id })
+        .insert({ name, type, user_id: effectiveUserId })
         .select()
         .single();
 

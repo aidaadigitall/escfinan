@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getEffectiveUserId } from "./useEffectiveUserId";
 
 export type Service = {
   id: string;
@@ -42,8 +43,7 @@ export const useServices = () => {
       category?: string;
       is_active?: boolean;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      const effectiveUserId = await getEffectiveUserId();
 
       const { data, error } = await supabase
         .from("services")
@@ -55,7 +55,7 @@ export const useServices = () => {
           estimated_hours: serviceData.estimated_hours || null,
           category: serviceData.category || null,
           is_active: serviceData.is_active ?? true,
-          user_id: user.id 
+          user_id: effectiveUserId 
         }])
         .select()
         .single();
