@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useUsers, UserProfile } from "@/hooks/useUsers";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { UserPermissionsForm, UserPermissions, defaultPermissions } from "@/components/UserPermissionsForm";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Loader } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,8 @@ const Usuarios = () => {
   const { user } = useAuth();
   const { users, isLoading, createUser, updateUser, deleteUser } = useUsers();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState("dados");
   const [formData, setFormData] = useState<{
@@ -133,10 +136,17 @@ const Usuarios = () => {
     setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir este usuário?")) {
-      deleteUser(id);
+  const handleDeleteClick = (id: string) => {
+    setUserToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (userToDelete) {
+      deleteUser(userToDelete);
+      setUserToDelete(null);
     }
+    setDeleteDialogOpen(false);
   };
 
   // Set default permissions based on role
@@ -243,7 +253,7 @@ const Usuarios = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDelete(usuario.id)}
+                      onClick={() => handleDeleteClick(usuario.id)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -384,6 +394,17 @@ const Usuarios = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Excluir usuário"
+        description="Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
     </div>
   );
 };
