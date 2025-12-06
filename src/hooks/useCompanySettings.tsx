@@ -21,6 +21,10 @@ export type CompanySettings = {
   logo_header_url: string | null;
   logo_sidebar_url: string | null;
   warranty_terms: string | null;
+  favicon_url: string | null;
+  next_quote_number: number | null;
+  next_service_order_number: number | null;
+  next_sale_number: number | null;
   created_at: string;
   updated_at: string;
 };

@@ -252,11 +252,15 @@ export type Database = {
           company_name: string | null
           created_at: string
           email: string | null
+          favicon_url: string | null
           id: string
           ie: string | null
           im: string | null
           logo_header_url: string | null
           logo_sidebar_url: string | null
+          next_quote_number: number | null
+          next_sale_number: number | null
+          next_service_order_number: number | null
           phone: string | null
           phone2: string | null
           state: string | null
@@ -274,11 +278,15 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           email?: string | null
+          favicon_url?: string | null
           id?: string
           ie?: string | null
           im?: string | null
           logo_header_url?: string | null
           logo_sidebar_url?: string | null
+          next_quote_number?: number | null
+          next_sale_number?: number | null
+          next_service_order_number?: number | null
           phone?: string | null
           phone2?: string | null
           state?: string | null
@@ -296,11 +304,15 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           email?: string | null
+          favicon_url?: string | null
           id?: string
           ie?: string | null
           im?: string | null
           logo_header_url?: string | null
           logo_sidebar_url?: string | null
+          next_quote_number?: number | null
+          next_sale_number?: number | null
+          next_service_order_number?: number | null
           phone?: string | null
           phone2?: string | null
           state?: string | null

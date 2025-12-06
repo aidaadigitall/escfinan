@@ -9,6 +9,7 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useTaskDueNotifications } from "@/hooks/useTaskDueNotifications";
 import { useTasks } from "@/hooks/useTasks";
 import { UrgentTasksWidget } from "./UrgentTasksWidget";
+import { useFavicon } from "@/hooks/useFavicon";
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,6 +28,9 @@ export const Layout = ({ children }: LayoutProps) => {
   
   // Enable task due notifications globally
   useTaskDueNotifications(tasks);
+
+  // Apply custom favicon
+  useFavicon();
 
   return (
     <div className="min-h-screen bg-background">

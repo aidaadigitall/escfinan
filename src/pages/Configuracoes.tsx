@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft, ShieldAlert, History } from "lucide-react";
+import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft, ShieldAlert, History, Globe, Hash } from "lucide-react";
 import { DataManagementDialog } from "@/components/DataManagementDialog";
 import { DataMigrationDialog } from "@/components/DataMigrationDialog";
 import { MaskedInput } from "@/components/ui/masked-input";
@@ -48,15 +48,23 @@ const Configuracoes = () => {
     warranty_terms: "",
     logo_header_url: "",
     logo_sidebar_url: "",
+    favicon_url: "",
+    next_quote_number: 1,
+    next_service_order_number: 1,
+    next_sale_number: 1,
   });
 
   const [headerPreview, setHeaderPreview] = useState("");
   const [sidebarPreview, setSidebarPreview] = useState("");
+  const [faviconPreview, setFaviconPreview] = useState("");
   const [headerFile, setHeaderFile] = useState<File | null>(null);
   const [sidebarFile, setSidebarFile] = useState<File | null>(null);
+  const [faviconFile, setFaviconFile] = useState<File | null>(null);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
   
   const headerInputRef = useRef<HTMLInputElement>(null);
   const sidebarInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (companySettings) {
@@ -77,13 +85,18 @@ const Configuracoes = () => {
         warranty_terms: companySettings.warranty_terms || "",
         logo_header_url: companySettings.logo_header_url || "",
         logo_sidebar_url: companySettings.logo_sidebar_url || "",
+        favicon_url: companySettings.favicon_url || "",
+        next_quote_number: companySettings.next_quote_number || 1,
+        next_service_order_number: companySettings.next_service_order_number || 1,
+        next_sale_number: companySettings.next_sale_number || 1,
       });
       setHeaderPreview(companySettings.logo_header_url || "");
       setSidebarPreview(companySettings.logo_sidebar_url || "");
+      setFaviconPreview(companySettings.favicon_url || "");
     }
   }, [companySettings]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: "header" | "sidebar") => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: "header" | "sidebar" | "favicon") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -101,16 +114,19 @@ const Configuracoes = () => {
     if (type === "header") {
       setHeaderFile(file);
       setHeaderPreview(preview);
-    } else {
+    } else if (type === "sidebar") {
       setSidebarFile(file);
       setSidebarPreview(preview);
+    } else {
+      setFaviconFile(file);
+      setFaviconPreview(preview);
     }
   };
 
-  const uploadLogo = async (file: File, type: "header" | "sidebar") => {
+  const uploadLogo = async (file: File, type: "header" | "sidebar" | "favicon") => {
     if (!user) return null;
 
-    const setUploading = type === "header" ? setUploadingHeader : setUploadingSidebar;
+    const setUploading = type === "header" ? setUploadingHeader : type === "sidebar" ? setUploadingSidebar : setUploadingFavicon;
     setUploading(true);
 
     try {
@@ -138,17 +154,22 @@ const Configuracoes = () => {
     }
   };
 
-  const handleRemoveLogo = (type: "header" | "sidebar") => {
+  const handleRemoveLogo = (type: "header" | "sidebar" | "favicon") => {
     if (type === "header") {
       setHeaderFile(null);
       setHeaderPreview("");
       setCompanyData({ ...companyData, logo_header_url: "" });
       if (headerInputRef.current) headerInputRef.current.value = "";
-    } else {
+    } else if (type === "sidebar") {
       setSidebarFile(null);
       setSidebarPreview("");
       setCompanyData({ ...companyData, logo_sidebar_url: "" });
       if (sidebarInputRef.current) sidebarInputRef.current.value = "";
+    } else {
+      setFaviconFile(null);
+      setFaviconPreview("");
+      setCompanyData({ ...companyData, favicon_url: "" });
+      if (faviconInputRef.current) faviconInputRef.current.value = "";
     }
   };
 
@@ -161,6 +182,7 @@ const Configuracoes = () => {
     try {
       let headerUrl = companyData.logo_header_url;
       let sidebarUrl = companyData.logo_sidebar_url;
+      let faviconUrl = companyData.favicon_url;
 
       if (headerFile) {
         const uploadedUrl = await uploadLogo(headerFile, "header");
@@ -172,11 +194,27 @@ const Configuracoes = () => {
         if (uploadedUrl) sidebarUrl = uploadedUrl;
       }
 
+      if (faviconFile) {
+        const uploadedUrl = await uploadLogo(faviconFile, "favicon");
+        if (uploadedUrl) faviconUrl = uploadedUrl;
+      }
+
       saveCompanySettings({
         ...companyData,
         logo_header_url: headerUrl,
         logo_sidebar_url: sidebarUrl,
+        favicon_url: faviconUrl,
       });
+
+      // Update favicon in the document
+      if (faviconUrl) {
+        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement || document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = faviconUrl;
+        document.getElementsByTagName('head')[0].appendChild(link);
+        localStorage.setItem("favicon_url", faviconUrl);
+      }
 
     } catch (error: any) {
       console.error("Erro ao salvar:", error);
@@ -498,9 +536,119 @@ const Configuracoes = () => {
           </CardContent>
         </Card>
 
+        {/* Favicon Card */}
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Favicon do Sistema
+            </CardTitle>
+            <CardDescription>
+              Ícone que aparece na aba do navegador (formato quadrado, recomendado 32x32 ou 64x64 pixels)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <input
+              ref={faviconInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/x-icon,image/ico"
+              onChange={(e) => handleFileSelect(e, "favicon")}
+              className="hidden"
+            />
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => faviconInputRef.current?.click()}
+                className="w-full rounded-xl"
+                disabled={uploadingFavicon}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Selecionar Favicon
+              </Button>
+              {faviconPreview && (
+                <div className="p-4 border rounded-xl bg-muted/50 relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() => handleRemoveLogo("favicon")}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center justify-center h-16">
+                    <img
+                      src={faviconPreview}
+                      alt="Favicon"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Formatos aceitos: PNG, JPEG ou ICO (máximo 5MB)
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Numeração de Documentos */}
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hash className="h-5 w-5" />
+              Numeração de Documentos
+            </CardTitle>
+            <CardDescription>
+              Configure o próximo número sequencial para orçamentos, ordens de serviço e vendas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <Label>Próximo Orçamento (ORC-)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={companyData.next_quote_number}
+                  onChange={(e) => setCompanyData({ ...companyData, next_quote_number: parseInt(e.target.value) || 1 })}
+                  placeholder="1"
+                  disabled={!canManage}
+                />
+              </div>
+              <div>
+                <Label>Próxima OS (OS-)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={companyData.next_service_order_number}
+                  onChange={(e) => setCompanyData({ ...companyData, next_service_order_number: parseInt(e.target.value) || 1 })}
+                  placeholder="1"
+                  disabled={!canManage}
+                />
+              </div>
+              <div>
+                <Label>Próxima Venda (PED-)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={companyData.next_sale_number}
+                  onChange={(e) => setCompanyData({ ...companyData, next_sale_number: parseInt(e.target.value) || 1 })}
+                  placeholder="1"
+                  disabled={!canManage}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Atenção: Alterar esses valores pode causar duplicação de números se você definir um valor já utilizado.
+            </p>
+          </CardContent>
+        </Card>
+
         {canManage && (
           <div className="flex justify-end">
-            <Button type="submit" disabled={loading || uploadingHeader || uploadingSidebar} className="rounded-xl">
+            <Button type="submit" disabled={loading || uploadingHeader || uploadingSidebar || uploadingFavicon} className="rounded-xl">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar Configurações
             </Button>
@@ -572,6 +720,10 @@ const fieldLabels: Record<string, string> = {
   logo_header_url: "Logo Header",
   logo_sidebar_url: "Logo Sidebar",
   warranty_terms: "Termos de Garantia",
+  favicon_url: "Favicon",
+  next_quote_number: "Próximo Nº Orçamento",
+  next_service_order_number: "Próximo Nº OS",
+  next_sale_number: "Próximo Nº Venda",
 };
 
 const SettingsAuditLog = () => {
