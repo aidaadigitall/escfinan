@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import escSolutionsLogo from "@/assets/esc_solutions_logo.png";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Home,
   TrendingUp,
@@ -34,12 +34,14 @@ import {
   Boxes,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 
 interface MenuItem {
   icon: any;
   label: string;
   path?: string;
   submenu?: MenuItem[];
+  permissionKey?: string;
 }
 
 interface SidebarProps {
@@ -48,74 +50,85 @@ interface SidebarProps {
   onNavigate?: () => void;
 }
 
-const menuItems: MenuItem[] = [
-  { icon: Home, label: "Dashboard", path: "/" },
-  {
-    icon: Users,
-    label: "Cadastros",
-    submenu: [
-      { icon: Briefcase, label: "Clientes", path: "/cadastros/clientes" },
-      { icon: Building2, label: "Fornecedores", path: "/cadastros/fornecedores" },
-      { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
-      { icon: Wrench, label: "Serviços", path: "/cadastros/servicos" },
-      { icon: Users, label: "Funcionários", path: "/cadastros/funcionarios" },
-      { icon: User, label: "Usuários", path: "/cadastros/usuarios" },
-    ],
-  },
-  {
-    icon: ShoppingCart,
-    label: "Comercial",
-    submenu: [
-      { icon: ClipboardList, label: "Orçamentos", path: "/orcamentos" },
-      { icon: FileText, label: "Ordens de Serviço", path: "/ordens-servico" },
-      { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
-    ],
-  },
-  {
-    icon: Boxes,
-    label: "Estoque",
-    submenu: [
-      { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
-      { icon: ArrowRightLeft, label: "Movimentações", path: "/estoque/movimentacoes" },
-    ],
-  },
-  {
-    icon: BarChart3,
-    label: "Financeiro",
-    submenu: [
-      { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
-      { icon: CreditCard, label: "Contas a Pagar", path: "/despesas" },
-      { icon: FileText, label: "Despesas Fixas", path: "/contas-fixas" },
-      { icon: FileText, label: "Receitas Fixas", path: "/receitas-fixas" },
-      { icon: Wallet, label: "Lançamentos Diários", path: "/lancamentos-diarios" },
-      { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
-      { icon: PieChart, label: "Relatórios Gerenciais", path: "/relatorios-gerenciais" },
-      { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },
-      { icon: ArrowRightLeft, label: "Transferências", path: "/transferencias" },
-      { icon: Wallet, label: "Caixa", path: "/caixa" },
-    ],
-  },
-  { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
-  { icon: Calendar, label: "Calendário Financeiro", path: "/calendario-financeiro" },
-  {
-    icon: Settings,
-    label: "Configurações Avançadas",
-    submenu: [
-      { icon: Building2, label: "Contas Bancárias", path: "/auxiliares/contas-bancarias" },
-      { icon: CreditCard, label: "Cartões de Crédito", path: "/auxiliares/cartoes-credito" },
-      { icon: Target, label: "Centros de Custos", path: "/auxiliares/centros-custos" },
-      { icon: FileText, label: "Categorias", path: "/categorias" },
-      { icon: Table, label: "Plano de Contas", path: "/plano-contas" },
-      { icon: Landmark, label: "Formas de Pagamento", path: "/formas-pagamento" },
-      { icon: FileBarChart, label: "Relatório de Recorrências", path: "/relatorio-recorrencias" },
-    ],
-  },
-  { icon: Settings, label: "Configurações", path: "/configuracoes" },
-];
+const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
+  const items: MenuItem[] = [
+    { icon: Home, label: "Dashboard", path: "/" },
+    {
+      icon: Users,
+      label: "Cadastros",
+      submenu: [
+        { icon: Briefcase, label: "Clientes", path: "/cadastros/clientes" },
+        { icon: Building2, label: "Fornecedores", path: "/cadastros/fornecedores" },
+        { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
+        { icon: Wrench, label: "Serviços", path: "/cadastros/servicos" },
+        { icon: Users, label: "Funcionários", path: "/cadastros/funcionarios" },
+        ...(permissions.can_view_users ? [{ icon: User, label: "Usuários", path: "/cadastros/usuarios" }] : []),
+      ],
+    },
+    {
+      icon: ShoppingCart,
+      label: "Comercial",
+      submenu: [
+        { icon: ClipboardList, label: "Orçamentos", path: "/orcamentos" },
+        { icon: FileText, label: "Ordens de Serviço", path: "/ordens-servico" },
+        { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
+      ],
+    },
+    {
+      icon: Boxes,
+      label: "Estoque",
+      submenu: [
+        { icon: Package, label: "Produtos", path: "/cadastros/produtos" },
+        { icon: ArrowRightLeft, label: "Movimentações", path: "/estoque/movimentacoes" },
+      ],
+    },
+    {
+      icon: BarChart3,
+      label: "Financeiro",
+      submenu: [
+        { icon: Receipt, label: "Contas a Receber", path: "/receitas" },
+        { icon: CreditCard, label: "Contas a Pagar", path: "/despesas" },
+        { icon: FileText, label: "Despesas Fixas", path: "/contas-fixas" },
+        { icon: FileText, label: "Receitas Fixas", path: "/receitas-fixas" },
+        { icon: Wallet, label: "Lançamentos Diários", path: "/lancamentos-diarios" },
+        { icon: FileBarChart, label: "DRE Gerencial", path: "/dre-gerencial" },
+        { icon: PieChart, label: "Relatórios Gerenciais", path: "/relatorios-gerenciais" },
+        { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },
+        { icon: ArrowRightLeft, label: "Transferências", path: "/transferencias" },
+        { icon: Wallet, label: "Caixa", path: "/caixa" },
+      ],
+    },
+    { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
+    { icon: Calendar, label: "Calendário Financeiro", path: "/calendario-financeiro" },
+    {
+      icon: Settings,
+      label: "Configurações Avançadas",
+      submenu: [
+        { icon: Building2, label: "Contas Bancárias", path: "/auxiliares/contas-bancarias" },
+        { icon: CreditCard, label: "Cartões de Crédito", path: "/auxiliares/cartoes-credito" },
+        { icon: Target, label: "Centros de Custos", path: "/auxiliares/centros-custos" },
+        { icon: FileText, label: "Categorias", path: "/categorias" },
+        { icon: Table, label: "Plano de Contas", path: "/plano-contas" },
+        { icon: Landmark, label: "Formas de Pagamento", path: "/formas-pagamento" },
+        { icon: FileBarChart, label: "Relatório de Recorrências", path: "/relatorio-recorrencias" },
+      ],
+    },
+  ];
+
+  // Only show Configurações if user has permission
+  if (permissions.can_view_settings) {
+    items.push({ icon: Settings, label: "Configurações", path: "/configuracoes" });
+  }
+
+  return items;
+};
 
 export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { permissions } = useCurrentUserPermissions();
+  
+  const menuItems = useMemo(() => getMenuItems(permissions), [permissions]);
   
   // Initialize expanded menus based on current route
   const getInitialExpandedMenus = () => {

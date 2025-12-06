@@ -50,14 +50,52 @@ export const useCompanySettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { data, error } = await supabase
-        .from("company_settings")
-        .upsert({ ...settingsData, user_id: user.id }, { onConflict: 'user_id' })
-        .select()
-        .single();
+      // Get effective owner ID for the current user
+      const { data: effectiveOwnerData } = await supabase
+        .rpc('get_effective_owner_id', { _user_id: user.id });
+      
+      const effectiveUserId = effectiveOwnerData || user.id;
 
-      if (error) throw error;
-      return data;
+      // First try to get existing settings
+      const { data: existing } = await supabase
+        .from("company_settings")
+        .select("id")
+        .eq("user_id", effectiveUserId)
+        .maybeSingle();
+
+      let result;
+      if (existing) {
+        // Update existing
+        const { data, error } = await supabase
+          .from("company_settings")
+          .update(settingsData)
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      } else {
+        // Insert new
+        const { data, error } = await supabase
+          .from("company_settings")
+          .insert({ ...settingsData, user_id: effectiveUserId })
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      }
+
+      // Update localStorage for immediate UI update
+      if (result) {
+        if (result.logo_header_url) {
+          localStorage.setItem("logo_header_url", result.logo_header_url);
+        }
+        if (result.logo_sidebar_url) {
+          localStorage.setItem("logo_sidebar_url", result.logo_sidebar_url);
+        }
+      }
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["company_settings"] });
