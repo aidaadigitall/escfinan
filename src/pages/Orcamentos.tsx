@@ -358,7 +358,7 @@ const Orcamentos = () => {
                         }
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start">
                       <Calendar
                         mode="single"
                         selected={formData.delivery_date ? new Date(formData.delivery_date + "T00:00:00") : undefined}
