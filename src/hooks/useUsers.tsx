@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UserPermissions, defaultPermissions } from "@/components/UserPermissionsForm";
 
 export type UserProfile = {
   id: string;
@@ -10,25 +11,44 @@ export type UserProfile = {
   role: "Administrador" | "Gerente" | "Usuário";
   is_active: boolean;
   created_at: string;
+  owner_user_id?: string;
 };
-
-// Este hook simula a gestão de usuários.
-// A criação de usuários com senha no Supabase é feita via `supabase.auth.signUp()`.
-// Para um painel de administração, o ideal seria usar a chave de serviço (Service Role Key)
-// e a função `supabase.auth.admin.createUser()`, mas isso requer uma Edge Function ou API
-// segura. Por simplicidade e segurança no frontend, vamos simular a criação de um perfil
-// e, para a senha, usaremos a função de convite/signup do Supabase.
 
 export const useUsers = () => {
   const queryClient = useQueryClient();
 
-  // 1. READ: Buscar todos os perfis de usuários (simulando a tabela de perfis)
+  // Get current user to determine owner context
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+  };
+
+  // Fetch users - show users created by the current owner or the current user's own profile
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return [];
+
+      // First, check if current user is a sub-user (has owner_user_id)
+      const { data: currentUserProfile } = await supabase
+        .from("system_users")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      let ownerUserId = currentUser.id;
+      
+      // If current user has an owner, use that owner's ID to fetch users
+      if (currentUserProfile?.owner_user_id) {
+        ownerUserId = currentUserProfile.owner_user_id;
+      }
+
+      // Fetch all users that belong to this owner OR the owner themselves
       const { data, error } = await supabase
         .from("system_users")
         .select("*")
+        .or(`owner_user_id.eq.${ownerUserId},user_id.eq.${ownerUserId}`)
         .order("name");
 
       if (error) throw error;
@@ -36,16 +56,29 @@ export const useUsers = () => {
     },
   });
 
-  // 2. CREATE: Criar um novo usuário (usando Edge Function com privilégios admin)
+  // CREATE: Create a new user using Edge Function with admin privileges
   const createMutation = useMutation({
-    mutationFn: async (userData: { email: string; password?: string; name: string; phone?: string; role: string; is_active: boolean }) => {
-      const { email, password, name, phone, role, is_active } = userData;
+    mutationFn: async (userData: { 
+      email: string; 
+      password?: string; 
+      name: string; 
+      phone?: string; 
+      role: string; 
+      is_active: boolean;
+      permissions?: UserPermissions;
+    }) => {
+      const { email, password, name, phone, role, is_active, permissions } = userData;
 
       if (!password) {
         throw new Error("A senha é obrigatória para criar um novo usuário.");
       }
 
-      // Chamar Edge Function para criar usuário com privilégios admin
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Call Edge Function to create user with admin privileges
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
           email,
@@ -54,6 +87,8 @@ export const useUsers = () => {
           phone,
           role,
           is_active,
+          owner_user_id: currentUser.id,
+          permissions: permissions || defaultPermissions,
         },
       });
 
@@ -64,14 +99,14 @@ export const useUsers = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Usuário criado com sucesso! (Conta Auth e Perfil)");
+      toast.success("Usuário criado com sucesso!");
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao criar usuário");
     },
   });
 
-  // 3. UPDATE: Atualizar o perfil do usuário
+  // UPDATE: Update user profile
   const updateMutation = useMutation({
     mutationFn: async (userData: Partial<UserProfile> & { id: string }) => {
       const { id, ...updateData } = userData;
@@ -95,7 +130,7 @@ export const useUsers = () => {
     },
   });
 
-  // 4. DELETE: Deletar o perfil do usuário (a exclusão da conta Auth deve ser feita via Service Role Key)
+  // DELETE: Delete user profile
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
