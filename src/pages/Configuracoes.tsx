@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -8,13 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft } from "lucide-react";
+import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft, ShieldAlert } from "lucide-react";
 import { DataManagementDialog } from "@/components/DataManagementDialog";
 import { DataMigrationDialog } from "@/components/DataMigrationDialog";
 import { MaskedInput } from "@/components/ui/masked-input";
+import { useNavigate } from "react-router-dom";
 
 const Configuracoes = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { permissions, isLoading: loadingPermissions } = useCurrentUserPermissions();
   const { companySettings, isLoading: loadingSettings, saveCompanySettings } = useCompanySettings();
   const [loading, setLoading] = useState(false);
   const [uploadingHeader, setUploadingHeader] = useState(false);
@@ -200,13 +204,29 @@ const Configuracoes = () => {
     }
   };
 
-  if (loadingSettings) {
+  if (loadingSettings || loadingPermissions) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+
+  // Check if user has permission to view settings
+  if (!permissions.can_view_settings) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <ShieldAlert className="h-16 w-16 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">Acesso Negado</h2>
+        <p className="text-muted-foreground text-center">
+          Você não tem permissão para acessar as configurações do sistema.
+        </p>
+        <Button onClick={() => navigate("/dashboard")}>Voltar ao Dashboard</Button>
+      </div>
+    );
+  }
+
+  const canManage = permissions.can_manage_settings;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -473,12 +493,14 @@ const Configuracoes = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={loading || uploadingHeader || uploadingSidebar} className="rounded-xl">
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Salvar Configurações
-          </Button>
-        </div>
+        {canManage && (
+          <div className="flex justify-end">
+            <Button type="submit" disabled={loading || uploadingHeader || uploadingSidebar} className="rounded-xl">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar Configurações
+            </Button>
+          </div>
+        )}
       </form>
 
       <Card className="rounded-2xl">
@@ -496,6 +518,7 @@ const Configuracoes = () => {
             variant="outline" 
             onClick={() => setDataManagementOpen(true)}
             className="w-full rounded-xl"
+            disabled={!canManage}
           >
             <Database className="mr-2 h-4 w-4" />
             Backup e Restauração
@@ -504,6 +527,7 @@ const Configuracoes = () => {
             variant="outline" 
             onClick={() => setDataMigrationOpen(true)}
             className="w-full rounded-xl"
+            disabled={!canManage}
           >
             <ArrowRightLeft className="mr-2 h-4 w-4" />
             Migrar Dados de Outro Sistema
