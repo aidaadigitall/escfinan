@@ -9,13 +9,14 @@ export type Sale = {
   client_id: string | null;
   seller_id: string | null;
   quote_id: string | null;
-  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+  status: 'pending' | 'approved' | 'confirmed' | 'delivered' | 'cancelled';
   sale_date: string;
   delivery_date: string | null;
   products_total: number;
   services_total: number;
   discount_total: number;
   total_amount: number;
+  paid_amount?: number;
   payment_method: string | null;
   notes: string | null;
   warranty_terms: string | null;
@@ -24,7 +25,7 @@ export type Sale = {
 };
 
 // Statuses that trigger financial integration
-const FINANCIAL_STATUSES = ['confirmed', 'delivered'];
+const FINANCIAL_STATUSES = ['approved', 'confirmed', 'delivered'];
 
 export const useSales = () => {
   const queryClient = useQueryClient();
@@ -42,39 +43,62 @@ export const useSales = () => {
     },
   });
 
-  // Helper to create financial transaction
+  // Helper to create financial transactions (handles partial payments)
   const createFinancialTransaction = async (sale: any, clientName?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check if transaction already exists
-      const { data: existing } = await supabase
+      // Delete existing transactions for this sale first
+      await supabase
         .from("transactions")
-        .select("id")
-        .eq("notes", `sale:${sale.id}`)
-        .maybeSingle();
-
-      if (existing) return;
+        .delete()
+        .like("notes", `sale:${sale.id}%`);
 
       const dueDate = sale.delivery_date || sale.sale_date || new Date().toISOString().split("T")[0];
       const today = new Date().toISOString().split("T")[0];
-      let status = "pending";
-      if (dueDate < today) status = "overdue";
+      const totalAmount = sale.total_amount || 0;
+      const paidAmount = sale.paid_amount || 0;
+      const remainingAmount = totalAmount - paidAmount;
 
-      await supabase
-        .from("transactions")
-        .insert({
-          user_id: user.id,
-          description: `Venda #${sale.sale_number}${clientName ? ` - ${clientName}` : ""}`,
-          amount: sale.total_amount || 0,
-          type: "income",
-          client: clientName || null,
-          payment_method: sale.payment_method || null,
-          status,
-          due_date: dueDate,
-          notes: `sale:${sale.id}`,
-        });
+      // If there's a paid amount, create a confirmed transaction
+      if (paidAmount > 0) {
+        await supabase
+          .from("transactions")
+          .insert({
+            user_id: user.id,
+            description: `Venda #${sale.sale_number}${clientName ? ` - ${clientName}` : ""} (Pago)`,
+            amount: paidAmount,
+            type: "income",
+            client: clientName || null,
+            payment_method: sale.payment_method || null,
+            status: "received",
+            paid_amount: paidAmount,
+            paid_date: today,
+            due_date: today,
+            notes: `sale:${sale.id}:paid`,
+          });
+      }
+
+      // If there's remaining amount, create a pending transaction (projection)
+      if (remainingAmount > 0) {
+        let status = "pending";
+        if (dueDate < today) status = "overdue";
+
+        await supabase
+          .from("transactions")
+          .insert({
+            user_id: user.id,
+            description: `Venda #${sale.sale_number}${clientName ? ` - ${clientName}` : ""} (A Receber)`,
+            amount: remainingAmount,
+            type: "income",
+            client: clientName || null,
+            payment_method: sale.payment_method || null,
+            status,
+            due_date: dueDate,
+            notes: `sale:${sale.id}:pending`,
+          });
+      }
 
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     } catch (error) {
@@ -89,7 +113,7 @@ export const useSales = () => {
         await supabase
           .from("transactions")
           .delete()
-          .eq("notes", `sale:${saleId}`);
+          .like("notes", `sale:${saleId}%`);
       }
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     } catch (error) {
@@ -159,11 +183,11 @@ export const useSales = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Delete associated financial transaction first
+      // Delete associated financial transactions first
       await supabase
         .from("transactions")
         .delete()
-        .eq("notes", `sale:${id}`);
+        .like("notes", `sale:${id}%`);
 
       const { error } = await supabase
         .from("sales")
