@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -6,27 +7,60 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTasks } from "@/hooks/useTasks";
 import { useUsers } from "@/hooks/useUsers";
+import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 import { format, startOfMonth, endOfMonth, subMonths, subDays, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend 
 } from "recharts";
-import { CheckCircle2, Clock, AlertTriangle, Target, TrendingUp, Users, CalendarIcon } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Target, TrendingUp, Users, CalendarIcon, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 type PeriodType = "3d" | "7d" | "15d" | "1m" | "3m" | "6m" | "12m" | "custom";
 
 const RelatorioTarefas = () => {
+  const navigate = useNavigate();
   const { tasks } = useTasks();
   const { users } = useUsers();
+  const { permissions, isLoading: permissionsLoading } = useCurrentUserPermissions();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("3m");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
+
+  // Check permissions
+  useEffect(() => {
+    if (!permissionsLoading && !permissions.can_view_task_reports) {
+      toast.error("Você não tem permissão para acessar esta página");
+      navigate("/");
+    }
+  }, [permissions, permissionsLoading, navigate]);
+
+  // Show loading while checking permissions
+  if (permissionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If no permission, show access denied
+  if (!permissions.can_view_task_reports) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <Lock className="h-16 w-16 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">Acesso Negado</h2>
+        <p className="text-muted-foreground">Você não tem permissão para visualizar o relatório de tarefas.</p>
+        <Button onClick={() => navigate("/")}>Voltar ao Início</Button>
+      </div>
+    );
+  }
 
   // Calculate period dates based on selection
   const { periodStart, periodEnd, periodMonths } = useMemo(() => {

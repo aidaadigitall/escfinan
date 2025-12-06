@@ -1761,6 +1761,7 @@ export type Database = {
           can_view_stock: boolean | null
           can_view_stock_movements: boolean | null
           can_view_suppliers: boolean | null
+          can_view_task_reports: boolean | null
           can_view_tasks: boolean | null
           can_view_transfers: boolean | null
           can_view_users: boolean | null
@@ -1826,6 +1827,7 @@ export type Database = {
           can_view_stock?: boolean | null
           can_view_stock_movements?: boolean | null
           can_view_suppliers?: boolean | null
+          can_view_task_reports?: boolean | null
           can_view_tasks?: boolean | null
           can_view_transfers?: boolean | null
           can_view_users?: boolean | null
@@ -1891,6 +1893,7 @@ export type Database = {
           can_view_stock?: boolean | null
           can_view_stock_movements?: boolean | null
           can_view_suppliers?: boolean | null
+          can_view_task_reports?: boolean | null
           can_view_tasks?: boolean | null
           can_view_transfers?: boolean | null
           can_view_users?: boolean | null

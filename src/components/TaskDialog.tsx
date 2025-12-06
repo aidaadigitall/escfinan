@@ -180,16 +180,25 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                           : "Selecionar"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[200]" align="start" sideOffset={4}>
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" sideOffset={4}>
                       <Calendar
                         mode="single"
-                        selected={formData.due_date ? new Date(formData.due_date) : undefined}
+                        selected={formData.due_date ? new Date(formData.due_date + "T12:00:00") : undefined}
                         onSelect={(date) => {
-                          setFormData({ ...formData, due_date: date?.toISOString().split("T")[0] || null });
+                          if (date) {
+                            // Use local date formatting to avoid timezone issues
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            setFormData({ ...formData, due_date: `${year}-${month}-${day}` });
+                          } else {
+                            setFormData({ ...formData, due_date: null });
+                          }
                           setDatePopoverOpen(false);
                         }}
                         locale={ptBR}
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
@@ -284,7 +293,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                           : "Data"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[200]" align="start" sideOffset={4}>
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" sideOffset={4}>
                       <Calendar
                         mode="single"
                         selected={formData.reminder_date ? new Date(formData.reminder_date) : undefined}
@@ -298,6 +307,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                         }}
                         locale={ptBR}
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
