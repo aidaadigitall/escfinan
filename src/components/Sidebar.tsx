@@ -34,6 +34,7 @@ import {
   CheckSquare,
   Calendar,
   Boxes,
+  Clock,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
@@ -98,6 +99,13 @@ const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
         { icon: BarChart3, label: "Fluxo de Caixa", path: "/fluxo-de-caixa" },
         { icon: ArrowRightLeft, label: "Transferências", path: "/transferencias" },
         { icon: Wallet, label: "Caixa", path: "/caixa" },
+      ],
+    },
+    {
+      icon: Clock,
+      label: "Ponto",
+      submenu: [
+        { icon: Clock, label: "Controle de Ponto", path: "/controle-ponto" },
       ],
     },
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },

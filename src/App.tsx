@@ -43,6 +43,7 @@ import Orcamentos from "./pages/Orcamentos";
 import OrdensServico from "./pages/OrdensServico";
 import Vendas from "./pages/Vendas";
 import PublicBilling from "./pages/PublicBilling";
+import ControlePonto from "./pages/ControlePonto";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -245,6 +246,13 @@ const App = () => (
               <PermissionProtectedRoute permission="can_view_reports">
                 <Layout><RelatorioRecorrencias /></Layout>
               </PermissionProtectedRoute>
+            } />
+            
+            {/* Time tracking route */}
+            <Route path="/controle-ponto" element={
+              <ProtectedRoute>
+                <Layout><ControlePonto /></Layout>
+              </ProtectedRoute>
             } />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
