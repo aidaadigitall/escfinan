@@ -38,10 +38,16 @@ export const useCompanySettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
+      // Get effective owner ID for the current user (for sub-users)
+      const { data: effectiveOwnerData } = await supabase
+        .rpc('get_effective_owner_id', { _user_id: user.id });
+      
+      const effectiveUserId = effectiveOwnerData || user.id;
+
       const { data, error } = await supabase
         .from("company_settings")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .maybeSingle();
 
       if (error) throw error;
