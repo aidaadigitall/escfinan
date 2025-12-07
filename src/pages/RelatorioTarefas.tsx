@@ -211,7 +211,8 @@ const RelatorioTarefas = () => {
   // User productivity data
   const userProductivityData = useMemo(() => {
     return Object.entries(metrics.tasksByUser).map(([userId, data]) => {
-      const user = users.find(u => u.user_id === userId);
+      // Try to find user by user_id or by id
+      const user = users.find(u => u.user_id === userId || u.id === userId);
       return {
         userId,
         userName: user?.name || "Usuário Desconhecido",

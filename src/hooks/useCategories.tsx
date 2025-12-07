@@ -28,7 +28,17 @@ export const useCategories = (type?: "income" | "expense") => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Category[];
+      
+      // Remove duplicates by id
+      const uniqueCategories = (data || []).reduce((acc: Category[], current) => {
+        const exists = acc.find(item => item.id === current.id);
+        if (!exists) {
+          acc.push(current as Category);
+        }
+        return acc;
+      }, []);
+      
+      return uniqueCategories;
     },
   });
 
