@@ -34,7 +34,7 @@ const TaskTimeCounter = ({ dueDate, dueTime, status }: { dueDate: string; dueTim
   if (status === "completed" || status === "cancelled") return null;
   
   const now = new Date();
-  let targetDate = new Date(dueDate);
+  let targetDate = new Date(dueDate + "T12:00:00");
   
   // If due_time is provided, set the time
   if (dueTime) {
@@ -253,7 +253,7 @@ const Tarefas = () => {
               {task.due_date && (
                 <span className="flex items-center gap-1">
                   <CalendarIcon className="h-3 w-3" />
-                  {format(new Date(task.due_date), "dd/MM/yyyy", { locale: ptBR })}
+                  {format(new Date(task.due_date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                 </span>
               )}
               {task.due_time && (

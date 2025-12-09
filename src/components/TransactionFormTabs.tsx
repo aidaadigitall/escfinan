@@ -85,11 +85,12 @@ export const TransactionFormTabs = ({
     if (transaction) {
       setDescription(transaction.description || "");
       setChartAccountId(transaction.category_id || "");
+      // Pre-fill payment method from existing transaction
       setPaymentMethod(transaction.payment_method || "");
       setSituation(transaction.status || "pending");
-      setDueDate(transaction.due_date ? new Date(transaction.due_date) : undefined);
+      setDueDate(transaction.due_date ? new Date(transaction.due_date + "T12:00:00") : undefined);
       setBankAccountId(transaction.bank_account_id || "");
-      setCompensationDate(transaction.paid_date ? new Date(transaction.paid_date) : undefined);
+      setCompensationDate(transaction.paid_date ? new Date(transaction.paid_date + "T12:00:00") : undefined);
       setGrossAmount(transaction.amount?.toString() || "");
       setEntity(transaction.entity || "");
       setClient(transaction.client || "");
@@ -424,20 +425,30 @@ export const TransactionFormTabs = ({
 
                           <div className="space-y-2">
                             <Label>Data 1ª parcela *</Label>
-                            <Popover>
+                            <Popover modal={true}>
                               <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                                   <CalendarIcon className="mr-2 h-4 w-4" />
                                   {firstInstallmentDate ? format(firstInstallmentDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
+                              <PopoverContent className="w-auto p-0 z-[9999]" align="start" sideOffset={4}>
                                 <Calendar
                                   mode="single"
                                   selected={firstInstallmentDate}
-                                  onSelect={setFirstInstallmentDate}
+                                  onSelect={(date) => {
+                                    if (date) {
+                                      const year = date.getFullYear();
+                                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                                      const day = String(date.getDate()).padStart(2, '0');
+                                      setFirstInstallmentDate(new Date(`${year}-${month}-${day}T12:00:00`));
+                                    } else {
+                                      setFirstInstallmentDate(undefined);
+                                    }
+                                  }}
                                   initialFocus
                                   locale={ptBR}
+                                  className="pointer-events-auto"
                                 />
                               </PopoverContent>
                             </Popover>
