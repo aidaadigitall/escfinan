@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Task, useTaskComments } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useUsers } from "@/hooks/useUsers";
+import { useTaskLabels } from "@/hooks/useTaskLabels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,8 +16,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Calendar as CalendarIcon, Clock, Tag, Users, Paperclip, MessageSquare, AtSign, Trash2, Send } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Clock, Tag, Users, Paperclip, MessageSquare, AtSign, Trash2, Send, Settings } from "lucide-react";
 import { TaskAttachments, Attachment } from "./TaskAttachments";
+import { LabelManagerDialog } from "./LabelManagerDialog";
 
 interface TaskDialogProps {
   open: boolean;
@@ -29,6 +31,7 @@ interface TaskDialogProps {
 export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: TaskDialogProps) => {
   const { employees } = useEmployees();
   const { users } = useUsers();
+  const { labels: savedLabels, createLabel } = useTaskLabels();
   const { comments, addComment, deleteComment } = useTaskComments(task?.id);
   
   const [formData, setFormData] = useState<Partial<Task>>({
@@ -53,6 +56,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
   const [showMentions, setShowMentions] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [reminderPopoverOpen, setReminderPopoverOpen] = useState(false);
+  const [labelManagerOpen, setLabelManagerOpen] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -83,10 +87,21 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
     onOpenChange(false);
   };
 
-  const handleAddLabel = () => {
+  const handleAddLabel = async () => {
     if (newLabel && !formData.labels?.includes(newLabel)) {
+      // Also save to database if it's a new label
+      const existingLabel = savedLabels.find(l => l.name.toLowerCase() === newLabel.toLowerCase());
+      if (!existingLabel) {
+        await createLabel({ name: newLabel });
+      }
       setFormData({ ...formData, labels: [...(formData.labels || []), newLabel] });
       setNewLabel("");
+    }
+  };
+
+  const handleSelectSavedLabel = (labelName: string) => {
+    if (!formData.labels?.includes(labelName)) {
+      setFormData({ ...formData, labels: [...(formData.labels || []), labelName] });
     }
   };
 
@@ -258,15 +273,35 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
               </div>
 
               <div>
-                <label className="text-sm font-medium">Etiquetas</label>
-                <div className="flex gap-2 mt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Etiquetas</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setLabelManagerOpen(true)}>
+                    <Settings className="h-3 w-3 mr-1" /> Gerenciar
+                  </Button>
+                </div>
+                {savedLabels.length > 0 && (
+                  <div className="flex gap-1 flex-wrap mt-1 mb-2">
+                    {savedLabels.filter(l => !formData.labels?.includes(l.name)).slice(0, 6).map((label) => (
+                      <Badge 
+                        key={label.id} 
+                        variant="outline" 
+                        className="cursor-pointer text-xs"
+                        style={{ borderColor: label.color, color: label.color }}
+                        onClick={() => handleSelectSavedLabel(label.name)}
+                      >
+                        + {label.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
                   <Input
                     value={newLabel}
                     onChange={(e) => setNewLabel(e.target.value)}
                     placeholder="Nova etiqueta"
                     onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddLabel())}
                   />
-                  <Button type="button" variant="outline" onClick={handleAddLabel}>
+                  <Button type="button" variant="outline" onClick={() => handleAddLabel()}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
