@@ -136,11 +136,46 @@ All colors MUST be HSL.
 }
 
 @layer base {
+  /* Global box-sizing and reset for better cross-browser behavior */
+  html {
+    box-sizing: border-box;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
+
+  /* Ensure borders don't force overflow and apply theme tokens */
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
+    min-height: 100vh;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* Responsive media elements */
+  img, picture, video, canvas, svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Make tables and iframes behave on small screens */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  iframe {
+    max-width: 100%;
   }
 }

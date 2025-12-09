@@ -39,7 +39,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
       id: "1",
       role: "assistant",
       content:
-        "Olá! 👋 Sou o assistente de IA do EscFinan. Posso ajudá-lo com:\n\n• 📚 **Dúvidas sobre o sistema** - Como usar funcionalidades\n• 💡 **Estratégias financeiras** - Ideias para melhorar sua gestão\n• 📊 **Análises e insights** - Baseado nos seus dados\n• 🎯 **Tomadas de decisão** - Recomendações personalizadas\n\nComo posso ajudá-lo?",
+        "Olá! 👋 Sou o assistente de IA do Esc. Posso ajudá-lo com:\n\n• 📚 **Dúvidas sobre o sistema** - Como usar funcionalidades\n• 💡 **Estratégias financeiras** - Ideias para melhorar sua gestão\n• 📊 **Análises e insights** - Baseado nos seus dados\n• 🎯 **Tomadas de decisão** - Recomendações personalizadas\n\nComo posso ajudá-lo?",
       timestamp: new Date(),
       type: "text",
     },
