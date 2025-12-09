@@ -103,66 +103,58 @@ export default function ControlePonto() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
-            <h1 className="text-3xl font-bold">Controle de Ponto</h1>
-            <p className="text-muted-foreground">Gerencie entradas, saídas e intervalos</p>
+            <h1 className="text-2xl font-bold">Controle de Ponto</h1>
+            <p className="text-sm text-muted-foreground">Gerencie entradas, saídas e intervalos</p>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-4">
           {/* Clock Widget */}
           <div className="lg:col-span-1">
             <TimeClockWidget />
           </div>
 
           {/* Quick Stats */}
-          <div className="lg:col-span-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span className="text-sm text-muted-foreground">Total de Horas</span>
-                </div>
-                <p className="text-2xl font-bold mt-2">{formatHours(metrics.totalHours)}</p>
-              </CardContent>
+          <div className="lg:col-span-3 grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <Card className="p-3">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-xs text-muted-foreground">Total de Horas</span>
+              </div>
+              <p className="text-xl font-bold mt-1">{formatHours(metrics.totalHours)}</p>
             </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-muted-foreground">Dias Trabalhados</span>
-                </div>
-                <p className="text-2xl font-bold mt-2">{metrics.uniqueDays}</p>
-              </CardContent>
+            <Card className="p-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-blue-500" />
+                <span className="text-xs text-muted-foreground">Dias Trabalhados</span>
+              </div>
+              <p className="text-xl font-bold mt-1">{metrics.uniqueDays}</p>
             </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-muted-foreground">Média/Dia</span>
-                </div>
-                <p className="text-2xl font-bold mt-2">{formatHours(metrics.avgHoursPerDay)}</p>
-              </CardContent>
+            <Card className="p-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <span className="text-xs text-muted-foreground">Média/Dia</span>
+              </div>
+              <p className="text-xl font-bold mt-1">{formatHours(metrics.avgHoursPerDay)}</p>
             </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Timer className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm text-muted-foreground">Intervalos</span>
-                </div>
-                <p className="text-2xl font-bold mt-2">{Math.round(metrics.totalBreakMinutes)}min</p>
-              </CardContent>
+            <Card className="p-3">
+              <div className="flex items-center gap-2">
+                <Timer className="h-4 w-4 text-orange-500" />
+                <span className="text-xs text-muted-foreground">Intervalos</span>
+              </div>
+              <p className="text-xl font-bold mt-1">{Math.round(metrics.totalBreakMinutes)}min</p>
             </Card>
           </div>
         </div>
 
-        <Tabs defaultValue="records" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="records">Registros</TabsTrigger>
-            {isAdmin && <TabsTrigger value="dashboard">Dashboard</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="users">Por Usuário</TabsTrigger>}
+        <Tabs defaultValue="records" className="space-y-3">
+          <TabsList className="h-9">
+            <TabsTrigger value="records" className="text-sm">Registros</TabsTrigger>
+            {isAdmin && <TabsTrigger value="dashboard" className="text-sm">Dashboard</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="users" className="text-sm">Por Usuário</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="records" className="space-y-4">

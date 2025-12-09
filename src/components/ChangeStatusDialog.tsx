@@ -18,6 +18,7 @@ import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useTransactionStatusHistory } from "@/hooks/useTransactionStatusHistory";
 
 const statusOptions = [
@@ -36,10 +37,6 @@ const statusLabels: Record<string, string> = {
   received: "Recebido",
 };
 
-const paymentMethods = [
-  "PIX", "Boleto", "Cartão de Crédito", "Transferência", "Dinheiro", "Outro"
-];
-
 // Interface Transaction
 interface Transaction {
   id: string;
@@ -48,6 +45,9 @@ interface Transaction {
   description: string;
   due_date: string;
   type: "income" | "expense";
+  payment_method?: string | null;
+  bank_account_id?: string | null;
+  paid_date?: string | null;
 }
 
 interface ChangeStatusDialogProps {
@@ -59,25 +59,27 @@ interface ChangeStatusDialogProps {
 
 export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusChange }: ChangeStatusDialogProps) => {
   const { accounts: bankAccounts } = useBankAccounts();
+  const { paymentMethods: paymentMethodsList } = usePaymentMethods();
   const { history, isLoading: historyLoading } = useTransactionStatusHistory(transaction?.id);
   const [currentStatus, setCurrentStatus] = useState(transaction?.status || "pending");
-  const [description, setDescription] = useState(transaction?.description || ""); // Descrição editável
+  const [description, setDescription] = useState(transaction?.description || "");
   const [valueReceived, setValueReceived] = useState(transaction?.amount.toString() || "");
-  const [compensationDate, setCompensationDate] = useState<Date | undefined>(undefined); // Inicializa como undefined
+  const [compensationDate, setCompensationDate] = useState<Date | undefined>(undefined);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [observation, setObservation] = useState("");
   const [complementaryInfo, setComplementaryInfo] = useState("");
-  const [file, setFile] = useState<File | null>(null); // Para o anexo
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (transaction) {
       setCurrentStatus(transaction.status || "pending");
       setDescription(transaction.description || "");
       setValueReceived(transaction.amount.toString() || "");
-      setCompensationDate(new Date());
-      setPaymentMethod("");
-      setBankAccount("");
+      // Pre-fill with existing payment data if available
+      setCompensationDate(transaction.paid_date ? new Date(transaction.paid_date) : new Date());
+      setPaymentMethod(transaction.payment_method || "");
+      setBankAccount(transaction.bank_account_id || "");
       setObservation("");
       setComplementaryInfo("");
     }
@@ -191,18 +193,15 @@ export const ChangeStatusDialog = ({ open, onOpenChange, transaction, onStatusCh
 	                <div className="space-y-2">
 	                  <div className="flex justify-between items-center">
 	                    <Label htmlFor="paymentMethod">Forma de pagamento*</Label>
-	                    <Button variant="link" size="sm" onClick={() => window.open("/auxiliares/formas-de-pagamento", "_blank")} className="p-0 h-auto text-xs">
-	                      + Criar
-	                    </Button>
 	                  </div>
 	                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
 	                    <SelectTrigger id="paymentMethod">
 	                      <SelectValue placeholder="Selecione" />
 	                    </SelectTrigger>
 	                    <SelectContent>
-	                      {paymentMethods.map(method => (
-	                        <SelectItem key={method} value={method}>
-	                          {method}
+	                      {paymentMethodsList.map(method => (
+	                        <SelectItem key={method.id} value={method.name}>
+	                          {method.name}
 	                        </SelectItem>
 	                      ))}
 	                    </SelectContent>

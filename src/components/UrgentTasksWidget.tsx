@@ -32,7 +32,7 @@ export const UrgentTasksWidget = () => {
   // Filter overdue and urgent tasks
   const overdueTasks = tasks.filter(task => {
     if (!task.due_date || task.status === "completed" || task.status === "cancelled") return false;
-    let targetDate = new Date(task.due_date);
+    let targetDate = new Date(task.due_date + "T12:00:00");
     if (task.due_time) {
       const [hours, minutes] = task.due_time.split(":");
       targetDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
@@ -55,7 +55,7 @@ export const UrgentTasksWidget = () => {
   const getTimeInfo = (task: Task) => {
     if (!task.due_date) return { text: "Sem prazo", color: "text-muted-foreground" };
 
-    let targetDate = new Date(task.due_date);
+    let targetDate = new Date(task.due_date + "T12:00:00");
     if (task.due_time) {
       const [hours, minutes] = task.due_time.split(":");
       targetDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
