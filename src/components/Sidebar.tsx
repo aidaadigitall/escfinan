@@ -106,7 +106,6 @@ const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
       label: "Ponto",
       submenu: [
         { icon: Clock, label: "Controle de Ponto", path: "/controle-ponto" },
-        { icon: Clock, label: "Sistema de Ponto", path: "/ponto" },
       ],
     },
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },

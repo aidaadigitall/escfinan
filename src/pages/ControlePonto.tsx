@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { TimeClockWidget } from "@/components/TimeClockWidget";
 import { useTimeEntries, TimeEntry } from "@/hooks/useTimeEntries";
+import { TimeClockApprovalPanel } from "@/components/TimeClockApprovalPanel";
+import { useTimeTracking } from "@/hooks/useTimeTracking";
 import { useUsers } from "@/hooks/useUsers";
 import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 import { format, startOfMonth, endOfMonth, parseISO, differenceInMinutes } from "date-fns";
@@ -38,6 +40,7 @@ export default function ControlePonto() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const isAdmin = permissions?.can_manage_users || false;
+  const { pendingRequests } = useTimeTracking();
 
   // Filter entries based on selected filters
   const filteredEntries = useMemo(() => {
@@ -155,6 +158,7 @@ export default function ControlePonto() {
             <TabsTrigger value="records" className="text-sm">Registros</TabsTrigger>
             {isAdmin && <TabsTrigger value="dashboard" className="text-sm">Dashboard</TabsTrigger>}
             {isAdmin && <TabsTrigger value="users" className="text-sm">Por Usuário</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="approvals" className="text-sm">Aprovações</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="records" className="space-y-4">
@@ -383,6 +387,12 @@ export default function ControlePonto() {
                   </Card>
                 ))}
               </div>
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="approvals" className="space-y-4">
+              <TimeClockApprovalPanel requests={pendingRequests} isLoading={false} />
             </TabsContent>
           )}
         </Tabs>

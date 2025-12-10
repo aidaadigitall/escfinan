@@ -44,7 +44,6 @@ import OrdensServico from "./pages/OrdensServico";
 import Vendas from "./pages/Vendas";
 import PublicBilling from "./pages/PublicBilling";
 import ControlePonto from "./pages/ControlePonto";
-import PontoPage from "./pages/Ponto";
 import PontoApprovalsPage from "./pages/PontoApprovalsPage";
 
 const queryClient = new QueryClient({
@@ -257,13 +256,8 @@ const App = () => (
               </ProtectedRoute>
             } />
             
-            {/* New time tracking system */}
-            <Route path="/ponto" element={
-              <ProtectedRoute>
-                <Layout><PontoPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/ponto/aprovacoes" element={
+            {/* Time tracking approvals integrated under Controle de Ponto */}
+            <Route path="/controle-ponto/aprovacoes" element={
               <ProtectedRoute>
                 <Layout><PontoApprovalsPage /></Layout>
               </ProtectedRoute>

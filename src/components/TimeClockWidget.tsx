@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Play, Pause, Square, Coffee } from "lucide-react";
 import { useTimeEntries } from "@/hooks/useTimeEntries";
+import { TimeClockRequestDialog } from "@/components/TimeClockRequestDialog";
 import { format, differenceInSeconds } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -21,6 +22,7 @@ export function TimeClockWidget() {
 
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [breakTime, setBreakTime] = useState("00:00:00");
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!activeEntry) {
@@ -154,6 +156,19 @@ export function TimeClockWidget() {
             </>
           )}
         </div>
+        {/* Request Edit Dialog Trigger */}
+        {activeEntry && (
+          <div>
+            <Button variant="ghost" size="sm" onClick={() => setRequestDialogOpen(true)}>
+              Solicitar Edição
+            </Button>
+            <TimeClockRequestDialog
+              open={requestDialogOpen}
+              onOpenChange={setRequestDialogOpen}
+              timeTracking={activeEntry as any}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
