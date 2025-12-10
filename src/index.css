@@ -198,6 +198,15 @@ All colors MUST be HSL.
     @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4;
   }
 
+  /* Large screen grid adjustments for forms in dialogs */
+  .form-grid-large-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4;
+  }
+
+  .form-grid-large-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4;
+  }
+
   /* Responsive input fields in mobile dialogs */
   input[type="text"],
   input[type="email"],

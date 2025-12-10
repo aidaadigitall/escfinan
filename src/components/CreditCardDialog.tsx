@@ -91,7 +91,7 @@ export const CreditCardDialog = ({ open, onOpenChange, card, onSave }: CreditCar
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg lg:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{card ? "Editar Cartão" : "Adicionar Cartão de Crédito"}</DialogTitle>
         </DialogHeader>

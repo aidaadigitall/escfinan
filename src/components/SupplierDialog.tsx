@@ -115,7 +115,7 @@ export const SupplierDialog = ({ open, onOpenChange, supplier, onSave }: Supplie
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{supplier ? "Editar" : "Adicionar"} Fornecedor</DialogTitle>
         </DialogHeader>
@@ -128,7 +128,7 @@ export const SupplierDialog = ({ open, onOpenChange, supplier, onSave }: Supplie
             </TabsList>
 
             <TabsContent value="general" className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="form-grid-large-2">
                 <div className="space-y-2">
                   <Label>Tipo de Fornecedor *</Label>
                   <Select value={supplierType} onValueChange={(value: any) => setSupplierType(value)}>
@@ -238,7 +238,7 @@ export const SupplierDialog = ({ open, onOpenChange, supplier, onSave }: Supplie
             </TabsContent>
 
             <TabsContent value="address" className="space-y-4 mt-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="form-grid-large-3">
                 <div className="space-y-2">
                   <Label htmlFor="zipcode">CEP</Label>
                   <div className="flex gap-2">

@@ -116,7 +116,7 @@ export const ClientDialog = ({ open, onOpenChange, client, onSave }: ClientDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{client ? "Editar" : "Adicionar"} Cliente</DialogTitle>
         </DialogHeader>
