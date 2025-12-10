@@ -44,6 +44,7 @@ import OrdensServico from "./pages/OrdensServico";
 import Vendas from "./pages/Vendas";
 import PublicBilling from "./pages/PublicBilling";
 import ControlePonto from "./pages/ControlePonto";
+import ControlePontoRH from "./pages/ControlePontoRH";
 import PontoApprovalsPage from "./pages/PontoApprovalsPage";
 
 const queryClient = new QueryClient({
@@ -254,6 +255,13 @@ const App = () => (
               <ProtectedRoute>
                 <Layout><ControlePonto /></Layout>
               </ProtectedRoute>
+            } />
+            
+            {/* Time tracking RH/Admin panel */}
+            <Route path="/controle-ponto/rh" element={
+              <PermissionProtectedRoute permission="can_manage_users">
+                <Layout><ControlePontoRH /></Layout>
+              </PermissionProtectedRoute>
             } />
             
             {/* Time tracking approvals integrated under Controle de Ponto */}

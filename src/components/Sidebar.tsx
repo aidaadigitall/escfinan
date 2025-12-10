@@ -106,6 +106,7 @@ const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
       label: "Ponto",
       submenu: [
         { icon: Clock, label: "Controle de Ponto", path: "/controle-ponto" },
+        ...(permissions.can_manage_users ? [{ icon: Users, label: "Painel RH", path: "/controle-ponto/rh" }] : []),
       ],
     },
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },

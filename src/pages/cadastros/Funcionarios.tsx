@@ -179,7 +179,6 @@ const Funcionarios = () => {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
           </Table>
         </div>
       </Card>
