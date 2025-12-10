@@ -120,7 +120,8 @@ export function TimeEntryEditDialog({
       if (error) throw error;
 
       toast.success("Registro atualizado com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["time_entries"] });
+      queryClient.invalidateQueries({ queryKey: ["active_time_entry"] });
       onOpenChange(false);
     } catch (error) {
       console.error("Erro ao atualizar registro:", error);
@@ -143,7 +144,8 @@ export function TimeEntryEditDialog({
       if (error) throw error;
 
       toast.success("Registro excluído com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["time_entries"] });
+      queryClient.invalidateQueries({ queryKey: ["active_time_entry"] });
       setShowDeleteConfirm(false);
       onOpenChange(false);
     } catch (error) {
