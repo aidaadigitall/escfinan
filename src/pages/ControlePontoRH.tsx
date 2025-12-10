@@ -224,7 +224,7 @@ export default function ControlePontoRH() {
 
   return (
     <Layout>
-      <div className="space-y-3 px-2 sm:px-3 md:px-4 max-w-full">
+      <div className="space-y-3 max-w-full">
         {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>

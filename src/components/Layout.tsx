@@ -63,7 +63,7 @@ export const Layout = ({ children }: LayoutProps) => {
           onMenuClick={isMobile ? () => setSidebarOpen(true) : () => setSidebarCollapsed(!sidebarCollapsed)} 
           showMenuButton={isMobile}
         />
-        <main className="pt-16 sm:pt-20 px-3 py-4 sm:px-4 sm:py-6 md:px-6">
+        <main className="pt-16 sm:pt-20 px-2 py-3 sm:px-3 sm:py-4">
           {children}
         </main>
       </div>
