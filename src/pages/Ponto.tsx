@@ -1,53 +1,12 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clock, Plus, Edit, LogIn, LogOut, Coffee, AlertCircle, TrendingUp, Calendar } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useTimeTracking, formatHours } from "@/hooks/useTimeTracking";
-import { useTimeClock, formatBalance, getBalanceColor } from "@/hooks/useTimeClock";
-import { TimeClockRequestDialog } from "@/components/TimeClockRequestDialog";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { TimeClockApprovalPanel } from "@/components/TimeClockApprovalPanel";
-import { toast } from "sonner";
 
 export default function PontoPage() {
   const navigate = useNavigate();
-  const { permissions } = useUserPermissions();
-  const {
-    selectedDate,
-    setSelectedDate,
-    timeTrackingData,
-    timeTrackingRange,
-    pendingRequests,
-    isLoading,
-    clockIn,
-    clockOut,
-    startBreak,
-    endBreak,
-    isClockingIn,
-  } = useTimeTracking();
 
-  const { monthlySummary, yearlySummaries, bankOfHours } = useTimeClock();
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-  const today = timeTrackingData && timeTrackingData.length > 0 ? timeTrackingData[0] : null;
-
-  const handleClockIn = () => {
-    clockIn();
-  };
-
-  const handleClockOut = () => {
-    if (!today) {
-      toast.error("Nenhum registro de entrada para hoje");
-      return;
-    }
-    clockOut(today.id);
-  };
+  // Redirecionar para a página correta de Controle de Ponto
+  React.useEffect(() => {
+    navigate("/controle-ponto");
+  }, [navigate]);
 
   const handleStartBreak = () => {
     if (!today) {
