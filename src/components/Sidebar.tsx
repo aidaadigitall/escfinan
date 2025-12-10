@@ -270,10 +270,10 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
     <aside 
       className={cn(
         "fixed left-0 top-14 h-[calc(100vh-56px)] bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300 ease-in-out z-40",
-        collapsed ? "w-14 md:w-16" : "w-full sm:w-56 md:w-64"
+        collapsed ? "w-12 md:w-14" : "w-44 sm:w-52 md:w-56 lg:w-60 xl:w-64"
       )}
     >
-      <div className="p-6 border-b border-sidebar-border flex items-center justify-between animate-fade-in">
+      <div className="p-4 border-b border-sidebar-border flex items-center justify-between animate-fade-in">
         <button
           onClick={() => navigate("/")}
           className={cn("flex items-center justify-center", collapsed ? "w-full" : "w-auto")}
@@ -297,7 +297,7 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
         )}
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 animate-fade-in">
+      <nav className="flex-1 p-2 space-y-1 animate-fade-in">
         {menuItems.map((item) => renderMenuItem(item))}
       </nav>
     </aside>

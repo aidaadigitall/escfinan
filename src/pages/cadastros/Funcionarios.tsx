@@ -100,17 +100,17 @@ const Funcionarios = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Funcionários</h1>
+    <div className="px-2 sm:px-4 md:px-6 py-4 max-w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+        <h1 className="text-xl sm:text-2xl font-bold">Funcionários</h1>
         <Button onClick={() => handleOpenDialog()}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Funcionário
         </Button>
       </div>
 
-      <Card className="mb-6">
-        <div className="p-4 border-b flex items-center gap-2">
+      <Card className="mb-4">
+        <div className="p-2 sm:p-4 border-b flex items-center gap-2">
           <Search className="h-4 w-4 text-gray-400" />
           <Input
             placeholder="Buscar por nome ou CPF..."
@@ -120,7 +120,8 @@ const Funcionarios = () => {
           />
         </div>
 
-        <Table>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
@@ -179,6 +180,8 @@ const Funcionarios = () => {
             ))}
           </TableBody>
         </Table>
+          </Table>
+        </div>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -190,7 +193,7 @@ const Funcionarios = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Nome *</label>
                 <Input
@@ -201,7 +204,6 @@ const Funcionarios = () => {
                   placeholder="Nome completo"
                 />
               </div>
-
               <div>
                 <label className="text-sm font-medium">CPF *</label>
                 <Input
@@ -214,7 +216,7 @@ const Funcionarios = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Email</label>
                 <Input
@@ -226,7 +228,6 @@ const Funcionarios = () => {
                   placeholder="email@example.com"
                 />
               </div>
-
               <div>
                 <label className="text-sm font-medium">Telefone</label>
                 <Input
@@ -239,7 +240,7 @@ const Funcionarios = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Cargo</label>
                 <Input
@@ -250,7 +251,6 @@ const Funcionarios = () => {
                   placeholder="Cargo do funcionário"
                 />
               </div>
-
               <div>
                 <label className="text-sm font-medium">Salário</label>
                 <Input

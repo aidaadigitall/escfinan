@@ -106,23 +106,23 @@ export default function ControlePonto() {
 
   return (
     <Layout>
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+      <div className="space-y-3 px-2 sm:px-4 md:px-6 max-w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-2">
           <div>
-            <h1 className="text-2xl font-bold">Controle de Ponto</h1>
-            <p className="text-sm text-muted-foreground">Gerencie entradas, saídas e intervalos</p>
+            <h1 className="text-xl sm:text-2xl font-bold">Controle de Ponto</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Gerencie entradas, saídas e intervalos</p>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-4">
+        <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
           {/* Clock Widget */}
-          <div className="lg:col-span-1">
+          <div className="md:col-span-1">
             <TimeClockWidget />
           </div>
 
           {/* Quick Stats */}
-          <div className="lg:col-span-3 grid gap-3 grid-cols-2 lg:grid-cols-4">
-            <Card className="p-3">
+          <div className="md:col-span-2 lg:col-span-3 grid gap-2 sm:gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <Card className="p-2 sm:p-3">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 <span className="text-xs text-muted-foreground">Total de Horas</span>
