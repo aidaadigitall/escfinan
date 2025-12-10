@@ -60,11 +60,22 @@ export function useTimeEntries() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Gerar timestamp no timezone de Brasília
+      const now = new Date();
+      const brasiliaOffset = "-03:00";
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const clockInTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${brasiliaOffset}`;
+
       const { data, error } = await supabase
         .from("time_entries")
         .insert({
           user_id: user.id,
-          clock_in: new Date().toISOString(),
+          clock_in: clockInTimestamp,
           notes,
           status: "active",
         })
@@ -86,8 +97,6 @@ export function useTimeEntries() {
 
   const clockOutMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      const clockOut = new Date();
-      
       // Get the entry to calculate total hours
       const { data: entry, error: fetchError } = await supabase
         .from("time_entries")
@@ -97,15 +106,26 @@ export function useTimeEntries() {
 
       if (fetchError) throw fetchError;
 
+      // Gerar timestamp de saída no timezone de Brasília
+      const now = new Date();
+      const brasiliaOffset = "-03:00";
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const clockOutTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${brasiliaOffset}`;
+
       const clockIn = new Date(entry.clock_in);
       const breakMinutes = entry.total_break_minutes || 0;
-      const totalMs = clockOut.getTime() - clockIn.getTime();
+      const totalMs = now.getTime() - clockIn.getTime();
       const totalHours = (totalMs / (1000 * 60 * 60)) - (breakMinutes / 60);
 
       const { data, error } = await supabase
         .from("time_entries")
         .update({
-          clock_out: clockOut.toISOString(),
+          clock_out: clockOutTimestamp,
           total_hours: Math.max(0, totalHours),
           status: "completed",
         })
@@ -128,10 +148,21 @@ export function useTimeEntries() {
 
   const startBreakMutation = useMutation({
     mutationFn: async (entryId: string) => {
+      // Gerar timestamp no timezone de Brasília
+      const now = new Date();
+      const brasiliaOffset = "-03:00";
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const breakStartTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${brasiliaOffset}`;
+
       const { data, error } = await supabase
         .from("time_entries")
         .update({
-          break_start: new Date().toISOString(),
+          break_start: breakStartTimestamp,
         })
         .eq("id", entryId)
         .select()
@@ -161,8 +192,19 @@ export function useTimeEntries() {
 
       if (fetchError) throw fetchError;
 
-      const breakEnd = new Date();
+      // Gerar timestamp no timezone de Brasília
+      const now = new Date();
+      const brasiliaOffset = "-03:00";
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const breakEndTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${brasiliaOffset}`;
+
       const breakStart = new Date(entry.break_start);
+      const breakEnd = now;
       const breakMs = breakEnd.getTime() - breakStart.getTime();
       const breakMinutes = breakMs / (1000 * 60);
       const totalBreak = (entry.total_break_minutes || 0) + breakMinutes;
@@ -170,7 +212,7 @@ export function useTimeEntries() {
       const { data, error } = await supabase
         .from("time_entries")
         .update({
-          break_end: breakEnd.toISOString(),
+          break_end: breakEndTimestamp,
           break_start: null, // Clear for next break
           total_break_minutes: totalBreak,
         })

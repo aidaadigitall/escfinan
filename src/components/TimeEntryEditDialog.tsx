@@ -84,25 +84,32 @@ export function TimeEntryEditDialog({
 
     setIsLoading(true);
     try {
-      // Construir timestamps completos
-      const clockInTimestamp = `${formData.date}T${formData.clockIn}:00`;
-      const clockOutTimestamp = formData.clockOut ? `${formData.date}T${formData.clockOut}:00` : null;
-      const breakStartTimestamp = formData.breakStart ? `${formData.date}T${formData.breakStart}:00` : null;
-      const breakEndTimestamp = formData.breakEnd ? `${formData.date}T${formData.breakEnd}:00` : null;
+      // Construir timestamps no timezone de Brasília (UTC-3)
+      // O formato com timezone explícito evita conversão automática
+      const brasiliaOffset = "-03:00";
+      
+      const clockInTimestamp = `${formData.date}T${formData.clockIn}:00${brasiliaOffset}`;
+      const clockOutTimestamp = formData.clockOut ? `${formData.date}T${formData.clockOut}:00${brasiliaOffset}` : null;
+      const breakStartTimestamp = formData.breakStart ? `${formData.date}T${formData.breakStart}:00${brasiliaOffset}` : null;
+      const breakEndTimestamp = formData.breakEnd ? `${formData.date}T${formData.breakEnd}:00${brasiliaOffset}` : null;
 
-      // Calcular horas totais
+      // Calcular horas totais (sem timezone, apenas a diferença)
       let totalHours = 0;
       let totalBreakMinutes = 0;
 
-      if (clockOutTimestamp) {
-        totalHours = calculateHours(clockInTimestamp, clockOutTimestamp);
+      if (formData.clockIn && formData.clockOut) {
+        const [inH, inM] = formData.clockIn.split(':').map(Number);
+        const [outH, outM] = formData.clockOut.split(':').map(Number);
+        totalHours = (outH + outM / 60) - (inH + inM / 60);
       }
 
-      if (breakStartTimestamp && breakEndTimestamp) {
-        totalBreakMinutes = Math.round(calculateHours(breakStartTimestamp, breakEndTimestamp) * 60);
+      if (formData.breakStart && formData.breakEnd) {
+        const [startH, startM] = formData.breakStart.split(':').map(Number);
+        const [endH, endM] = formData.breakEnd.split(':').map(Number);
+        totalBreakMinutes = Math.round(((endH + endM / 60) - (startH + startM / 60)) * 60);
       }
 
-      console.log("Tentando atualizar registro:", {
+      console.log("Atualizando registro com timezone Brasília:", {
         id: entry.id,
         clockInTimestamp,
         clockOutTimestamp,
