@@ -99,10 +99,10 @@ const TaskTimeCounter = ({ dueDate, dueTime, status }: { dueDate: string; dueTim
 };
 
 const priorityColors = {
-  low: "bg-gray-100 text-gray-800 border-gray-300",
-  medium: "bg-blue-100 text-blue-800 border-blue-300",
-  high: "bg-orange-100 text-orange-800 border-orange-300",
-  urgent: "bg-red-100 text-red-800 border-red-300",
+  low: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  medium: "bg-sky-100 text-sky-700 border-sky-300",
+  high: "bg-amber-100 text-amber-700 border-amber-300",
+  urgent: "bg-rose-100 text-rose-700 border-rose-300",
 };
 
 const priorityLabels = {

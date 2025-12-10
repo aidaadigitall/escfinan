@@ -511,6 +511,12 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
           <Button onClick={handleSave}>Salvar</Button>
         </DialogFooter>
       </DialogContent>
+      
+      {/* Label Manager Dialog */}
+      <LabelManagerDialog
+        open={labelManagerOpen}
+        onOpenChange={setLabelManagerOpen}
+      />
     </Dialog>
   );
 };

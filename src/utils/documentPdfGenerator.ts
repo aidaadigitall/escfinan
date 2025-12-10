@@ -1397,6 +1397,12 @@ export const openViewWindow = (html: string) => {
   if (viewWindow) {
     viewWindow.document.write(html);
     viewWindow.document.close();
+    
+    // Add meta tag for better PDF rendering
+    const meta = viewWindow.document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1.0';
+    viewWindow.document.head.appendChild(meta);
   }
 };
 
