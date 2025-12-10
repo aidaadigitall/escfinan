@@ -85,7 +85,7 @@ export function QuickBankAccountDialog({ open, onOpenChange, onSuccess }: QuickB
               className="rounded-xl"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="form-grid-cols-2">
             <div className="space-y-2">
               <Label>Tipo de Conta</Label>
               <Select value={formData.account_type} onValueChange={(value) => setFormData({ ...formData, account_type: value })}>

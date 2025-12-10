@@ -219,16 +219,16 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
           <button
             onClick={() => toggleSubmenu(item.label)}
             className={cn(
-              "flex items-center justify-between w-full gap-3 px-4 py-3 rounded-lg transition-colors",
-              level > 0 && "pl-8",
+              "flex items-center justify-between w-full gap-2 px-3 sm:px-4 py-3 rounded-lg transition-colors min-h-10 sm:min-h-auto",
+              level > 0 && "pl-6 sm:pl-8",
               itemIsActive
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
             )}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span className="text-sm font-medium transition-opacity duration-200">{item.label}</span>}
+              {!collapsed && <span className="text-xs sm:text-sm font-medium transition-opacity duration-200 truncate">{item.label}</span>}
             </div>
             {!collapsed && (
               isExpanded ? (
@@ -253,15 +253,15 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
         to={item.path!}
         onClick={onNavigate}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-          level > 0 && "pl-8",
+          "flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-lg transition-colors min-h-10 sm:min-h-auto",
+          level > 0 && "pl-6 sm:pl-8",
           itemIsActive
             ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         )}
       >
         <Icon className="h-5 w-5 flex-shrink-0" />
-        {!collapsed && <span className="text-sm font-medium transition-opacity duration-200">{item.label}</span>}
+        {!collapsed && <span className="text-xs sm:text-sm font-medium transition-opacity duration-200 truncate">{item.label}</span>}
       </Link>
     );
   };
@@ -269,8 +269,8 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
   return (
     <aside 
       className={cn(
-        "fixed left-0 top-14 h-[calc(100vh-56px)] bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300 ease-in-out",
-        collapsed ? "w-16" : "w-64"
+        "fixed left-0 top-14 h-[calc(100vh-56px)] bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300 ease-in-out z-40",
+        collapsed ? "w-14 md:w-16" : "w-full sm:w-56 md:w-64"
       )}
     >
       <div className="p-6 border-b border-sidebar-border flex items-center justify-between animate-fade-in">

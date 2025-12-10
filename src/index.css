@@ -178,4 +178,39 @@ All colors MUST be HSL.
   iframe {
     max-width: 100%;
   }
+
+  /* Hide scrollbar for table containers while keeping functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;      /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;              /* Chrome, Safari and Opera */
+  }
+
+  /* Responsive form grids */
+  .form-grid-cols-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4;
+  }
+
+  .form-grid-cols-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4;
+  }
+
+  /* Responsive input fields in mobile dialogs */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="date"],
+  input[type="tel"],
+  textarea,
+  select {
+    @apply text-base sm:text-sm;
+  }
+
+  /* Ensure buttons have min touch target on mobile (44px) */
+  button {
+    @apply min-h-10;
+  }
 }

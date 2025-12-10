@@ -107,7 +107,7 @@ export const CreditCardDialog = ({ open, onOpenChange, card, onSave }: CreditCar
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="form-grid-cols-2">
             <div>
               <Label htmlFor="card_number">Últimos 4 Dígitos *</Label>
               <Input
@@ -164,7 +164,7 @@ export const CreditCardDialog = ({ open, onOpenChange, card, onSave }: CreditCar
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="form-grid-cols-2">
             <div>
               <Label htmlFor="closing_day">Dia de Fechamento *</Label>
               <Input

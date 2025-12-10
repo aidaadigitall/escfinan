@@ -131,7 +131,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed bottom-6 right-6 z-30 rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110",
+          "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-30 rounded-full p-3 sm:p-4 shadow-lg transition-all duration-300 hover:scale-110",
           isOpen
             ? "bg-red-500 hover:bg-red-600"
             : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -139,15 +139,15 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
         title="Assistente de IA"
       >
         {isOpen ? (
-          <X className="h-6 w-6" />
+          <X className="h-5 w-5 sm:h-6 sm:w-6" />
         ) : (
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
         )}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-24 right-6 z-30 w-96 max-h-[500px] flex flex-col shadow-2xl border-2 border-blue-200 bg-white">
+        <Card className="fixed bottom-16 right-4 sm:bottom-24 sm:right-6 z-30 w-[calc(100vw-32px)] sm:w-96 max-h-[60vh] sm:max-h-[500px] flex flex-col shadow-2xl border-2 border-blue-200 bg-white">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
             <h3 className="font-bold text-lg flex items-center gap-2">
@@ -176,7 +176,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
                 )}
                 <div
                   className={cn(
-                    "max-w-xs px-4 py-2 rounded-lg text-sm whitespace-pre-wrap",
+                    "max-w-[80%] sm:max-w-xs px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm whitespace-pre-wrap break-words",
                     msg.role === "user"
                       ? "bg-blue-600 text-white rounded-br-none"
                       : "bg-white border border-gray-200 text-gray-800 rounded-bl-none"
@@ -205,11 +205,11 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
               <p className="text-xs font-semibold text-gray-600">
                 Ações rápidas:
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1 sm:gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs h-8"
+                  className="text-[10px] sm:text-xs h-7 sm:h-8"
                   onClick={() => handleQuickAction("help")}
                 >
                   <HelpCircle className="h-3 w-3 mr-1" />
@@ -218,7 +218,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs h-8"
+                  className="text-[10px] sm:text-xs h-7 sm:h-8"
                   onClick={() => handleQuickAction("strategy")}
                 >
                   <TrendingUp className="h-3 w-3 mr-1" />
@@ -227,7 +227,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs h-8"
+                  className="text-[10px] sm:text-xs h-7 sm:h-8"
                   onClick={() => handleQuickAction("analysis")}
                 >
                   <Lightbulb className="h-3 w-3 mr-1" />
@@ -236,7 +236,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs h-8"
+                  className="text-[10px] sm:text-xs h-7 sm:h-8"
                   onClick={() => handleQuickAction("decision")}
                 >
                   <TrendingUp className="h-3 w-3 mr-1" />

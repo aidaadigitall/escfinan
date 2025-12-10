@@ -130,7 +130,7 @@ export const ClientDialog = ({ open, onOpenChange, client, onSave }: ClientDialo
             </TabsList>
 
             <TabsContent value="general" className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="form-grid-cols-2">
                 <div className="space-y-2">
                   <Label>Tipo de Cliente *</Label>
                   <Select value={clientType} onValueChange={(value: any) => setClientType(value)}>
