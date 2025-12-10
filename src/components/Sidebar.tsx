@@ -271,7 +271,7 @@ export const Sidebar = ({ collapsed = false, onToggle, onNavigate }: SidebarProp
     <aside 
       className={cn(
         "fixed left-0 top-14 h-[calc(100vh-56px)] bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto transition-all duration-300 ease-in-out z-40",
-        collapsed ? "w-14" : "w-[clamp(11rem,15vw,16rem)]"
+        collapsed ? "w-14" : "w-56"
       )}
     >
       <div className="p-4 border-b border-sidebar-border flex items-center justify-between animate-fade-in">
