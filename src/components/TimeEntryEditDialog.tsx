@@ -136,21 +136,29 @@ export function TimeEntryEditDialog({
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      console.log("Tentando excluir registro:", entry.id);
+      
+      const { data, error } = await supabase
         .from("time_entries")
         .delete()
-        .eq("id", entry.id);
+        .eq("id", entry.id)
+        .select();
 
-      if (error) throw error;
+      console.log("Resultado da exclusão:", { data, error });
+
+      if (error) {
+        console.error("Erro do Supabase:", error);
+        throw error;
+      }
 
       toast.success("Registro excluído com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["time_entries"] });
       queryClient.invalidateQueries({ queryKey: ["active_time_entry"] });
       setShowDeleteConfirm(false);
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao excluir registro:", error);
-      toast.error("Erro ao excluir registro");
+      toast.error(error?.message || "Erro ao excluir registro");
     } finally {
       setIsLoading(false);
     }
