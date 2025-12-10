@@ -224,42 +224,40 @@ export default function ControlePontoRH() {
 
   return (
     <Layout>
-      <div className="space-y-3 max-w-full">
-        {/* Cabeçalho */}
+      <div className="space-y-4 w-full">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-              <UsersIcon className="h-6 w-6" />
-              Painel RH - Controle de Ponto
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold flex items-center gap-2">
+              <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+              <span>Painel RH - Controle de Ponto</span>
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
               Gestão completa de ponto, banco de horas e relatórios
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={exportReport}>
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={exportReport} className="shrink-0">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
         </div>
 
-        {/* Filtros */}
+        {/* Filters */}
         <Card className="p-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-xs font-medium mb-1 block">Período</label>
               <Input
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="text-sm"
+                className="text-sm h-9"
               />
             </div>
             <div>
               <label className="text-xs font-medium mb-1 block">Funcionário</label>
               <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-sm h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -280,137 +278,137 @@ export default function ControlePontoRH() {
                   placeholder="Nome do funcionário..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 text-sm"
+                  className="pl-8 text-sm h-9"
                 />
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Cards de Resumo */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-          <Card className="p-2 sm:p-3">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+          <Card className="p-3">
             <div className="flex items-center gap-2">
-              <UsersIcon className="h-4 w-4 text-primary" />
-              <span className="text-xs text-muted-foreground">Funcionários</span>
+              <UsersIcon className="h-4 w-4 shrink-0 text-primary" />
+              <span className="text-xs text-muted-foreground truncate">Funcionários</span>
             </div>
-            <p className="text-xl font-bold mt-1">{summary.totalStaff}</p>
+            <p className="text-lg sm:text-xl font-bold mt-1">{summary.totalStaff}</p>
           </Card>
 
-          <Card className="p-2 sm:p-3">
+          <Card className="p-3">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-muted-foreground">Horas Totais</span>
+              <Clock className="h-4 w-4 shrink-0 text-blue-500" />
+              <span className="text-xs text-muted-foreground truncate">Horas Totais</span>
             </div>
-            <p className="text-xl font-bold mt-1">{summary.totalHours.toFixed(0)}h</p>
+            <p className="text-lg sm:text-xl font-bold mt-1">{summary.totalHours.toFixed(0)}h</p>
           </Card>
 
-          <Card className="p-2 sm:p-3">
+          <Card className="p-3">
             <div className="flex items-center gap-2">
-              <Timer className="h-4 w-4 text-green-500" />
-              <span className="text-xs text-muted-foreground">Banco de Horas</span>
+              <Timer className="h-4 w-4 shrink-0 text-green-500" />
+              <span className="text-xs text-muted-foreground truncate">Banco de Horas</span>
             </div>
-            <p className={`text-xl font-bold mt-1 ${summary.totalBankHours >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-lg sm:text-xl font-bold mt-1 ${summary.totalBankHours >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatHours(summary.totalBankHours)}
             </p>
           </Card>
 
-          <Card className="p-2 sm:p-3">
+          <Card className="p-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
-              <span className="text-xs text-muted-foreground">Atrasos</span>
+              <AlertTriangle className="h-4 w-4 shrink-0 text-orange-500" />
+              <span className="text-xs text-muted-foreground truncate">Atrasos</span>
             </div>
-            <p className="text-xl font-bold mt-1 text-orange-600">{summary.totalLateEntries}</p>
+            <p className="text-lg sm:text-xl font-bold mt-1 text-orange-600">{summary.totalLateEntries}</p>
           </Card>
 
-          <Card className="p-2 sm:p-3">
+          <Card className="p-3">
             <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-red-500" />
-              <span className="text-xs text-muted-foreground">Faltas</span>
+              <XCircle className="h-4 w-4 shrink-0 text-red-500" />
+              <span className="text-xs text-muted-foreground truncate">Faltas</span>
             </div>
-            <p className="text-xl font-bold mt-1 text-red-600">{summary.totalMissingEntries}</p>
+            <p className="text-lg sm:text-xl font-bold mt-1 text-red-600">{summary.totalMissingEntries}</p>
           </Card>
 
-          <Card className="p-2 sm:p-3">
+          <Card className="p-3">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-purple-500" />
-              <span className="text-xs text-muted-foreground">Pendentes</span>
+              <CheckCircle className="h-4 w-4 shrink-0 text-purple-500" />
+              <span className="text-xs text-muted-foreground truncate">Pendentes</span>
             </div>
-            <p className="text-xl font-bold mt-1 text-purple-600">{summary.pendingApprovals}</p>
+            <p className="text-lg sm:text-xl font-bold mt-1 text-purple-600">{summary.pendingApprovals}</p>
           </Card>
         </div>
 
-        {/* Abas */}
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="details">Detalhes</TabsTrigger>
-            <TabsTrigger value="approvals">Aprovações</TabsTrigger>
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Visão Geral</TabsTrigger>
+            <TabsTrigger value="details" className="text-xs sm:text-sm">Detalhes</TabsTrigger>
+            <TabsTrigger value="approvals" className="text-xs sm:text-sm">Aprovações</TabsTrigger>
           </TabsList>
 
-          {/* Visão Geral - Resumo por Funcionário */}
-          <TabsContent value="overview" className="space-y-3">
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-4 mt-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Resumo por Funcionário</CardTitle>
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm sm:text-base">Resumo por Funcionário</CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto p-2 sm:p-4">
-                <div className="min-w-[800px]">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Funcionário</TableHead>
-                        <TableHead className="text-right">Horas Trabalhadas</TableHead>
-                        <TableHead className="text-right">Banco de Horas</TableHead>
-                        <TableHead className="text-right">Dias Trabalhados</TableHead>
-                        <TableHead className="text-right">Atrasos</TableHead>
-                        <TableHead className="text-right">Faltas</TableHead>
-                        <TableHead className="text-right">Horas Extras</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="text-xs">Funcionário</TableHead>
+                        <TableHead className="text-xs text-right">Horas Trabalhadas</TableHead>
+                        <TableHead className="text-xs text-right">Banco de Horas</TableHead>
+                        <TableHead className="text-xs text-right">Dias Trabalhados</TableHead>
+                        <TableHead className="text-xs text-right">Atrasos</TableHead>
+                        <TableHead className="text-xs text-right">Faltas</TableHead>
+                        <TableHead className="text-xs text-right">Horas Extras</TableHead>
+                        <TableHead className="text-xs text-center">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {Object.entries(staffMetrics).length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8 text-sm">
                             Nenhum registro encontrado para o período selecionado
                           </TableCell>
                         </TableRow>
                       ) : (
                         Object.entries(staffMetrics).map(([userId, m]) => (
                           <TableRow key={userId}>
-                            <TableCell className="font-medium">{m.name}</TableCell>
-                            <TableCell className="text-right">{m.totalHours.toFixed(1)}h</TableCell>
-                            <TableCell className={`text-right font-semibold ${m.bankHours >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            <TableCell className="font-medium text-sm">{m.name}</TableCell>
+                            <TableCell className="text-right text-sm">{m.totalHours.toFixed(1)}h</TableCell>
+                            <TableCell className={`text-right font-semibold text-sm ${m.bankHours >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                               {formatHours(m.bankHours)}
                             </TableCell>
-                            <TableCell className="text-right">{m.workDays}</TableCell>
+                            <TableCell className="text-right text-sm">{m.workDays}</TableCell>
                             <TableCell className="text-right">
                               {m.lateEntries > 0 && (
-                                <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
+                                <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
                                   {m.lateEntries}
                                 </Badge>
                               )}
-                              {m.lateEntries === 0 && <span className="text-muted-foreground">-</span>}
+                              {m.lateEntries === 0 && <span className="text-muted-foreground text-sm">-</span>}
                             </TableCell>
                             <TableCell className="text-right">
                               {m.missingEntries > 0 && (
-                                <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                                <Badge variant="outline" className="text-xs bg-red-100 text-red-800 border-red-300">
                                   {m.missingEntries}
                                 </Badge>
                               )}
-                              {m.missingEntries === 0 && <span className="text-muted-foreground">-</span>}
+                              {m.missingEntries === 0 && <span className="text-muted-foreground text-sm">-</span>}
                             </TableCell>
-                            <TableCell className="text-right">{m.overtimeHours.toFixed(1)}h</TableCell>
+                            <TableCell className="text-right text-sm">{m.overtimeHours.toFixed(1)}h</TableCell>
                             <TableCell className="text-center">
                               {m.missingEntries > 0 ? (
-                                <Badge variant="destructive">Irregular</Badge>
+                                <Badge variant="destructive" className="text-xs">Irregular</Badge>
                               ) : m.bankHours < -8 ? (
-                                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
                                   Atenção
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                                <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300">
                                   Regular
                                 </Badge>
                               )}
@@ -425,31 +423,31 @@ export default function ControlePontoRH() {
             </Card>
           </TabsContent>
 
-          {/* Detalhes - Registros Individuais */}
-          <TabsContent value="details" className="space-y-3">
+          {/* Details Tab */}
+          <TabsContent value="details" className="space-y-4 mt-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Registros de Ponto</CardTitle>
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm sm:text-base">Registros de Ponto</CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto p-2 sm:p-4">
-                <div className="min-w-[700px]">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Funcionário</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Entrada</TableHead>
-                        <TableHead>Saída</TableHead>
-                        <TableHead className="text-right">Horas</TableHead>
-                        <TableHead className="text-right">Intervalo</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[80px]">Ações</TableHead>
+                        <TableHead className="text-xs">Funcionário</TableHead>
+                        <TableHead className="text-xs">Data</TableHead>
+                        <TableHead className="text-xs">Entrada</TableHead>
+                        <TableHead className="text-xs">Saída</TableHead>
+                        <TableHead className="text-xs text-right">Horas</TableHead>
+                        <TableHead className="text-xs text-right">Intervalo</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
+                        <TableHead className="text-xs w-[60px]">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredEntries.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8 text-sm">
                             Nenhum registro encontrado
                           </TableCell>
                         </TableRow>
@@ -458,17 +456,17 @@ export default function ControlePontoRH() {
                           const staff = allStaff.find(s => (s.user_id || s.id) === entry.user_id);
                           return (
                             <TableRow key={entry.id}>
-                              <TableCell className="font-medium">{staff?.name || "N/A"}</TableCell>
-                              <TableCell>{format(parseISO(entry.clock_in), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                              <TableCell>{format(parseISO(entry.clock_in), "HH:mm")}</TableCell>
-                              <TableCell>
+                              <TableCell className="font-medium text-sm">{staff?.name || "N/A"}</TableCell>
+                              <TableCell className="text-sm">{format(parseISO(entry.clock_in), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
+                              <TableCell className="text-sm">{format(parseISO(entry.clock_in), "HH:mm")}</TableCell>
+                              <TableCell className="text-sm">
                                 {entry.clock_out ? format(parseISO(entry.clock_out), "HH:mm") : "-"}
                               </TableCell>
-                              <TableCell className="text-right">{(entry.total_hours || 0).toFixed(2)}h</TableCell>
-                              <TableCell className="text-right">{(entry.total_break_minutes || 0)}min</TableCell>
+                              <TableCell className="text-right text-sm">{(entry.total_hours || 0).toFixed(1)}h</TableCell>
+                              <TableCell className="text-right text-sm">{(entry.total_break_minutes || 0)}min</TableCell>
                               <TableCell>
-                                {entry.status === "active" && <Badge variant="outline" className="bg-blue-100 text-blue-800">Ativo</Badge>}
-                                {entry.status === "completed" && <Badge variant="outline" className="bg-green-100 text-green-800">Concluído</Badge>}
+                                {entry.status === "active" && <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">Ativo</Badge>}
+                                {entry.status === "completed" && <Badge variant="outline" className="text-xs bg-green-100 text-green-800">Concluído</Badge>}
                               </TableCell>
                               <TableCell>
                                 <Button
@@ -478,7 +476,7 @@ export default function ControlePontoRH() {
                                     setEditingEntry(entry);
                                     setShowEditDialog(true);
                                   }}
-                                  className="h-8 w-8 p-0"
+                                  className="h-7 w-7 p-0"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -494,8 +492,8 @@ export default function ControlePontoRH() {
             </Card>
           </TabsContent>
 
-          {/* Aprovações */}
-          <TabsContent value="approvals" className="space-y-3">
+          {/* Approvals Tab */}
+          <TabsContent value="approvals" className="space-y-4 mt-4">
             <TimeClockApprovalPanel />
           </TabsContent>
         </Tabs>

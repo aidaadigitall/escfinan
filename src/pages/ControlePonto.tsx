@@ -109,49 +109,51 @@ export default function ControlePonto() {
 
   return (
     <Layout>
-      <div className="space-y-3 max-w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-2">
+      <div className="space-y-4 w-full">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Controle de Ponto</h1>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Controle de Ponto</h1>
             <p className="text-xs sm:text-sm text-muted-foreground">Gerencie entradas, saídas e intervalos</p>
           </div>
         </div>
 
-        <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
+        {/* Clock Widget + Stats Grid */}
+        <div className="grid gap-3 lg:gap-4 grid-cols-1 lg:grid-cols-5">
           {/* Clock Widget */}
-          <div className="md:col-span-1">
+          <div className="lg:col-span-1">
             <TimeClockWidget />
           </div>
 
           {/* Quick Stats */}
-          <div className="md:col-span-2 lg:col-span-3 grid gap-2 sm:gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            <Card className="p-2 sm:p-3">
+          <div className="lg:col-span-4 grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-4">
+            <Card className="p-3">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-xs text-muted-foreground">Total de Horas</span>
+                <Clock className="h-4 w-4 shrink-0 text-primary" />
+                <span className="text-xs text-muted-foreground truncate">Total de Horas</span>
               </div>
-              <p className="text-xl font-bold mt-1">{formatHours(metrics.totalHours)}</p>
+              <p className="text-lg sm:text-xl font-bold mt-1">{formatHours(metrics.totalHours)}</p>
             </Card>
             <Card className="p-3">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-blue-500" />
-                <span className="text-xs text-muted-foreground">Dias Trabalhados</span>
+                <Calendar className="h-4 w-4 shrink-0 text-blue-500" />
+                <span className="text-xs text-muted-foreground truncate">Dias Trabalhados</span>
               </div>
-              <p className="text-xl font-bold mt-1">{metrics.uniqueDays}</p>
+              <p className="text-lg sm:text-xl font-bold mt-1">{metrics.uniqueDays}</p>
             </Card>
             <Card className="p-3">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-500" />
-                <span className="text-xs text-muted-foreground">Média/Dia</span>
+                <TrendingUp className="h-4 w-4 shrink-0 text-green-500" />
+                <span className="text-xs text-muted-foreground truncate">Média/Dia</span>
               </div>
-              <p className="text-xl font-bold mt-1">{formatHours(metrics.avgHoursPerDay)}</p>
+              <p className="text-lg sm:text-xl font-bold mt-1">{formatHours(metrics.avgHoursPerDay)}</p>
             </Card>
             <Card className="p-3">
               <div className="flex items-center gap-2">
-                <Timer className="h-4 w-4 text-orange-500" />
-                <span className="text-xs text-muted-foreground">Intervalos</span>
+                <Timer className="h-4 w-4 shrink-0 text-orange-500" />
+                <span className="text-xs text-muted-foreground truncate">Intervalos</span>
               </div>
-              <p className="text-xl font-bold mt-1">{Math.round(metrics.totalBreakMinutes)}min</p>
+              <p className="text-lg sm:text-xl font-bold mt-1">{Math.round(metrics.totalBreakMinutes)}min</p>
             </Card>
           </div>
         </div>
