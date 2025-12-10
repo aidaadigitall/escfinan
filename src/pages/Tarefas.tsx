@@ -14,7 +14,7 @@ import { format, differenceInDays, differenceInHours, differenceInMinutes, isPas
 import { ptBR } from "date-fns/locale";
 import { 
   Plus, Calendar as CalendarIcon, Flag, Tag, Trash2, Edit, 
-  CheckCircle2, Circle, Clock, User, Filter, ChevronDown, ChevronRight, Users, Timer, AlertTriangle, BarChart3
+  CheckCircle2, Circle, Clock, User, Filter, ChevronDown, ChevronRight, Users, Timer, AlertTriangle, BarChart3, Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -224,11 +224,16 @@ const Tarefas = () => {
               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           )}
-          <Checkbox
-            checked={task.status === "completed"}
-            onCheckedChange={() => handleToggleComplete(task)}
-            className="mt-1"
-          />
+          <button
+            onClick={() => handleToggleComplete(task)}
+            aria-label={task.status === "completed" ? "Reabrir tarefa" : "Concluir tarefa"}
+            className={cn(
+              "flex-none h-6 w-6 rounded-full flex items-center justify-center mt-0.5 focus:outline-none transition-colors",
+              task.status === "completed" ? "bg-primary text-primary-foreground" : "border border-border bg-transparent text-muted-foreground"
+            )}
+          >
+            {task.status === "completed" ? <Check className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
+          </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className={cn("font-medium", task.status === "completed" && "line-through text-muted-foreground")}>
@@ -391,11 +396,13 @@ const Tarefas = () => {
                   key={task.id}
                   className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30"
                 >
-                  <Checkbox
-                    checked={true}
-                    onCheckedChange={() => handleToggleComplete(task)}
-                    className="mt-1"
-                  />
+                  <button
+                    onClick={() => handleToggleComplete(task)}
+                    aria-label="Reabrir tarefa"
+                    className="flex-none h-6 w-6 rounded-full flex items-center justify-center mt-0.5 bg-primary text-primary-foreground focus:outline-none"
+                  >
+                    <Check className="h-3 w-3" />
+                  </button>
                   <div className="flex-1 min-w-0">
                     <span className="line-through text-muted-foreground">{task.title}</span>
                     {task.completed_at && (
