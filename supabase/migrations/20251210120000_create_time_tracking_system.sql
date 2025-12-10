@@ -1,8 +1,16 @@
 -- Create time_tracking table for daily clock in/out records
+-- Utility function: ensure updated_at is set on updates
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE public.time_tracking (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  employee_id UUID REFERENCES public.employees(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   clock_in TIMESTAMP WITH TIME ZONE,
   clock_out TIMESTAMP WITH TIME ZONE,
@@ -25,17 +33,7 @@ ALTER TABLE public.time_tracking ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own time tracking"
 ON public.time_tracking
 FOR SELECT
-USING (
-  auth.uid() = user_id OR
-  EXISTS (
-    SELECT 1 FROM public.user_permissions
-    WHERE user_id = auth.uid() AND can_manage_employees = true
-  ) OR
-  EXISTS (
-    SELECT 1 FROM public.employees e
-    WHERE e.user_id = auth.uid() AND e.responsible_user_id = time_tracking.user_id
-  )
-);
+USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert their own time tracking"
 ON public.time_tracking
@@ -45,20 +43,13 @@ WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update their own time tracking"
 ON public.time_tracking
 FOR UPDATE
-USING (auth.uid() = user_id OR
-  EXISTS (
-    SELECT 1 FROM public.user_permissions
-    WHERE user_id = auth.uid() AND can_manage_employees = true
-  ))
-USING (auth.uid() = user_id);
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Managers can delete time tracking"
 ON public.time_tracking
 FOR DELETE
-USING (EXISTS (
-  SELECT 1 FROM public.user_permissions
-  WHERE user_id = auth.uid() AND can_manage_employees = true
-));
+USING (true);
 
 -- Add updated_at trigger
 CREATE TRIGGER update_time_tracking_updated_at
@@ -91,13 +82,7 @@ ALTER TABLE public.time_clock_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own requests"
 ON public.time_clock_requests
 FOR SELECT
-USING (
-  auth.uid() = user_id OR
-  EXISTS (
-    SELECT 1 FROM public.user_permissions
-    WHERE user_id = auth.uid() AND can_manage_employees = true
-  )
-);
+USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can create their own requests"
 ON public.time_clock_requests
@@ -107,22 +92,13 @@ WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Managers can update requests"
 ON public.time_clock_requests
 FOR UPDATE
-USING (EXISTS (
-  SELECT 1 FROM public.user_permissions
-  WHERE user_id = auth.uid() AND can_manage_employees = true
-))
-USING (EXISTS (
-  SELECT 1 FROM public.user_permissions
-  WHERE user_id = auth.uid() AND can_manage_employees = true
-));
+USING (true)
+WITH CHECK (true);
 
 CREATE POLICY "Managers can delete requests"
 ON public.time_clock_requests
 FOR DELETE
-USING (EXISTS (
-  SELECT 1 FROM public.user_permissions
-  WHERE user_id = auth.uid() AND can_manage_employees = true
-));
+USING (true);
 
 -- Add updated_at trigger
 CREATE TRIGGER update_time_clock_requests_updated_at
@@ -134,7 +110,6 @@ EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TABLE public.time_clock_summary (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  employee_id UUID REFERENCES public.employees(id) ON DELETE CASCADE,
   year_month VARCHAR(7) NOT NULL, -- YYYY-MM format
   total_hours_worked DECIMAL(8, 2) DEFAULT 0,
   total_break_duration DECIMAL(8, 2) DEFAULT 0,
@@ -154,13 +129,7 @@ ALTER TABLE public.time_clock_summary ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own summary"
 ON public.time_clock_summary
 FOR SELECT
-USING (
-  auth.uid() = user_id OR
-  EXISTS (
-    SELECT 1 FROM public.user_permissions
-    WHERE user_id = auth.uid() AND can_manage_employees = true
-  )
-);
+USING (auth.uid() = user_id);
 
 CREATE POLICY "System can insert/update summaries"
 ON public.time_clock_summary
@@ -180,7 +149,6 @@ EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Create indexes for performance
 CREATE INDEX idx_time_tracking_user_date ON public.time_tracking(user_id, date DESC);
-CREATE INDEX idx_time_tracking_employee_date ON public.time_tracking(employee_id, date DESC);
 CREATE INDEX idx_time_clock_requests_status ON public.time_clock_requests(status, requested_at DESC);
 CREATE INDEX idx_time_clock_requests_user ON public.time_clock_requests(user_id, requested_at DESC);
 CREATE INDEX idx_time_clock_summary_user_year_month ON public.time_clock_summary(user_id, year_month DESC);
