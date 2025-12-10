@@ -102,8 +102,16 @@ export function TimeEntryEditDialog({
         totalBreakMinutes = Math.round(calculateHours(breakStartTimestamp, breakEndTimestamp) * 60);
       }
 
+      console.log("Tentando atualizar registro:", {
+        id: entry.id,
+        clockInTimestamp,
+        clockOutTimestamp,
+        totalHours,
+        totalBreakMinutes
+      });
+
       // Atualizar registro
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("time_entries")
         .update({
           clock_in: clockInTimestamp,
@@ -115,17 +123,23 @@ export function TimeEntryEditDialog({
           notes: formData.notes,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", entry.id);
+        .eq("id", entry.id)
+        .select();
 
-      if (error) throw error;
+      console.log("Resultado da atualização:", { data, error });
+
+      if (error) {
+        console.error("Erro do Supabase:", error);
+        throw error;
+      }
 
       toast.success("Registro atualizado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["time_entries"] });
       queryClient.invalidateQueries({ queryKey: ["active_time_entry"] });
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar registro:", error);
-      toast.error("Erro ao atualizar registro");
+      toast.error(error?.message || "Erro ao atualizar registro");
     } finally {
       setIsLoading(false);
     }

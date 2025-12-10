@@ -30,6 +30,14 @@ CREATE POLICY "Users can update own and managed time entries"
       WHERE user_permissions.user_id = auth.uid()
       AND user_permissions.can_manage_users = true
     )
+  )
+  WITH CHECK (
+    user_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM public.user_permissions
+      WHERE user_permissions.user_id = auth.uid()
+      AND user_permissions.can_manage_users = true
+    )
   );
 
 CREATE POLICY "Users can delete own time entries, admins can delete all"
