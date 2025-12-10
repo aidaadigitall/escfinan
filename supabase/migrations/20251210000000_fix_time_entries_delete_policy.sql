@@ -1,5 +1,5 @@
--- Fix time_entries RLS policies to allow proper delete operations
--- Drop existing policies
+-- Fix time_entries RLS policies to allow proper delete and update operations
+-- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Users can view time entries" ON public.time_entries;
 DROP POLICY IF EXISTS "Users can create time entries" ON public.time_entries;
 DROP POLICY IF EXISTS "Users can update time entries" ON public.time_entries;
