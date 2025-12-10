@@ -437,6 +437,7 @@ export const TransactionDialog = ({ open, onOpenChange, type, transaction, onSav
                   id="recurring"
                   checked={isRecurring}
                   onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+                  className="rounded-full"
                 />
                 <Label htmlFor="recurring" className="cursor-pointer">
                   Criar como conta recorrente (fixa)

@@ -384,18 +384,19 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                   ) : (
                     allUsers.map((user) => (
                       <div key={user.id} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`user-${user.id}`}
-                          checked={formData.assigned_users?.includes(user.id) || false}
-                          onCheckedChange={() => toggleAssignedUser(user.id)}
-                        />
-                        <label htmlFor={`user-${user.id}`} className="text-sm cursor-pointer flex-1">
-                          {user.name}
-                          <span className="text-xs text-muted-foreground ml-2">
-                            ({user.type === 'employee' ? 'Funcionário' : 'Usuário'})
-                          </span>
-                        </label>
-                      </div>
+                          <Checkbox
+                            id={`user-${user.id}`}
+                            checked={formData.assigned_users?.includes(user.id) || false}
+                            onCheckedChange={() => toggleAssignedUser(user.id)}
+                            className="rounded-full"
+                          />
+                          <label htmlFor={`user-${user.id}`} className="text-sm cursor-pointer flex-1">
+                            {user.name}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({user.type === 'employee' ? 'Funcionário' : 'Usuário'})
+                            </span>
+                          </label>
+                        </div>
                     ))
                   )}
                 </div>

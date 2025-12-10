@@ -333,6 +333,7 @@ export const UserPermissionsForm = ({ permissions, onChange, disabled }: UserPer
                         checked={permissions[item.viewKey]}
                         onCheckedChange={(checked) => handleCheckboxChange(item.viewKey, !!checked)}
                         disabled={disabled}
+                        className="rounded-full"
                       />
                     </div>
                     <div className="flex items-center">
@@ -341,6 +342,7 @@ export const UserPermissionsForm = ({ permissions, onChange, disabled }: UserPer
                           checked={permissions[item.manageKey]}
                           onCheckedChange={(checked) => handleCheckboxChange(item.manageKey!, !!checked)}
                           disabled={disabled || !permissions[item.viewKey]}
+                          className="rounded-full"
                         />
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
