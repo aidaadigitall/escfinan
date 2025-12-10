@@ -85,7 +85,7 @@ export default function Caixa() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border rounded-md"
+            className="px-3 py-2 border rounded-md bg-background text-foreground dark:bg-slate-800 dark:text-white"
           />
         </div>
       </div>
