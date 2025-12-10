@@ -21,7 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TimeClockApprovalPanel } from "@/components/TimeClockApprovalPanel";
-import { useTimeEntries } from "@/hooks/useTimeEntries";
+import { TimeEntryEditDialog } from "@/components/TimeEntryEditDialog";
+import { useTimeEntries, TimeEntry } from "@/hooks/useTimeEntries";
 import { useTimeTracking } from "@/hooks/useTimeTracking";
 import { useUsers } from "@/hooks/useUsers";
 import { useEmployees } from "@/hooks/useEmployees";
@@ -40,6 +41,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Edit,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -53,6 +55,8 @@ export default function ControlePontoRH() {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), "yyyy-MM"));
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   // Combinar users e employees para lista completa
   const allStaff = useMemo(() => {
@@ -439,12 +443,13 @@ export default function ControlePontoRH() {
                         <TableHead className="text-right">Horas</TableHead>
                         <TableHead className="text-right">Intervalo</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead className="w-[80px]">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredEntries.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                             Nenhum registro encontrado
                           </TableCell>
                         </TableRow>
@@ -465,6 +470,19 @@ export default function ControlePontoRH() {
                                 {entry.status === "active" && <Badge variant="outline" className="bg-blue-100 text-blue-800">Ativo</Badge>}
                                 {entry.status === "completed" && <Badge variant="outline" className="bg-green-100 text-green-800">Concluído</Badge>}
                               </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingEntry(entry);
+                                    setShowEditDialog(true);
+                                  }}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
                             </TableRow>
                           );
                         })
@@ -482,6 +500,14 @@ export default function ControlePontoRH() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Diálogo de edição */}
+      <TimeEntryEditDialog
+        entry={editingEntry}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        isAdmin={true}
+      />
     </Layout>
   );
 }

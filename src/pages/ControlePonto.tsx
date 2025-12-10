@@ -23,12 +23,13 @@ import {
 import { TimeClockWidget } from "@/components/TimeClockWidget";
 import { useTimeEntries, TimeEntry } from "@/hooks/useTimeEntries";
 import { TimeClockApprovalPanel } from "@/components/TimeClockApprovalPanel";
+import { TimeEntryEditDialog } from "@/components/TimeEntryEditDialog";
 import { useTimeTracking } from "@/hooks/useTimeTracking";
 import { useUsers } from "@/hooks/useUsers";
 import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 import { format, startOfMonth, endOfMonth, parseISO, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, Users, Calendar, TrendingUp, Timer, AlertCircle, Search, Download } from "lucide-react";
+import { Clock, Users, Calendar, TrendingUp, Timer, AlertCircle, Search, Download, Edit } from "lucide-react";
 
 export default function ControlePonto() {
   const { timeEntries, isLoading } = useTimeEntries();
@@ -38,6 +39,8 @@ export default function ControlePonto() {
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), "yyyy-MM"));
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const isAdmin = permissions?.can_manage_users || false;
   const { pendingRequests } = useTimeTracking();
@@ -219,18 +222,19 @@ export default function ControlePonto() {
                         <TableHead>Intervalo</TableHead>
                         <TableHead>Total</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead className="w-[80px]">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {isLoading ? (
                         <TableRow>
-                          <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8">
+                          <TableCell colSpan={isAdmin ? 8 : 7} className="text-center py-8">
                             Carregando...
                           </TableCell>
                         </TableRow>
                       ) : filteredEntries.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8">
+                          <TableCell colSpan={isAdmin ? 8 : 7} className="text-center py-8">
                             Nenhum registro encontrado
                           </TableCell>
                         </TableRow>
@@ -263,6 +267,19 @@ export default function ControlePonto() {
                               >
                                 {entry.status === "completed" ? "Completo" : "Ativo"}
                               </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingEntry(entry);
+                                  setShowEditDialog(true);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -397,6 +414,14 @@ export default function ControlePonto() {
           )}
         </Tabs>
       </div>
+
+      {/* Diálogo de edição */}
+      <TimeEntryEditDialog
+        entry={editingEntry}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        isAdmin={isAdmin}
+      />
     </Layout>
   );
 }
