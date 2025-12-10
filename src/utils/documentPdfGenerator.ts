@@ -1395,7 +1395,32 @@ export const openPrintWindow = (html: string, format: PrintFormat = "a4") => {
 export const openViewWindow = (html: string) => {
   const viewWindow = window.open('', '_blank');
   if (viewWindow) {
-    viewWindow.document.write(html);
+    // Add download/print toolbar at top
+    const toolbarHtml = `
+      <div id="pdf-toolbar" style="position: fixed; top: 0; left: 0; right: 0; background: #1a1a2e; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+        <span style="font-family: Arial, sans-serif; font-size: 14px;">Visualização do Documento</span>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="window.print()" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+            🖨️ Imprimir / Salvar PDF
+          </button>
+          <button onclick="document.getElementById('pdf-toolbar').style.display='none'" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+            ✕ Fechar Barra
+          </button>
+        </div>
+      </div>
+      <style>
+        @media print {
+          #pdf-toolbar { display: none !important; }
+          body { padding-top: 0 !important; }
+        }
+        body { padding-top: 60px; }
+      </style>
+    `;
+    
+    // Inject toolbar before content
+    const modifiedHtml = html.replace('<body>', '<body>' + toolbarHtml);
+    
+    viewWindow.document.write(modifiedHtml);
     viewWindow.document.close();
     
     // Add meta tag for better PDF rendering

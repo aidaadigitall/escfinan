@@ -181,7 +181,7 @@ export const TransactionFormTabs = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {transaction ? "Editar" : "Adicionar"} {type === "income" ? "Receita" : "Despesa"}
@@ -195,10 +195,10 @@ export const TransactionFormTabs = ({
               <TabsTrigger value="attachments">Anexos</TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto py-4">
-              <TabsContent value="financial" className="space-y-4 mt-0">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+            <div className="flex-1 overflow-y-auto py-3 pr-2">
+              <TabsContent value="financial" className="space-y-3 mt-0">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2 space-y-2">
                       <Label htmlFor="description">Descrição do {type === "income" ? "recebimento" : "pagamento"} *</Label>
                       <Input
@@ -332,9 +332,9 @@ export const TransactionFormTabs = ({
                     </div>
                   </div>
 
-                  <div className="border-t pt-4 mt-4">
-                    <h3 className="text-lg font-semibold mb-4">Valores</h3>
-                    <div className="grid grid-cols-3 gap-4">
+                  <div className="border-t pt-3 mt-3">
+                    <h3 className="text-base font-semibold mb-3">Valores</h3>
+                    <div className="grid grid-cols-3 gap-3">
                       <div className="space-y-2">
                         <Label>Valor bruto *</Label>
                         <Input
@@ -367,14 +367,14 @@ export const TransactionFormTabs = ({
                       </div>
                     </div>
                     
-                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <div className="mt-3 p-3 bg-muted rounded-lg">
                       <div className="flex items-center justify-between">
                         <span className="font-medium">Total:</span>
-                        <span className="text-2xl font-bold">R$ {calculateTotal().toFixed(2)}</span>
+                        <span className="text-xl font-bold">R$ {calculateTotal().toFixed(2)}</span>
                       </div>
                     </div>
 
-                    <div className="mt-6 space-y-4">
+                    <div className="mt-4 space-y-3">
                       <div className="flex items-center space-x-2">
                         <Switch
                           id="installments"
@@ -385,7 +385,7 @@ export const TransactionFormTabs = ({
                       </div>
 
                       {enableInstallments && (
-                        <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg">
+                        <div className="grid grid-cols-2 gap-3 p-3 border rounded-lg">
                           <div className="space-y-2">
                             <Label>Tipo de parcela *</Label>
                             <Select value={installmentType} onValueChange={setInstallmentType}>

@@ -54,16 +54,17 @@ export const Layout = ({ children }: LayoutProps) => {
 
       {/* Main content */}
       <div 
-        className={isMobile ? "w-full" : "transition-all duration-300"}
+        className={isMobile ? "w-full" : "transition-all duration-300 flex-1"}
         style={!isMobile ? { 
-          marginLeft: sidebarCollapsed ? '3.5rem' : 'clamp(11rem, 15vw, 16rem)' 
+          marginLeft: sidebarCollapsed ? '3.5rem' : '14rem',
+          width: sidebarCollapsed ? 'calc(100% - 3.5rem)' : 'calc(100% - 14rem)'
         } : undefined}
       >
         <Header 
           onMenuClick={isMobile ? () => setSidebarOpen(true) : () => setSidebarCollapsed(!sidebarCollapsed)} 
           showMenuButton={isMobile}
         />
-        <main className="pt-16 sm:pt-20 px-2 py-3 sm:px-3 sm:py-4">
+        <main className="pt-16 sm:pt-20 px-3 py-4 sm:px-4 sm:py-5">
           {children}
         </main>
       </div>

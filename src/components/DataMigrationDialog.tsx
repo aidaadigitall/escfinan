@@ -411,9 +411,27 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file extension
+    const fileName = file.name.toLowerCase();
+    const isExcelFile = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+    
+    if (isExcelFile) {
+      toast.error("Arquivos Excel (.xlsx, .xls) não são suportados. Por favor, salve o arquivo como CSV e tente novamente.");
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
+      
+      // Check if content looks like binary/corrupted data
+      const isBinaryContent = /[\x00-\x08\x0E-\x1F]/.test(content.substring(0, 100));
+      if (isBinaryContent) {
+        toast.error("O arquivo parece ser binário ou corrompido. Por favor, use um arquivo CSV ou TXT válido.");
+        return;
+      }
+      
       if (type === "csv") {
         setCsvData(content);
       } else {
