@@ -580,6 +580,102 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          client_id: string | null
+          company: string | null
+          converted_at: string | null
+          converted_to_client: boolean | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          expected_close_date: string | null
+          expected_value: number | null
+          first_contact_date: string | null
+          id: string
+          last_activity_date: string | null
+          last_contact_date: string | null
+          lost_date: string | null
+          lost_reason: string | null
+          name: string
+          notes: string | null
+          owner_user_id: string | null
+          phone: string | null
+          pipeline_stage_id: string | null
+          position: string | null
+          probability: number | null
+          score: number | null
+          source: string | null
+          source_details: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id?: string | null
+          company?: string | null
+          converted_at?: string | null
+          converted_to_client?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          expected_close_date?: string | null
+          expected_value?: number | null
+          first_contact_date?: string | null
+          id?: string
+          last_activity_date?: string | null
+          last_contact_date?: string | null
+          lost_date?: string | null
+          lost_reason?: string | null
+          name: string
+          notes?: string | null
+          owner_user_id?: string | null
+          phone?: string | null
+          pipeline_stage_id?: string | null
+          position?: string | null
+          probability?: number | null
+          score?: number | null
+          source?: string | null
+          source_details?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string | null
+          company?: string | null
+          converted_at?: string | null
+          converted_to_client?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          expected_close_date?: string | null
+          expected_value?: number | null
+          first_contact_date?: string | null
+          id?: string
+          last_activity_date?: string | null
+          last_contact_date?: string | null
+          lost_date?: string | null
+          lost_reason?: string | null
+          name?: string
+          notes?: string | null
+          owner_user_id?: string | null
+          phone?: string | null
+          pipeline_stage_id?: string | null
+          position?: string | null
+          probability?: number | null
+          score?: number | null
+          source?: string | null
+          source_details?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
