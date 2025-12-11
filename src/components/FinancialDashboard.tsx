@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import {
@@ -23,8 +25,10 @@ import {
 } from "recharts";
 import { format, startOfMonth, endOfMonth, subMonths, eachDayOfInterval, eachMonthOfInterval, startOfYear, subYears, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, DollarSign, BarChart3, PieChartIcon, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, DollarSign, BarChart3, PieChartIcon, Activity, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { exportToExcel, exportToPDF } from "@/utils/financialReportExport";
+import { toast } from "sonner";
 
 const CHART_COLORS = [
   "hsl(142, 76%, 36%)", // green
@@ -212,24 +216,83 @@ export function FinancialDashboard() {
     );
   }
 
+  const periodLabel = useMemo(() => {
+    switch (selectedPeriod) {
+      case "3months": return "Últimos 3 meses";
+      case "6months": return "Últimos 6 meses";
+      case "12months": return "Últimos 12 meses";
+      default: return "Últimos 6 meses";
+    }
+  }, [selectedPeriod]);
+
+  const handleExportExcel = () => {
+    try {
+      exportToExcel({
+        monthlyEvolution,
+        expensesByCategory,
+        incomeByCategory,
+        totals,
+        periodLabel,
+      });
+      toast.success("Relatório Excel exportado com sucesso!");
+    } catch {
+      toast.error("Erro ao exportar relatório Excel");
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      exportToPDF({
+        monthlyEvolution,
+        expensesByCategory,
+        incomeByCategory,
+        totals,
+        periodLabel,
+      });
+      toast.success("Relatório PDF gerado com sucesso!");
+    } catch {
+      toast.error("Erro ao gerar relatório PDF");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header with period selector */}
+      {/* Header with period selector and export */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Dashboard Financeiro</h2>
           <p className="text-muted-foreground">Análise comparativa de receitas vs despesas</p>
         </div>
-        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="3months">Últimos 3 meses</SelectItem>
-            <SelectItem value="6months">Últimos 6 meses</SelectItem>
-            <SelectItem value="12months">Últimos 12 meses</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3months">Últimos 3 meses</SelectItem>
+              <SelectItem value="6months">Últimos 6 meses</SelectItem>
+              <SelectItem value="12months">Últimos 12 meses</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Download className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportExcel} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Exportar Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                <FileText className="h-4 w-4" />
+                Exportar PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* KPI Cards */}
