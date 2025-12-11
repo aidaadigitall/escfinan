@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { getEffectiveUserId } from "./useEffectiveUserId";
 import { toast } from "sonner";
 
 export interface LeadSource {
@@ -22,12 +23,12 @@ export const useLeadSources = () => {
       if (!user) return [];
       
       const { data, error } = await supabase
-        .from('lead_sources')
+        .from('lead_sources' as any)
         .select('*')
         .order('name');
       
       if (error) throw error;
-      return data as LeadSource[];
+      return (data || []) as unknown as LeadSource[];
     },
     enabled: !!user,
   });
@@ -35,10 +36,12 @@ export const useLeadSources = () => {
   const createSource = useMutation({
     mutationFn: async (name: string) => {
       if (!user) throw new Error("Usuário não autenticado");
+      
+      const effectiveUserId = await getEffectiveUserId();
 
       const { data, error } = await supabase
-        .from('lead_sources')
-        .insert([{ name, user_id: user.id }])
+        .from('lead_sources' as any)
+        .insert([{ name, user_id: effectiveUserId }])
         .select()
         .single();
 
@@ -47,7 +50,6 @@ export const useLeadSources = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lead-sources'] });
-      toast.success("Origem criada com sucesso!");
     },
     onError: (error) => {
       console.error("Erro ao criar origem:", error);
@@ -58,7 +60,7 @@ export const useLeadSources = () => {
   const updateSource = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<LeadSource> & { id: string }) => {
       const { data, error } = await supabase
-        .from('lead_sources')
+        .from('lead_sources' as any)
         .update(updates)
         .eq('id', id)
         .select()
@@ -80,7 +82,7 @@ export const useLeadSources = () => {
   const deleteSource = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('lead_sources')
+        .from('lead_sources' as any)
         .delete()
         .eq('id', id);
 
