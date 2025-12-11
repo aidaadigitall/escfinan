@@ -79,6 +79,12 @@ const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
       ],
     },
     {
+      icon: Briefcase,
+      label: "Projetos",
+      path: "/projetos",
+      permissionKey: "can_view_projects"
+    },
+    {
       icon: Boxes,
       label: "Estoque",
       submenu: [

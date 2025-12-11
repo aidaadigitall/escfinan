@@ -47,6 +47,7 @@ import ControlePonto from "./pages/ControlePonto";
 import ControlePontoRH from "./pages/ControlePontoRH";
 import PontoApprovalsPage from "./pages/PontoApprovalsPage";
 import CRM from "./pages/CRM";
+import Projects from "./pages/Projects";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -161,6 +162,13 @@ const App = () => (
             <Route path="/crm" element={
               <PermissionProtectedRoute permission="can_view_crm">
                 <Layout><CRM /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
+            {/* Projects route */}
+            <Route path="/projetos" element={
+              <PermissionProtectedRoute permission="can_view_projects">
+                <Layout><Projects /></Layout>
               </PermissionProtectedRoute>
             } />
             
