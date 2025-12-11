@@ -123,6 +123,12 @@ export const DocumentActionsMenu = ({
   };
 
   const handleViewDocument = async () => {
+    // Use new React-based print template for viewing as well
+    const typeSlug = documentType === "service_order" ? "os" : documentType === "sale" ? "sale" : "budget";
+    const url = `/print/document/${typeSlug}/${document.id}`;
+    window.open(url, "_blank");
+
+    /* Legacy view logic
     const docData = prepareDocumentData();
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
@@ -139,9 +145,16 @@ export const DocumentActionsMenu = ({
       html = generateA4PDF(docData, companySettings || {}, qrCode);
     }
     openViewWindow(html);
+    */
   };
 
   const handlePrintA4 = async () => {
+    // Use new React-based print template
+    const typeSlug = documentType === "service_order" ? "os" : documentType === "sale" ? "sale" : "budget";
+    const url = `/print/document/${typeSlug}/${document.id}`;
+    window.open(url, "_blank");
+    
+    /* Legacy print logic
     const docData = prepareDocumentData();
     const publicUrl = getPublicUrl();
     const qrCode = await generateQRCodeDataURL(publicUrl);
@@ -158,6 +171,7 @@ export const DocumentActionsMenu = ({
       html = generateA4PDF(docData, companySettings || {}, qrCode);
     }
     openPrintWindow(html, "a4");
+    */
   };
 
   const handlePrintCoupon = () => {

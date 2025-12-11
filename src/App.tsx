@@ -48,6 +48,7 @@ import ControlePontoRH from "./pages/ControlePontoRH";
 import PontoApprovalsPage from "./pages/PontoApprovalsPage";
 import CRM from "./pages/CRM";
 import Projects from "./pages/Projects";
+import PrintDocument from "./pages/PrintDocument";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +72,13 @@ const App = () => (
             
             {/* Public billing page - no auth required */}
             <Route path="/cobranca/:type/:id" element={<PublicBilling />} />
+            
+            {/* Print document route */}
+            <Route path="/print/document/:type/:id" element={
+              <ProtectedRoute>
+                <PrintDocument />
+              </ProtectedRoute>
+            } />
             
             <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
             
