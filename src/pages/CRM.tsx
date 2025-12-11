@@ -1,12 +1,15 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Plus, Users, TrendingUp, DollarSign } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Users, TrendingUp, DollarSign, BarChart3, Workflow, ClipboardList, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
 import { LeadDialog } from "@/components/LeadDialog";
 import { LeadActivityDialog } from "@/components/LeadActivityDialog";
+import { CRMAnalytics } from "@/components/CRMAnalytics";
+import { AutomationsList } from "@/components/AutomationsList";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -18,6 +21,7 @@ const CRM = () => {
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activityLeadId, setActivityLeadId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("pipeline");
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -124,17 +128,40 @@ const CRM = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">CRM - Funil de Vendas</h1>
-          <p className="text-muted-foreground">Gerencie seus leads e oportunidades</p>
+          <h1 className="text-3xl font-bold">CRM - Sistema de Alta Performance</h1>
+          <p className="text-muted-foreground">Gerencie leads, automações e análises de vendas</p>
         </div>
-        <Button onClick={handleNewLead}>
+        <Button onClick={handleNewLead} size="lg">
           <Plus className="mr-2 h-4 w-4" />
           Novo Lead
         </Button>
       </div>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Tabs de Navegação */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+          <TabsTrigger value="pipeline" className="flex items-center gap-2">
+            <Workflow className="h-4 w-4" />
+            <span className="hidden sm:inline">Funil</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Estatísticas</span>
+          </TabsTrigger>
+          <TabsTrigger value="automations" className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">Automações</span>
+          </TabsTrigger>
+          <TabsTrigger value="capture" className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4" />
+            <span className="hidden sm:inline">Captura</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Aba: Funil de Vendas */}
+        <TabsContent value="pipeline" className="space-y-4 mt-6">
+          {/* Métricas Rápidas */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <p className="text-sm font-medium">Total de Leads</p>
@@ -165,19 +192,19 @@ const CRM = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <p className="text-sm font-medium">Taxa de Conversão</p>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{conversionRate}%</div>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <p className="text-sm font-medium">Taxa de Conversão</p>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{conversionRate}%</div>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Funil Kanban */}
-      <DragDropContext onDragEnd={onDragEnd}>
+          {/* Funil Kanban */}
+          <DragDropContext onDragEnd={onDragEnd}>
         <div 
           ref={scrollContainerRef}
           className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-250px)] cursor-grab active:cursor-grabbing select-none custom-scrollbar"
@@ -346,9 +373,94 @@ const CRM = () => {
                 </div>
               )}
             </Droppable>
-          )}
-        </div>
-      </DragDropContext>
+            )}
+          </div>
+        </DragDropContext>
+        </TabsContent>
+
+        {/* Aba: Estatísticas e Analytics */}
+        <TabsContent value="analytics" className="mt-6">
+          <CRMAnalytics />
+        </TabsContent>
+
+        {/* Aba: Automações */}
+        <TabsContent value="automations" className="mt-6">
+          <AutomationsList />
+        </TabsContent>
+
+        {/* Aba: Captura de Leads */}
+        <TabsContent value="capture" className="mt-6">
+          <Card>
+            <CardHeader>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <ClipboardList className="h-5 w-5" />
+                Formulários de Captura
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Crie formulários personalizados para capturar leads do seu site ou campanhas
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
+                  <ClipboardList className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h4 className="font-semibold mb-2">Crie Seu Primeiro Formulário</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Formulários personalizados com campos customizáveis, rastreamento UTM e integração automática com o pipeline
+                  </p>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Criar Formulário
+                  </Button>
+                </div>
+
+                {/* Templates de formulários */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
+                    <CardContent className="pt-6">
+                      <h4 className="font-semibold mb-2">📋 Formulário de Contato Simples</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Nome, email, telefone e mensagem
+                      </p>
+                      <Badge variant="secondary">3 campos</Badge>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
+                    <CardContent className="pt-6">
+                      <h4 className="font-semibold mb-2">💼 Formulário Corporativo</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Dados completos da empresa e necessidades
+                      </p>
+                      <Badge variant="secondary">7 campos</Badge>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
+                    <CardContent className="pt-6">
+                      <h4 className="font-semibold mb-2">🎯 Captura para Webinar</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Inscrição otimizada para eventos online
+                      </p>
+                      <Badge variant="secondary">4 campos</Badge>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
+                    <CardContent className="pt-6">
+                      <h4 className="font-semibold mb-2">📱 Formulário Mobile-First</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Otimizado para dispositivos móveis
+                      </p>
+                      <Badge variant="secondary">5 campos</Badge>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       <LeadDialog

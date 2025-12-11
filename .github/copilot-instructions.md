@@ -22,6 +22,9 @@ This is a **financial management system (ERP-like)** with:
 - Time tracking system with approval workflow (clock in/out, hour bank, edit requests)
 - Quote and sales order management
 - Public billing pages (no auth required)
+- **CRM module**: Lead pipeline management with stages, activities tracking, source attribution
+- **Project management**: Project tracking with tasks, time entries, expenses, and profitability analysis
+- **Inventory/stock management**: Product tracking, stock movements, and inventory control
 
 Language: All UI text and AI responses are in **Brazilian Portuguese (pt-BR)**.
 
@@ -73,10 +76,11 @@ Located in `supabase/functions/`:
 
 ### Database & Migrations
 - Migrations in `supabase/migrations/*.sql`
-- Key tables: `transactions`, `bank_accounts`, `credit_cards`, `clients`, `suppliers`, `tasks`, `time_tracking`, `time_clock_requests`, `time_clock_summary`, `user_permissions`
+- Key tables: `transactions`, `bank_accounts`, `credit_cards`, `clients`, `suppliers`, `tasks`, `time_tracking`, `time_clock_requests`, `time_clock_summary`, `user_permissions`, `leads`, `lead_activities`, `projects`, `project_tasks`, `products`, `stock_movements`
 - **RLS (Row Level Security)**: Enabled on all tables — users only see their own data or data they have permission to access
 - **Multi-tenancy**: Tables use `owner_user_id` (admin) and `user_id` (sub-user) pattern
   - Helper functions: `get_effective_user_id()`, `can_access_user_data(user_id)` in migrations
+- **Time tracking workflow**: `time_tracking` → edit request via `time_clock_requests` → approval by manager → updates `time_clock_summary`
 
 ## Development Workflow
 
@@ -205,6 +209,15 @@ Permissions are defined in `user_permissions` table and checked server-side via 
 1. Create `src/hooks/useMyData.tsx`
 2. Use `useQuery` for fetching, `useMutation` for writes
 3. Export hook and use in components
+
+### Add New Feature Module
+Key modules follow patterns found in:
+- **CRM**: `pages/CRM.tsx`, `hooks/useLeads.tsx`, `hooks/useLeadActivities.tsx`, `components/LeadDialog.tsx`
+- **Projects**: `pages/Projects.tsx`, `hooks/useProjects.tsx`, `hooks/useProjectTasks.tsx`, `components/ProjectCard.tsx`
+- **Time Tracking**: `pages/Ponto.tsx`, `hooks/useTimeTracking.ts`, `components/TimeClockApprovalPanel.tsx`
+- **Inventory**: `pages/estoque/`, `hooks/useProducts.tsx`
+
+Follow established patterns for CRUD operations, dialogs, and permission checks.
 
 ### Modify AI System Prompt
 Edit `supabase/functions/chat/index.ts` → update `systemPrompt` variable (keep Brazilian Portuguese requirement)
