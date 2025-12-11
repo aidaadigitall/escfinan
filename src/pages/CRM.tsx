@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Users, TrendingUp, DollarSign, BarChart3, Workflow, ClipboardList, Sparkles } from "lucide-react";
+import { Plus, Users, TrendingUp, DollarSign, BarChart3, Workflow, ClipboardList, Sparkles, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
@@ -10,6 +10,7 @@ import { LeadDialog } from "@/components/LeadDialog";
 import { LeadActivityDialog } from "@/components/LeadActivityDialog";
 import { CRMAnalytics } from "@/components/CRMAnalytics";
 import { AutomationsList } from "@/components/AutomationsList";
+import { DashboardSettingsDialog } from "@/components/DashboardSettingsDialog";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -22,6 +23,7 @@ const CRM = () => {
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activityLeadId, setActivityLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("pipeline");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -131,10 +133,16 @@ const CRM = () => {
           <h1 className="text-3xl font-bold">CRM - Sistema de Alta Performance</h1>
           <p className="text-muted-foreground">Gerencie leads, automações e análises de vendas</p>
         </div>
-        <Button onClick={handleNewLead} size="lg">
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Lead
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsSettingsOpen(true)} variant="outline" size="lg">
+            <Settings className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button onClick={handleNewLead} size="lg">
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Lead
+          </Button>
+        </div>
       </div>
 
       {/* Tabs de Navegação */}
@@ -476,6 +484,11 @@ const CRM = () => {
           leadId={activityLeadId}
         />
       )}
+
+      <DashboardSettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+      />
     </div>
   );
 };

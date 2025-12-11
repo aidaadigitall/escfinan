@@ -8,6 +8,7 @@ import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionProtectedRoute } from "./components/PermissionProtectedRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ThemeProvider } from "./components/ThemeProvider";
 import Dashboard from "./pages/Dashboard";
 import Receitas from "./pages/Receitas";
 import Despesas from "./pages/Despesas";
@@ -63,10 +64,11 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
         <Routes>
             <Route path="/auth" element={<Auth />} />
             
@@ -299,7 +301,8 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </TooltipProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );
