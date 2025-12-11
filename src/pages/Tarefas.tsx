@@ -1,20 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useUsers } from "@/hooks/useUsers";
 import { useTaskDueNotifications } from "@/hooks/useTaskDueNotifications";
+import { useTaskLabels } from "@/hooks/useTaskLabels";
 import { TaskDialog } from "@/components/TaskDialog";
+import { TaskAdvancedFilters } from "@/components/TaskAdvancedFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, isToday } from "date-fns";
+import { format, differenceInMinutes, isPast, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
-  Plus, Calendar as CalendarIcon, Flag, Tag, Trash2, Edit, 
-  CheckCircle2, Circle, Clock, User, Filter, ChevronDown, ChevronRight, Users, Timer, AlertTriangle, BarChart3, Check
+  Plus, Calendar as CalendarIcon, Tag, Trash2, Edit, 
+  CheckCircle2, Circle, Clock, User, ChevronDown, ChevronRight, Users, Timer, AlertTriangle, BarChart3, Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -118,6 +118,7 @@ const Tarefas = () => {
   const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
   const { employees } = useEmployees();
   const { users } = useUsers();
+  const { labels } = useTaskLabels();
   
   // Enable due notifications for tasks
   useTaskDueNotifications(tasks);
@@ -125,9 +126,24 @@ const Tarefas = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterPriority, setFilterPriority] = useState<string>("all");
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
+  
+  // Advanced filters state
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "all",
+    priority: "all",
+    responsibleId: "all",
+    labels: [] as string[],
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
+  });
+
+  // Combined responsibles list
+  const responsibles = useMemo(() => {
+    const allUsers = [...employees, ...users];
+    return allUsers.map((u) => ({ id: u.id, name: u.name }));
+  }, [employees, users]);
 
   // Check for task parameter in URL to open specific task
   useEffect(() => {
@@ -145,11 +161,54 @@ const Tarefas = () => {
     }
   }, [searchParams, tasks, setSearchParams]);
 
-  const filteredTasks = tasks.filter((task) => {
-    if (filterStatus !== "all" && task.status !== filterStatus) return false;
-    if (filterPriority !== "all" && task.priority !== filterPriority) return false;
-    return true;
-  });
+  // Apply advanced filters
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      // Status filter
+      if (filters.status !== "all" && task.status !== filters.status) return false;
+      
+      // Priority filter
+      if (filters.priority !== "all" && task.priority !== filters.priority) return false;
+      
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesTitle = task.title.toLowerCase().includes(searchLower);
+        const matchesDescription = task.description?.toLowerCase().includes(searchLower);
+        if (!matchesTitle && !matchesDescription) return false;
+      }
+      
+      // Responsible filter
+      if (filters.responsibleId !== "all" && task.responsible_id !== filters.responsibleId) {
+        return false;
+      }
+      
+      // Labels filter
+      if (filters.labels.length > 0) {
+        const taskLabels = task.labels || [];
+        const hasMatchingLabel = filters.labels.some((label) => taskLabels.includes(label));
+        if (!hasMatchingLabel) return false;
+      }
+      
+      // Date range filter
+      if (filters.startDate || filters.endDate) {
+        if (!task.due_date) return false;
+        const taskDate = new Date(task.due_date + "T12:00:00");
+        
+        if (filters.startDate && filters.endDate) {
+          if (!isWithinInterval(taskDate, { start: filters.startDate, end: filters.endDate })) {
+            return false;
+          }
+        } else if (filters.startDate && taskDate < filters.startDate) {
+          return false;
+        } else if (filters.endDate && taskDate > filters.endDate) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [tasks, filters]);
 
   // Separate parent tasks and subtasks
   const parentTasks = filteredTasks.filter(t => !t.parent_task_id);
@@ -331,35 +390,13 @@ const Tarefas = () => {
         </div>
       </div>
 
-      <div className="flex gap-4 flex-wrap">
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[180px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
-            <SelectItem value="in_progress">Em Andamento</SelectItem>
-            <SelectItem value="completed">Concluída</SelectItem>
-            <SelectItem value="cancelled">Cancelada</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={filterPriority} onValueChange={setFilterPriority}>
-          <SelectTrigger className="w-[180px]">
-            <Flag className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Prioridade" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="low">Baixa</SelectItem>
-            <SelectItem value="medium">Média</SelectItem>
-            <SelectItem value="high">Alta</SelectItem>
-            <SelectItem value="urgent">Urgente</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Advanced Filters */}
+      <TaskAdvancedFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        labels={labels}
+        responsibles={responsibles}
+      />
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>

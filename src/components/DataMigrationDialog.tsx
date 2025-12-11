@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowRightLeft, Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface DataMigrationDialogProps {
   open: boolean;
@@ -411,16 +412,38 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file extension
     const fileName = file.name.toLowerCase();
     const isExcelFile = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
     
+    // Handle Excel files using xlsx library
     if (isExcelFile) {
-      toast.error("Arquivos Excel (.xlsx, .xls) não são suportados. Por favor, salve o arquivo como CSV e tente novamente.");
-      e.target.value = '';
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = event.target?.result;
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Get first sheet
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          
+          // Convert to CSV
+          const csvContent = XLSX.utils.sheet_to_csv(worksheet, { FS: delimiter });
+          
+          if (type === "csv") {
+            setCsvData(csvContent);
+            toast.success(`Arquivo Excel convertido com sucesso! ${workbook.SheetNames.length > 1 ? `(usando planilha "${sheetName}")` : ""}`);
+          }
+        } catch (error) {
+          console.error("Error parsing Excel file:", error);
+          toast.error("Erro ao processar arquivo Excel. Verifique se o arquivo não está corrompido.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
       return;
     }
 
+    // Handle CSV/JSON files
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
