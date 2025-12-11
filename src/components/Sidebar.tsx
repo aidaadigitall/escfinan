@@ -72,6 +72,7 @@ const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
       icon: ShoppingCart,
       label: "Comercial",
       submenu: [
+        { icon: Users, label: "CRM - Funil de Vendas", path: "/crm" },
         { icon: ClipboardList, label: "Orçamentos", path: "/orcamentos" },
         { icon: FileText, label: "Ordens de Serviço", path: "/ordens-servico" },
         { icon: ShoppingCart, label: "Vendas", path: "/vendas" },

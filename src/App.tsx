@@ -46,6 +46,7 @@ import PublicBilling from "./pages/PublicBilling";
 import ControlePonto from "./pages/ControlePonto";
 import ControlePontoRH from "./pages/ControlePontoRH";
 import PontoApprovalsPage from "./pages/PontoApprovalsPage";
+import CRM from "./pages/CRM";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -153,6 +154,13 @@ const App = () => (
             <Route path="/vendas" element={
               <PermissionProtectedRoute permission="can_view_sales">
                 <Layout><Vendas /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            
+            {/* CRM route */}
+            <Route path="/crm" element={
+              <PermissionProtectedRoute permission="can_view_crm">
+                <Layout><CRM /></Layout>
               </PermissionProtectedRoute>
             } />
             
