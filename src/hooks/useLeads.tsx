@@ -69,20 +69,19 @@ export const useLeads = () => {
   const { data: leads = [], isLoading, error } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      try {
-        const { data, error } = await (supabase as any)
-          .from("leads" as any)
-          .select("*")
-          .order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any)
+        .from("leads" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
 
-        if (error) throw error;
-        return data as Lead[];
-      } catch (error) {
+      if (error) {
         console.error("Error fetching leads:", error);
-        return [];
+        throw error;
       }
+      return (data || []) as Lead[];
     },
     enabled: !!user,
+    retry: 1,
   });
 
   const createLead = useMutation({

@@ -97,7 +97,7 @@ const CRM = () => {
     setIsLeadDialogOpen(true);
   };
 
-  if (loadingLeads || loadingStages) {
+  if (loadingLeads && loadingStages) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -105,12 +105,15 @@ const CRM = () => {
     );
   }
 
-  if (errorLeads || errorStages) {
+  if ((errorLeads || errorStages) && (!leads || leads.length === 0) && (!stages || stages.length === 0)) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center space-y-2">
           <p className="text-red-500 font-medium">Erro ao carregar CRM.</p>
           <p className="text-sm text-muted-foreground">Tente recarregar a página. Se persistir, verifique políticas RLS das tabelas leads e pipeline_stages.</p>
+          <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
+            Recarregar Página
+          </Button>
         </div>
       </div>
     );
