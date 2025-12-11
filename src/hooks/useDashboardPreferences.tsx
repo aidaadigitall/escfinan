@@ -94,7 +94,7 @@ export const useDashboardPreferences = () => {
     mutationFn: async (updates: Partial<DashboardPreferences>) => {
       if (!user?.id) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dashboard_preferences")
         .update(updates)
         .eq("user_id", user.id)
@@ -118,7 +118,7 @@ export const useDashboardPreferences = () => {
     mutationFn: async (layout_config: any[]) => {
       if (!user?.id) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dashboard_preferences")
         .update({ layout_config })
         .eq("user_id", user.id)
@@ -141,7 +141,7 @@ export const useDashboardPreferences = () => {
     mutationFn: async (theme_mode: 'light' | 'dark' | 'auto') => {
       if (!user?.id) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dashboard_preferences")
         .update({ theme_mode })
         .eq("user_id", user.id)
@@ -151,7 +151,7 @@ export const useDashboardPreferences = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
       toast.success(`Tema alterado para ${data.theme_mode}`);
     },
@@ -165,7 +165,7 @@ export const useDashboardPreferences = () => {
     mutationFn: async (custom_theme: any) => {
       if (!user?.id) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dashboard_preferences")
         .update({ custom_theme })
         .eq("user_id", user.id)
@@ -194,7 +194,7 @@ export const useDashboardPreferences = () => {
         ? currentWidgets.filter(id => id !== widgetId)
         : [...currentWidgets, widgetId];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dashboard_preferences")
         .update({ enabled_widgets })
         .eq("user_id", user.id)
@@ -217,11 +217,26 @@ export const useDashboardPreferences = () => {
     mutationFn: async (templateId: string) => {
       if (!user?.id) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .rpc('apply_layout_template', {
-          user_id_param: user.id,
-          template_id_param: templateId
-        });
+      // Buscar template
+      const { data: template, error: templateError } = await (supabase as any)
+        .from("dashboard_layout_templates")
+        .select("*")
+        .eq("id", templateId)
+        .single();
+
+      if (templateError) throw templateError;
+
+      // Aplicar ao usuário
+      const { data, error } = await (supabase as any)
+        .from("dashboard_preferences")
+        .update({
+          layout_config: template.layout_config,
+          enabled_widgets: template.enabled_widgets,
+          custom_theme: template.theme_config,
+        })
+        .eq("user_id", user.id)
+        .select()
+        .single();
 
       if (error) throw error;
       return data;
@@ -248,7 +263,7 @@ export const useDashboardPreferences = () => {
     }) => {
       if (!user?.id || !preferences) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dashboard_layout_templates")
         .insert([{
           user_id: user.id,
@@ -311,7 +326,7 @@ export const useDashboardPreferences = () => {
         [widgetId]: config,
       };
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("dashboard_preferences")
         .update({ widget_settings })
         .eq("user_id", user.id)

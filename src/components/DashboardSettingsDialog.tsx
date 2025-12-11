@@ -165,7 +165,7 @@ export const DashboardSettingsDialog = ({ open, onOpenChange }: DashboardSetting
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                    <div className="space-y-0.5 flex-1">
                       <Label>Modo Compacto</Label>
                       <p className="text-sm text-muted-foreground">
                         Reduz o espaçamento entre widgets
@@ -176,13 +176,14 @@ export const DashboardSettingsDialog = ({ open, onOpenChange }: DashboardSetting
                       onCheckedChange={(checked) =>
                         updatePreferences.mutate({ compact_mode: checked })
                       }
+                      className="data-[state=checked]:bg-primary scale-75"
                     />
                   </div>
 
                   <Separator />
 
                   <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                    <div className="space-y-0.5 flex-1">
                       <Label>Mostrar Sidebar</Label>
                       <p className="text-sm text-muted-foreground">
                         Exibe a barra lateral de navegação
@@ -193,13 +194,14 @@ export const DashboardSettingsDialog = ({ open, onOpenChange }: DashboardSetting
                       onCheckedChange={(checked) =>
                         updatePreferences.mutate({ show_sidebar: checked })
                       }
+                      className="data-[state=checked]:bg-primary scale-75"
                     />
                   </div>
 
                   <Separator />
 
                   <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                    <div className="space-y-0.5 flex-1">
                       <Label>Mostrar Métricas</Label>
                       <p className="text-sm text-muted-foreground">
                         Exibe os cards de métricas no topo
@@ -210,6 +212,7 @@ export const DashboardSettingsDialog = ({ open, onOpenChange }: DashboardSetting
                       onCheckedChange={(checked) =>
                         updatePreferences.mutate({ show_metrics: checked })
                       }
+                      className="data-[state=checked]:bg-primary scale-75"
                     />
                   </div>
                 </CardContent>
@@ -254,13 +257,14 @@ export const DashboardSettingsDialog = ({ open, onOpenChange }: DashboardSetting
                             key={widget.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-1">
                               <span className="text-xl">{widget.icon}</span>
                               <span className="text-sm font-medium">{widget.name}</span>
                             </div>
                             <Switch
                               checked={isWidgetEnabled(widget.id)}
                               onCheckedChange={() => toggleWidget.mutate(widget.id)}
+                              className="data-[state=checked]:bg-primary scale-75"
                             />
                           </div>
                         ))}
@@ -278,13 +282,14 @@ export const DashboardSettingsDialog = ({ open, onOpenChange }: DashboardSetting
                             key={widget.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-1">
                               <span className="text-xl">{widget.icon}</span>
                               <span className="text-sm font-medium">{widget.name}</span>
                             </div>
                             <Switch
                               checked={isWidgetEnabled(widget.id)}
                               onCheckedChange={() => toggleWidget.mutate(widget.id)}
+                              className="data-[state=checked]:bg-primary scale-75"
                             />
                           </div>
                         ))}
@@ -302,13 +307,14 @@ export const DashboardSettingsDialog = ({ open, onOpenChange }: DashboardSetting
                             key={widget.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-1">
                               <span className="text-xl">{widget.icon}</span>
                               <span className="text-sm font-medium">{widget.name}</span>
                             </div>
                             <Switch
                               checked={isWidgetEnabled(widget.id)}
                               onCheckedChange={() => toggleWidget.mutate(widget.id)}
+                              className="data-[state=checked]:bg-primary scale-75"
                             />
                           </div>
                         ))}
