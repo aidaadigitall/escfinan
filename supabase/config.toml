@@ -1,10 +1,10 @@
 project_id = "qdavvdfjhskdwelyvwjy"
 
 [functions.process-recurring-bills]
-verify_jwt = false
+verify_jwt = true
 
 [functions.chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-whatsapp]
-verify_jwt = false
+verify_jwt = true

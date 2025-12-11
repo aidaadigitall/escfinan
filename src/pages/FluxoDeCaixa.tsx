@@ -10,7 +10,10 @@ import { DemonstrativoTab } from "@/components/fluxo-caixa/DemonstrativoTab";
 import { AdvancedSearchDialog } from "@/components/fluxo-caixa/AdvancedSearchDialog";
 import { PeriodSelector } from "@/components/fluxo-caixa/PeriodSelector";
 import { toast } from "sonner";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, format, eachDayOfInterval } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useFluxoCaixaData } from "@/hooks/useFluxoCaixaData";
+import * as XLSX from "xlsx";
 
 const FluxoDeCaixa = () => {
   const today = new Date();
@@ -22,8 +25,96 @@ const FluxoDeCaixa = () => {
     end: endOfMonth(today),
   });
 
+  const fluxoData = useFluxoCaixaData(selectedPeriod, filters);
+
   const handleExport = () => {
-    toast.success("Exportando dados...");
+    try {
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      
+      // Summary sheet
+      const summaryData = [
+        ["Fluxo de Caixa - Resumo"],
+        ["Período", `${format(selectedPeriod.start, "dd/MM/yyyy")} a ${format(selectedPeriod.end, "dd/MM/yyyy")}`],
+        [],
+        ["Receitas Realizadas", fluxoData.income],
+        ["Despesas Realizadas", fluxoData.expenses],
+        ["Saldo Realizado", fluxoData.balance],
+        [],
+        ["Receitas Pendentes", fluxoData.pendingIncome],
+        ["Despesas Pendentes", fluxoData.pendingExpenses],
+        ["Saldo Final Previsto", fluxoData.finalBalance],
+      ];
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, summarySheet, "Resumo");
+
+      // Income transactions sheet
+      if (fluxoData.incomeTransactions && fluxoData.incomeTransactions.length > 0) {
+        const incomeData = [
+          ["Data Vencimento", "Descrição", "Cliente", "Valor", "Status", "Valor Pago"],
+          ...fluxoData.incomeTransactions.map((t: any) => [
+            format(new Date(t.due_date), "dd/MM/yyyy"),
+            t.description,
+            t.client || "-",
+            t.amount,
+            t.status,
+            t.paid_amount || 0,
+          ]),
+        ];
+        const incomeSheet = XLSX.utils.aoa_to_sheet(incomeData);
+        XLSX.utils.book_append_sheet(wb, incomeSheet, "Receitas");
+      }
+
+      // Expense transactions sheet
+      if (fluxoData.expenseTransactions && fluxoData.expenseTransactions.length > 0) {
+        const expenseData = [
+          ["Data Vencimento", "Descrição", "Fornecedor", "Valor", "Status", "Valor Pago"],
+          ...fluxoData.expenseTransactions.map((t: any) => [
+            format(new Date(t.due_date), "dd/MM/yyyy"),
+            t.description,
+            t.entity || "-",
+            t.amount,
+            t.status,
+            t.paid_amount || 0,
+          ]),
+        ];
+        const expenseSheet = XLSX.utils.aoa_to_sheet(expenseData);
+        XLSX.utils.book_append_sheet(wb, expenseSheet, "Despesas");
+      }
+
+      // Daily flow sheet
+      if (fluxoData.dailyFlow && fluxoData.dailyFlow.length > 0) {
+        const dailyData = [
+          ["Data", "Valor do Dia", "Saldo Acumulado"],
+          ...fluxoData.dailyFlow.map((d: any) => [
+            d.date,
+            d.value,
+            d.accumulated,
+          ]),
+        ];
+        const dailySheet = XLSX.utils.aoa_to_sheet(dailyData);
+        XLSX.utils.book_append_sheet(wb, dailySheet, "Fluxo Diário");
+      }
+
+      // Category data sheet
+      if (fluxoData.categoryData && fluxoData.categoryData.length > 0) {
+        const categoryDataSheet = [
+          ["Categoria", "Valor"],
+          ...fluxoData.categoryData.map((c: any) => [c.name, c.value]),
+        ];
+        const catSheet = XLSX.utils.aoa_to_sheet(categoryDataSheet);
+        XLSX.utils.book_append_sheet(wb, catSheet, "Por Categoria");
+      }
+
+      // Download file
+      const fileName = `fluxo_caixa_${format(selectedPeriod.start, "yyyy-MM-dd")}_${format(selectedPeriod.end, "yyyy-MM-dd")}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      toast.success("Fluxo de caixa exportado com sucesso!");
+    } catch (error) {
+      console.error("Error exporting:", error);
+      toast.error("Erro ao exportar fluxo de caixa");
+    }
   };
 
   return (

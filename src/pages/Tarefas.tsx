@@ -436,7 +436,7 @@ const Tarefas = () => {
                   <button
                     onClick={() => handleToggleComplete(task)}
                     aria-label="Reabrir tarefa"
-                    className="flex-none h-6 w-6 rounded-full flex items-center justify-center mt-0.5 bg-primary text-primary-foreground focus:outline-none"
+                    className="flex-none h-6 w-6 rounded-full border border-border flex items-center justify-center mt-0.5 bg-primary text-primary-foreground focus:outline-none"
                   >
                     <Check className="h-3 w-3" />
                   </button>

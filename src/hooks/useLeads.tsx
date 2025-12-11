@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useAuth } from "./useAuth";
+import { toast } from "sonner";
 
 export interface Lead {
   id: string;
@@ -63,8 +63,8 @@ export interface LeadFormData {
 }
 
 export const useLeads = () => {
-  const queryClient = useQueryClient();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: leads = [], isLoading, error } = useQuery({
     queryKey: ["leads"],
@@ -75,14 +75,11 @@ export const useLeads = () => {
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Erro ao buscar leads:", error);
-          return [] as Lead[];
-        }
-        return (data || []) as Lead[];
-      } catch (err) {
-        console.error("Exceção ao buscar leads:", err);
-        return [] as Lead[];
+        if (error) throw error;
+        return data as Lead[];
+      } catch (error) {
+        console.error("Error fetching leads:", error);
+        return [];
       }
     },
     enabled: !!user,
@@ -224,7 +221,7 @@ export const useLeads = () => {
   });
 
   return {
-    leads: leads || [],
+    leads,
     isLoading,
     error,
     createLead,

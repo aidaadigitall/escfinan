@@ -1,7 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useAuth } from "./useAuth";
 
 export interface PipelineStage {
   id: string;
@@ -25,123 +23,45 @@ export interface PipelineStageFormData {
   color?: string;
 }
 
+// Hook stub - CRM tables not yet implemented in database
 export const usePipelineStages = () => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const [stages] = useState<PipelineStage[]>([
+    { id: "1", user_id: "", name: "Novo Lead", order: 1, probability_default: 10, color: "#6366f1", is_active: true, is_system: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "2", user_id: "", name: "Qualificação", order: 2, probability_default: 25, color: "#8b5cf6", is_active: true, is_system: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "3", user_id: "", name: "Proposta", order: 3, probability_default: 50, color: "#a855f7", is_active: true, is_system: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "4", user_id: "", name: "Negociação", order: 4, probability_default: 75, color: "#d946ef", is_active: true, is_system: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "5", user_id: "", name: "Fechamento", order: 5, probability_default: 90, color: "#22c55e", is_active: true, is_system: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  ]);
+  const [isLoading] = useState(false);
 
-  const { data: stages = [], isLoading, error } = useQuery({
-    queryKey: ["pipeline-stages"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("pipeline_stages")
-          .select("*")
-          .eq("is_active", true)
-          .order("order", { ascending: true });
+  const createStage = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
-        if (error) {
-          console.error("Erro ao buscar pipeline stages:", error);
-          return [] as PipelineStage[];
-        }
-        return (data || []) as PipelineStage[];
-      } catch (err) {
-        console.error("Exceção ao buscar pipeline stages:", err);
-        return [] as PipelineStage[];
-      }
-    },
-    enabled: !!user,
-  });
+  const updateStage = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
-  const createStage = useMutation({
-    mutationFn: async (stageData: PipelineStageFormData) => {
-      // Pegar o próximo order
-      const maxOrder = Math.max(...(stages?.map(s => s.order) || [0]));
-      
-      const { data, error } = await supabase
-        .from("pipeline_stages")
-        .insert([{
-          ...stageData,
-          user_id: user?.id,
-          order: stageData.order || maxOrder + 1,
-          is_system: false,
-        }])
-        .select()
-        .single();
+  const deleteStage = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-stages"] });
-      toast.success("Estágio criado com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao criar estágio: " + error.message);
-    },
-  });
-
-  const updateStage = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<PipelineStageFormData> }) => {
-      const { data: updated, error } = await supabase
-        .from("pipeline_stages")
-        .update(data)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return updated;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-stages"] });
-      toast.success("Estágio atualizado!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao atualizar estágio: " + error.message);
-    },
-  });
-
-  const deleteStage = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("pipeline_stages")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-stages"] });
-      toast.success("Estágio excluído!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao excluir estágio: " + error.message);
-    },
-  });
-
-  const reorderStages = useMutation({
-    mutationFn: async (newOrder: { id: string; order: number }[]) => {
-      const updates = newOrder.map(({ id, order }) =>
-        supabase
-          .from("pipeline_stages")
-          .update({ order })
-          .eq("id", id)
-      );
-
-      await Promise.all(updates);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-stages"] });
-      toast.success("Ordem atualizada!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao reordenar estágios: " + error.message);
-    },
-  });
+  const reorderStages = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
   return {
-    stages: stages || [],
+    stages,
     isLoading,
+    error: null,
     createStage,
     updateStage,
     deleteStage,

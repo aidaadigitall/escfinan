@@ -66,10 +66,6 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   
-  // Debug: ver se os dados estão carregando
-  console.log('Clientes carregados:', clients?.length, clients);
-  console.log('Formas de pagamento:', paymentMethods?.length, paymentMethods);
-  
   // Buscar dados do cliente selecionado
   const selectedClient = clients?.find(c => c.id === selectedClientId);
 
@@ -127,7 +123,17 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
 
   const onSubmit = async (data: ProjectFormData) => {
     const formData = {
-      ...data,
+      name: data.name || "",
+      code: data.code,
+      description: data.description,
+      client_id: data.client_id,
+      payment_method_id: data.payment_method_id,
+      budget_amount: data.budget_amount,
+      budget_hours: data.budget_hours,
+      hourly_rate: data.hourly_rate,
+      start_date: data.start_date,
+      expected_end_date: data.expected_end_date,
+      project_manager_id: data.project_manager_id,
       project_type: selectedType as any,
       status: selectedStatus as any,
       priority: selectedPriority as any,
