@@ -64,11 +64,7 @@ export const useProjects = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
-        .select(`
-          *,
-          client:clients(id, name),
-          project_manager:auth.users(id, email)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -90,11 +86,7 @@ export const useProject = (id: string | undefined) => {
 
       const { data, error } = await supabase
         .from("projects")
-        .select(`
-          *,
-          client:clients(id, name),
-          project_manager:auth.users(id, email)
-        `)
+        .select("*")
         .eq("id", id)
         .single();
 
