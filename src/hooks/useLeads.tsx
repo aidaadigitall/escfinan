@@ -73,8 +73,7 @@ export const useLeads = () => {
         .from("leads")
         .select(`
           *,
-          pipeline_stage:pipeline_stages(id, name, color),
-          assigned_user:auth.users(id, email)
+          pipeline_stage:pipeline_stages(id, name, color)
         `)
         .order("created_at", { ascending: false });
 
