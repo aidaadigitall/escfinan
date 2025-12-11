@@ -200,11 +200,14 @@ export const useLeads = () => {
   });
 
   const moveToPipelineStage = useMutation({
-    mutationFn: async ({ leadId, stageId }: { leadId: string; stageId: string }) => {
+    mutationFn: async ({ leadId, stageId }: { leadId: string; stageId: string | null }) => {
+      // Tratar o caso especial "no-stage" - significa remover do estágio
+      const finalStageId = stageId === "no-stage" ? null : stageId;
+      
       const { error } = await (supabase as any)
         .from("leads" as any)
         .update({ 
-          pipeline_stage_id: stageId,
+          pipeline_stage_id: finalStageId,
           last_activity_date: new Date().toISOString(),
         })
         .eq("id", leadId);
@@ -213,6 +216,7 @@ export const useLeads = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Lead movido com sucesso!");
     },
     onError: (error: any) => {
       toast.error("Erro ao mover lead: " + error.message);

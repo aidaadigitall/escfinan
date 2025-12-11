@@ -53,7 +53,7 @@ export const useLeadScoring = () => {
   const { data: rules = [], isLoading, error } = useQuery({
     queryKey: ["lead_scoring_rules"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_scoring_rules")
         .select("*")
         .order("priority", { ascending: false });
@@ -66,7 +66,7 @@ export const useLeadScoring = () => {
 
   // Buscar histórico de pontuação de um lead
   const getLeadScoreHistory = async (leadId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("lead_score_history")
       .select("*")
       .eq("lead_id", leadId)
@@ -79,7 +79,7 @@ export const useLeadScoring = () => {
   // Criar regra de pontuação
   const createRule = useMutation({
     mutationFn: async (ruleData: ScoringRuleFormData) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_scoring_rules")
         .insert([{
           ...ruleData,
@@ -103,7 +103,7 @@ export const useLeadScoring = () => {
   // Atualizar regra
   const updateRule = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ScoringRuleFormData> }) => {
-      const { data: updated, error } = await supabase
+      const { data: updated, error } = await (supabase as any)
         .from("lead_scoring_rules")
         .update(data)
         .eq("id", id)
@@ -125,7 +125,7 @@ export const useLeadScoring = () => {
   // Deletar regra
   const deleteRule = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("lead_scoring_rules")
         .delete()
         .eq("id", id);
@@ -155,7 +155,7 @@ export const useLeadScoring = () => {
       expiresAfterDays?: number;
     }) => {
       // Buscar score atual do lead
-      const { data: lead } = await supabase
+      const { data: lead } = await (supabase as any)
         .from("leads")
         .select("score")
         .eq("id", leadId)
@@ -173,7 +173,7 @@ export const useLeadScoring = () => {
       }
 
       // Adicionar ao histórico
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_score_history")
         .insert([{
           lead_id: leadId,
@@ -189,7 +189,7 @@ export const useLeadScoring = () => {
       if (error) throw error;
 
       // Atualizar score do lead
-      await supabase
+      await (supabase as any)
         .from("leads")
         .update({ score: newScore })
         .eq("id", leadId);
@@ -208,13 +208,13 @@ export const useLeadScoring = () => {
   // Recalcular score de um lead baseado nas regras ativas
   const recalculateLeadScore = useMutation({
     mutationFn: async (leadId: string) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('calculate_lead_score', { lead_id_param: leadId });
 
       if (error) throw error;
 
       // Atualizar score do lead
-      await supabase
+      await (supabase as any)
         .from("leads")
         .update({ score: data })
         .eq("id", leadId);

@@ -76,7 +76,7 @@ export const useLeadCaptureForms = () => {
   const { data: forms = [], isLoading, error } = useQuery({
     queryKey: ["lead_capture_forms"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_capture_forms")
         .select("*")
         .order("created_at", { ascending: false });
@@ -89,7 +89,7 @@ export const useLeadCaptureForms = () => {
 
   // Buscar formulário por slug (público)
   const getFormBySlug = async (slug: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("lead_capture_forms")
       .select("*")
       .eq("slug", slug)
@@ -104,7 +104,7 @@ export const useLeadCaptureForms = () => {
   const { data: submissions = [] } = useQuery({
     queryKey: ["lead_capture_submissions"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_capture_submissions")
         .select("*")
         .order("submitted_at", { ascending: false })
@@ -119,7 +119,7 @@ export const useLeadCaptureForms = () => {
   // Criar formulário
   const createForm = useMutation({
     mutationFn: async (formData: CaptureFormFormData) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_capture_forms")
         .insert([{
           ...formData,
@@ -144,7 +144,7 @@ export const useLeadCaptureForms = () => {
   // Atualizar formulário
   const updateForm = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CaptureFormFormData> }) => {
-      const { data: updated, error } = await supabase
+      const { data: updated, error } = await (supabase as any)
         .from("lead_capture_forms")
         .update(data)
         .eq("id", id)
@@ -166,7 +166,7 @@ export const useLeadCaptureForms = () => {
   // Deletar formulário
   const deleteForm = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("lead_capture_forms")
         .delete()
         .eq("id", id);
@@ -196,10 +196,10 @@ export const useLeadCaptureForms = () => {
       trackingData?: any;
     }) => {
       // Incrementar view count
-      await supabase.rpc('increment_form_view', { form_id: formId }).catch(() => {});
+      await (supabase as any).rpc('increment_form_view', { form_id: formId }).catch(() => {});
 
       // Criar submissão
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_capture_submissions")
         .insert([{
           form_id: formId,
@@ -220,7 +220,7 @@ export const useLeadCaptureForms = () => {
       if (error) throw error;
 
       // Processar submissão (criar lead)
-      const { data: leadId, error: processError } = await supabase
+      const { data: leadId, error: processError } = await (supabase as any)
         .rpc('process_lead_capture_submission', { submission_id_param: data.id });
 
       if (processError) {
@@ -243,7 +243,7 @@ export const useLeadCaptureForms = () => {
       const form = forms.find(f => f.id === formId);
       if (!form) throw new Error("Formulário não encontrado");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_capture_forms")
         .insert([{
           user_id: user?.id,

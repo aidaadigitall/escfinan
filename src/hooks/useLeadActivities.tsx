@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
 import { toast } from "sonner";
 
 export interface LeadActivity {
@@ -30,38 +32,134 @@ export interface LeadActivityFormData {
   duration_minutes?: number;
 }
 
-// Hook stub - CRM tables not yet implemented in database
 export const useLeadActivities = (leadId?: string) => {
-  const [activities] = useState<LeadActivity[]>([]);
-  const [isLoading] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const createActivity = {
-    mutate: (_data: LeadActivityFormData) => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async (_data: LeadActivityFormData) => { toast.info("Funcionalidade CRM em desenvolvimento"); },
-    isPending: false,
-  };
+  const { data: activities = [], isLoading, error } = useQuery({
+    queryKey: ["lead_activities", leadId],
+    queryFn: async () => {
+      let query = (supabase as any)
+        .from("lead_activities")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-  const updateActivity = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    isPending: false,
-  };
+      if (leadId) {
+        query = query.eq("lead_id", leadId);
+      }
 
-  const completeActivity = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    isPending: false,
-  };
+      const { data, error } = await query;
 
-  const deleteActivity = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    isPending: false,
-  };
+      if (error) {
+        console.error("Error fetching lead activities:", error);
+        throw error;
+      }
+      return (data || []) as LeadActivity[];
+    },
+    enabled: !!user,
+    retry: 1,
+  });
+
+  const createActivity = useMutation({
+    mutationFn: async (activityData: LeadActivityFormData) => {
+      const { data, error } = await (supabase as any)
+        .from("lead_activities")
+        .insert([{
+          ...activityData,
+          user_id: user?.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead_activities"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Atividade criada com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao criar atividade: " + error.message);
+    },
+  });
+
+  const updateActivity = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<LeadActivityFormData> }) => {
+      const { data: updated, error } = await (supabase as any)
+        .from("lead_activities")
+        .update(data)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return updated;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead_activities"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Atividade atualizada com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao atualizar atividade: " + error.message);
+    },
+  });
+
+  const completeActivity = useMutation({
+    mutationFn: async ({ id, outcome, outcome_notes }: { 
+      id: string; 
+      outcome?: string; 
+      outcome_notes?: string;
+    }) => {
+      const { data, error } = await (supabase as any)
+        .from("lead_activities")
+        .update({
+          is_completed: true,
+          completed_at: new Date().toISOString(),
+          outcome,
+          outcome_notes,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead_activities"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Atividade concluída!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao concluir atividade: " + error.message);
+    },
+  });
+
+  const deleteActivity = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any)
+        .from("lead_activities")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead_activities"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Atividade excluída com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao excluir atividade: " + error.message);
+    },
+  });
 
   return {
     activities,
     isLoading,
+    error,
     createActivity,
     updateActivity,
     completeActivity,

@@ -55,7 +55,7 @@ export const useLeadAutomations = () => {
   const { data: rules = [], isLoading, error } = useQuery({
     queryKey: ["lead_automation_rules"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_automation_rules")
         .select("*")
         .order("priority", { ascending: false });
@@ -70,7 +70,7 @@ export const useLeadAutomations = () => {
   const { data: executions = [] } = useQuery({
     queryKey: ["lead_automation_executions"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_automation_executions")
         .select("*")
         .order("executed_at", { ascending: false })
@@ -85,7 +85,7 @@ export const useLeadAutomations = () => {
   // Criar regra de automação
   const createRule = useMutation({
     mutationFn: async (ruleData: AutomationRuleFormData) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_automation_rules")
         .insert([{
           ...ruleData,
@@ -110,7 +110,7 @@ export const useLeadAutomations = () => {
   // Atualizar regra de automação
   const updateRule = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<AutomationRuleFormData> }) => {
-      const { data: updated, error } = await supabase
+      const { data: updated, error } = await (supabase as any)
         .from("lead_automation_rules")
         .update(data)
         .eq("id", id)
@@ -132,7 +132,7 @@ export const useLeadAutomations = () => {
   // Deletar regra de automação
   const deleteRule = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("lead_automation_rules")
         .delete()
         .eq("id", id);
@@ -151,7 +151,7 @@ export const useLeadAutomations = () => {
   // Alternar status ativo/inativo
   const toggleRuleStatus = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("lead_automation_rules")
         .update({ is_active: isActive })
         .eq("id", id);
@@ -172,7 +172,7 @@ export const useLeadAutomations = () => {
     mutationFn: async ({ ruleId, leadId }: { ruleId: string; leadId: string }) => {
       // Aqui você implementaria a lógica de execução
       // Por enquanto, apenas registramos a execução
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lead_automation_executions")
         .insert([{
           rule_id: ruleId,
