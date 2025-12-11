@@ -41,7 +41,7 @@ const PrintDocument = () => {
         }
 
         // Fetch main document data with relations
-        const { data: docData, error: docError } = await supabase
+        const { data: docData, error: docError } = await (supabase as any)
           .from(tableName)
           .select(`
             *,
@@ -55,7 +55,7 @@ const PrintDocument = () => {
         if (docError) throw docError;
 
         // Fetch items
-        const { data: itemsData, error: itemsError } = await supabase
+        const { data: itemsData, error: itemsError } = await (supabase as any)
           .from(itemsTableName)
           .select("*")
           .eq(itemsForeignKey, id);
@@ -103,11 +103,11 @@ const PrintDocument = () => {
 
   // Fallback for company settings if not loaded yet
   const company = companySettings || {
-    name: "Minha Empresa",
+    company_name: "Minha Empresa",
     address: "Endereço da Empresa",
     phone: "(00) 0000-0000",
     email: "contato@empresa.com",
-  };
+  } as any;
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center py-8 print:bg-white print:py-0">
