@@ -32,17 +32,22 @@ export const usePipelineStages = () => {
   const { data: stages = [], isLoading, error } = useQuery({
     queryKey: ["pipeline-stages"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pipeline_stages")
-        .select("*")
-        .eq("is_active", true)
-        .order("order", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("pipeline_stages")
+          .select("*")
+          .eq("is_active", true)
+          .order("order", { ascending: true });
 
-      if (error) {
-        console.error("Erro ao buscar pipeline stages:", error);
-        throw error;
+        if (error) {
+          console.error("Erro ao buscar pipeline stages:", error);
+          return [] as PipelineStage[];
+        }
+        return (data || []) as PipelineStage[];
+      } catch (err) {
+        console.error("Exceção ao buscar pipeline stages:", err);
+        return [] as PipelineStage[];
       }
-      return (data || []) as PipelineStage[];
     },
     enabled: !!user,
   });

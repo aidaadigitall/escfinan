@@ -69,16 +69,21 @@ export const useLeads = () => {
   const { data: leads = [], isLoading, error } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("leads")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Erro ao buscar leads:", error);
-        throw error;
+        if (error) {
+          console.error("Erro ao buscar leads:", error);
+          return [] as Lead[];
+        }
+        return (data || []) as Lead[];
+      } catch (err) {
+        console.error("Exceção ao buscar leads:", err);
+        return [] as Lead[];
       }
-      return (data || []) as Lead[];
     },
     enabled: !!user,
   });

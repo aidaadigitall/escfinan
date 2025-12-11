@@ -62,17 +62,22 @@ export const useProjects = () => {
   return useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        toast.error("Erro ao carregar projetos");
-        throw error;
+        if (error) {
+          console.error("Erro ao carregar projetos:", error);
+          return [] as Project[];
+        }
+
+        return (data || []) as Project[];
+      } catch (err) {
+        console.error("Exceção ao carregar projetos:", err);
+        return [] as Project[];
       }
-
-      return data as Project[];
     },
   });
 };
@@ -84,18 +89,23 @@ export const useProject = (id: string | undefined) => {
     queryFn: async () => {
       if (!id) return null;
 
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("id", id)
+          .single();
 
-      if (error) {
-        toast.error("Erro ao carregar projeto");
-        throw error;
+        if (error) {
+          console.error("Erro ao carregar projeto:", error);
+          return null as any;
+        }
+
+        return data as Project;
+      } catch (err) {
+        console.error("Exceção ao carregar projeto:", err);
+        return null as any;
       }
-
-      return data as Project;
     },
     enabled: !!id,
   });
