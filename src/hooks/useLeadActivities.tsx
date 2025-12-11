@@ -36,8 +36,8 @@ export const useLeadActivities = (leadId?: string) => {
   const [isLoading] = useState(false);
 
   const createActivity = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutate: (_data: LeadActivityFormData) => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async (_data: LeadActivityFormData) => { toast.info("Funcionalidade CRM em desenvolvimento"); },
     isPending: false,
   };
 

@@ -1,5 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export interface ProjectTask {
@@ -22,8 +21,6 @@ export interface ProjectTask {
   owner_user_id: string;
   created_at: string;
   updated_at: string;
-  
-  // Dados relacionados
   assigned_user?: {
     id: string;
     email: string;
@@ -51,189 +48,52 @@ export interface UpdateTaskInput extends CreateTaskInput {
   progress_percentage?: number;
 }
 
-// Hook para buscar tarefas de um projeto
+// Hook stub - tabela project_tasks não existe ainda
 export const useProjectTasks = (projectId: string | undefined) => {
-  return useQuery({
-    queryKey: ["project-tasks", projectId],
-    queryFn: async () => {
-      if (!projectId) return [];
-
-      const { data, error } = await supabase
-        .from("project_tasks")
-        .select(`
-          *,
-          assigned_user:auth.users(id, email)
-        `)
-        .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        toast.error("Erro ao carregar tarefas");
-        throw error;
-      }
-
-      return data as ProjectTask[];
-    },
-    enabled: !!projectId,
-  });
+  const [data] = useState<ProjectTask[]>([]);
+  return {
+    data,
+    isLoading: false,
+    error: null,
+  };
 };
 
-// Hook para buscar tarefa por ID
 export const useProjectTask = (id: string | undefined) => {
-  return useQuery({
-    queryKey: ["project-tasks", id],
-    queryFn: async () => {
-      if (!id) return null;
-
-      const { data, error } = await supabase
-        .from("project_tasks")
-        .select(`
-          *,
-          assigned_user:auth.users(id, email)
-        `)
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        toast.error("Erro ao carregar tarefa");
-        throw error;
-      }
-
-      return data as ProjectTask;
-    },
-    enabled: !!id,
-  });
+  return {
+    data: null as ProjectTask | null,
+    isLoading: false,
+    error: null,
+  };
 };
 
-// Hook para criar tarefa
 export const useCreateTask = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: CreateTaskInput) => {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      const { data, error } = await supabase
-        .from("project_tasks")
-        .insert({
-          ...input,
-          user_id: userData.user.id,
-          owner_user_id: userData.user.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", data.project_id] });
-      queryClient.invalidateQueries({ queryKey: ["projects", data.project_id] });
-      toast.success("Tarefa criada com sucesso!");
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar tarefa: ${error.message}`);
-    },
-  });
+  return {
+    mutate: () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    isPending: false,
+  };
 };
 
-// Hook para atualizar tarefa
 export const useUpdateTask = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: UpdateTaskInput) => {
-      const { id, ...updateData } = input;
-
-      // Se marcar como completado, adiciona data de conclusão e 100% de progresso
-      if (updateData.status === "completed" && !updateData.completed_date) {
-        updateData.completed_date = new Date().toISOString().split("T")[0];
-        updateData.progress_percentage = 100;
-      }
-
-      const { data, error } = await supabase
-        .from("project_tasks")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", data.project_id] });
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", data.id] });
-      queryClient.invalidateQueries({ queryKey: ["projects", data.project_id] });
-      toast.success("Tarefa atualizada com sucesso!");
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar tarefa: ${error.message}`);
-    },
-  });
+  return {
+    mutate: () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    isPending: false,
+  };
 };
 
-// Hook para excluir tarefa
 export const useDeleteTask = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, project_id }: { id: string; project_id: string }) => {
-      const { error } = await supabase.from("project_tasks").delete().eq("id", id);
-
-      if (error) throw error;
-      return project_id;
-    },
-    onSuccess: (projectId) => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
-      toast.success("Tarefa excluída com sucesso!");
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao excluir tarefa: ${error.message}`);
-    },
-  });
+  return {
+    mutate: () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    isPending: false,
+  };
 };
 
-// Hook para atualizar status da tarefa
 export const useUpdateTaskStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      status,
-      project_id,
-    }: {
-      id: string;
-      status: "todo" | "in_progress" | "review" | "completed" | "blocked";
-      project_id: string;
-    }) => {
-      const updateData: any = { status };
-
-      if (status === "completed") {
-        updateData.completed_date = new Date().toISOString().split("T")[0];
-        updateData.progress_percentage = 100;
-      }
-
-      const { data, error } = await supabase
-        .from("project_tasks")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { data, project_id };
-    },
-    onSuccess: ({ data, project_id }) => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", project_id] });
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", data.id] });
-      queryClient.invalidateQueries({ queryKey: ["projects", project_id] });
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar status: ${error.message}`);
-    },
-  });
+  return {
+    mutate: () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade de Projetos em desenvolvimento"),
+    isPending: false,
+  };
 };

@@ -66,14 +66,14 @@ export const useLeads = () => {
   const [isLoading] = useState(false);
 
   const createLead = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutate: (_data: LeadFormData) => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async (_data: LeadFormData) => { toast.info("Funcionalidade CRM em desenvolvimento"); },
     isPending: false,
   };
 
   const updateLead = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutate: (_params: { id: string; data: Partial<LeadFormData> }) => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async (_params: { id: string; data: Partial<LeadFormData> }) => { toast.info("Funcionalidade CRM em desenvolvimento"); },
     isPending: false,
   };
 
@@ -90,8 +90,8 @@ export const useLeads = () => {
   };
 
   const moveToPipelineStage = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutate: (_params: { leadId: string; stageId: string }) => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async (_params: { leadId: string; stageId: string }) => { toast.info("Funcionalidade CRM em desenvolvimento"); },
     isPending: false,
   };
 
