@@ -44,11 +44,18 @@ export const useCreditCards = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Validate card_number is exactly 4 digits for security
+      const sanitizedCardNumber = String(card.card_number).replace(/\D/g, '').slice(-4);
+      if (sanitizedCardNumber.length !== 4) {
+        throw new Error("Número do cartão deve conter exatamente 4 dígitos");
+      }
+
       const { data, error } = await supabase
         .from("credit_cards")
         .insert({ 
           ...card, 
           user_id: user.id,
+          card_number: sanitizedCardNumber, // Store only last 4 digits
           available_credit: card.credit_limit
         })
         .select()
