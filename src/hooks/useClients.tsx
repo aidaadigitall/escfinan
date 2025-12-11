@@ -31,7 +31,6 @@ export const useClients = () => {
       const { data, error } = await supabase
         .from("clients")
         .select("*")
-        .eq("is_active", true)
         .order("name");
 
       if (error) {

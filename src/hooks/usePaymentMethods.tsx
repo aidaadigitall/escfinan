@@ -22,7 +22,6 @@ export const usePaymentMethods = () => {
       const { data, error } = await supabase
         .from("payment_methods")
         .select("*")
-        .eq("is_active", true)
         .order("name");
 
       if (error) {
