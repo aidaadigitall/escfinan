@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLeads } from "@/hooks/useLeads";
+import { useSearchParams } from "react-router-dom";
 import { useServiceOrders } from "@/hooks/useServiceOrders";
 import { useClients } from "@/hooks/useClients";
 import { useProducts } from "@/hooks/useProducts";
@@ -74,6 +76,8 @@ const OrdensServico = () => {
   const { services } = useServices();
   const { employees } = useEmployees();
   const { companySettings } = useCompanySettings();
+  const { leads } = useLeads();
+  const [searchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,6 +103,26 @@ const OrdensServico = () => {
     paid_amount: 0,
     notes: "",
   });
+
+  // Pré-preenchimento a partir do leadId na URL
+  const [prefilledFromLead, setPrefilledFromLead] = useState(false);
+  useEffect(() => {
+    const leadId = searchParams.get("leadId");
+    if (!leadId || prefilledFromLead || editingOrder) return;
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) return;
+    const clientId = lead.client_id || "";
+    const notes = lead.notes || "";
+    const score = lead.score || 0;
+    setFormData((prev) => ({
+      ...prev,
+      client_id: clientId,
+      notes,
+      priority: score >= 80 ? "urgent" : score >= 60 ? "high" : prev.priority,
+    }));
+    setPrefilledFromLead(true);
+    setDialogOpen(true);
+  }, [searchParams, leads, editingOrder]);
 
   const filteredOrders = serviceOrders.filter(
     (o: any) => o.order_number?.toString().includes(searchTerm) ||

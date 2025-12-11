@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLeads } from "@/hooks/useLeads";
+import { useSearchParams } from "react-router-dom";
 import { useQuotes } from "@/hooks/useQuotes";
 import { useClients } from "@/hooks/useClients";
 import { useProducts } from "@/hooks/useProducts";
@@ -57,6 +59,8 @@ const Orcamentos = () => {
   const { products } = useProducts();
   const { services } = useServices();
   const { employees } = useEmployees();
+  const { leads } = useLeads();
+  const [searchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,6 +75,24 @@ const Orcamentos = () => {
     internal_notes: "",
     status: "draft",
   });
+
+  // Pré-preenchimento a partir do leadId na URL
+  const [prefilledFromLead, setPrefilledFromLead] = useState(false);
+  useEffect(() => {
+    const leadId = searchParams.get("leadId");
+    if (!leadId || prefilledFromLead || editingQuote) return;
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) return;
+    const clientId = lead.client_id || "";
+    const notes = lead.notes || "";
+    setFormData((prev) => ({
+      ...prev,
+      client_id: clientId,
+      notes,
+    }));
+    setPrefilledFromLead(true);
+    setDialogOpen(true);
+  }, [searchParams, leads, editingQuote]);
 
   const filteredQuotes = quotes.filter(
     (q: any) => q.quote_number?.toString().includes(searchTerm) || 

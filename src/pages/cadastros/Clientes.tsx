@@ -24,6 +24,7 @@ import { Plus, Edit, Trash2, Search, Loader } from "lucide-react";
 import { toast } from "sonner";
 import { MaskedInput } from "@/components/ui/masked-input";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AdvancedSearchBar, AdvancedFilters } from "@/components/AdvancedSearchBar";
 
 const Clientes = () => {
   const { clients, isLoading, createClient, updateClient, deleteClient } = useClients();
@@ -36,12 +37,42 @@ const Clientes = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
-  const filteredClients = clients.filter(
-    (c) =>
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({ type: "all", status: "all" });
+
+  const applyClientFilters = (c: Client) => {
+    // Texto livre
+    const textMatch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.cnpj && c.cnpj.includes(searchTerm)) ||
-      (c.cpf && c.cpf.includes(searchTerm))
-  );
+      (c.cpf && c.cpf.includes(searchTerm));
+
+    // Tipo
+    const typeOk =
+      advancedFilters.type === "all" ||
+      (advancedFilters.type === "pf" && !!c.cpf) ||
+      (advancedFilters.type === "pj" && !!c.cnpj);
+
+    // Código (usa id)
+    const codeOk = !advancedFilters.code || (c.id || "").toString().includes(advancedFilters.code);
+
+    // Campos específicos
+    const nameOk = !advancedFilters.name || c.name.toLowerCase().includes(advancedFilters.name.toLowerCase());
+    const docOk = !advancedFilters.cpfCnpj || (c.cpf || c.cnpj || "").includes(advancedFilters.cpfCnpj);
+    const phoneOk = !advancedFilters.phone || (c.phone || "").includes(advancedFilters.phone);
+    const emailOk = !advancedFilters.email || (c.email || "").toLowerCase().includes(advancedFilters.email.toLowerCase());
+    const cityOk = !advancedFilters.city || (c.city || "").toLowerCase().includes(advancedFilters.city.toLowerCase());
+    const stateOk = !advancedFilters.state || (c.state || "").toLowerCase().includes(advancedFilters.state.toLowerCase());
+
+    // Status
+    const statusOk =
+      advancedFilters.status === "all" ||
+      (advancedFilters.status === "active" && !!c.is_active) ||
+      (advancedFilters.status === "inactive" && !c.is_active);
+
+    return textMatch && typeOk && codeOk && nameOk && docOk && phoneOk && emailOk && cityOk && stateOk && statusOk;
+  };
+
+  const filteredClients = clients.filter(applyClientFilters);
 
   useEffect(() => {
     if (editingClient) {
@@ -199,6 +230,12 @@ const Clientes = () => {
             className="border-0"
           />
         </div>
+
+        <AdvancedSearchBar
+          entity="client"
+          onApply={(f) => setAdvancedFilters(f)}
+          onClear={() => setAdvancedFilters({ type: "all", status: "all" })}
+        />
 
         <Table>
           <TableHeader>

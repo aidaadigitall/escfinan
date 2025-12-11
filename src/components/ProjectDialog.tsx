@@ -23,6 +23,9 @@ import {
 import { useCreateProject, useUpdateProject, type Project } from "@/hooks/useProjects";
 import { useClients } from "@/hooks/useClients";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { Switch } from "@/components/ui/switch";
+import { QuickClientDialog } from "./QuickClientDialog";
+import { QuickPaymentMethodDialog } from "./QuickPaymentMethodDialog";
 
 const projectSchema = z.object({
   name: z.string().min(1, "Nome obrigatório"),
@@ -54,6 +57,9 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const [selectedStatus, setSelectedStatus] = useState<string>(project?.status || "planning");
   const [selectedPriority, setSelectedPriority] = useState<string>(project?.priority || "medium");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [autoCode, setAutoCode] = useState<boolean>(true);
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const { data: clients = [], isLoading: loadingClients } = useClients();
   const { data: paymentMethods = [], isLoading: loadingPaymentMethods } = usePaymentMethods();
@@ -165,10 +171,35 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
 
             {/* Código */}
             <div>
-              <Label htmlFor="code">Código</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="code">Código</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Gerar automaticamente</span>
+                  <Switch checked={autoCode} onCheckedChange={(v) => {
+                    setAutoCode(v);
+                    if (v) {
+                      const client = clients?.find(c => c.id === form.watch("client_id"));
+                      const initials = client?.name
+                        ? client.name.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 3)
+                        : 'PROJ';
+                      const code = `${initials}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                      form.setValue("code", code);
+                    }
+                  }} />
+                  <Button type="button" variant="outline" size="sm" onClick={() => {
+                    const client = clients?.find(c => c.id === form.watch("client_id"));
+                    const initials = client?.name
+                      ? client.name.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 3)
+                      : 'PROJ';
+                    const code = `${initials}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                    form.setValue("code", code);
+                  }}>Gerar Código</Button>
+                </div>
+              </div>
               <Input
                 id="code"
                 {...form.register("code")}
+                disabled={autoCode}
                 placeholder="Ex: PROJ-001"
               />
             </div>
@@ -183,7 +214,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   setSelectedClientId(value);
                   // Auto-preencher código do projeto
                   const client = clients?.find(c => c.id === value);
-                  if (client && !project) {
+                  if (client && !project && autoCode) {
                     const initials = client.name.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 3);
                     const code = `${initials}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
                     form.setValue("code", code);
@@ -201,6 +232,11 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   ))}
                 </SelectContent>
               </Select>
+              <div className="mt-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setClientDialogOpen(true)}>
+                  + Novo Cliente
+                </Button>
+              </div>
               {selectedClient && (
                 <p className="text-xs text-muted-foreground mt-1">
                   📧 {selectedClient.email} | 📞 {selectedClient.phone}
@@ -222,6 +258,11 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   <SelectItem value="internal">Interno</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="mt-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setPaymentDialogOpen(true)}>
+                  + Nova Forma de Pagamento
+                </Button>
+              </div>
             </div>
 
             {/* Status */}
@@ -399,6 +440,20 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
             </Button>
           </DialogFooter>
         </form>
+        {/* Dialogs auxiliares */}
+        <QuickClientDialog
+          open={clientDialogOpen}
+          onOpenChange={setClientDialogOpen}
+          onSuccess={(id) => {
+            form.setValue("client_id", id);
+            setSelectedClientId(id);
+          }}
+        />
+        <QuickPaymentMethodDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          onSuccess={(id) => form.setValue("payment_method_id", id)}
+        />
       </DialogContent>
     </Dialog>
   );

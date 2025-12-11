@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Plus, Users, TrendingUp, DollarSign } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
 import { LeadDialog } from "@/components/LeadDialog";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
 const CRM = () => {
+  const navigate = useNavigate();
   const { leads = [], isLoading: loadingLeads, error: errorLeads, moveToPipelineStage } = useLeads();
   const { stages = [], isLoading: loadingStages, error: errorStages } = usePipelineStages();
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
@@ -211,6 +213,10 @@ const CRM = () => {
                         >
                           + Atividade
                         </Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?lead=${lead.id}`); }}>Orçamento</Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?lead=${lead.id}`); }}>OS</Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?lead=${lead.id}`); }}>Venda</Button>
+                        </div>
                       </div>
                     </div>
                   </Card>

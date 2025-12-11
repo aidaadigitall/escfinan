@@ -217,3 +217,44 @@ BEGIN
     RAISE NOTICE '- leads';
     RAISE NOTICE '- lead_activities';
 END $$;
+
+-- =====================================================
+-- ADICIONAL: lead_sources (origens personalizadas)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS public.lead_sources (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.lead_sources ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own lead sources" ON public.lead_sources;
+CREATE POLICY "Users can view own lead sources"
+ON public.lead_sources
+FOR SELECT
+USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can create own lead sources" ON public.lead_sources;
+CREATE POLICY "Users can create own lead sources"
+ON public.lead_sources
+FOR INSERT
+WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own lead sources" ON public.lead_sources;
+CREATE POLICY "Users can update own lead sources"
+ON public.lead_sources
+FOR UPDATE
+USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own lead sources" ON public.lead_sources;
+CREATE POLICY "Users can delete own lead sources"
+ON public.lead_sources
+FOR DELETE
+USING (user_id = auth.uid());
+
+CREATE INDEX IF NOT EXISTS idx_lead_sources_user_id ON public.lead_sources(user_id);
+CREATE INDEX IF NOT EXISTS idx_lead_sources_name ON public.lead_sources(name);

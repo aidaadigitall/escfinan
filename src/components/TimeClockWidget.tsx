@@ -79,7 +79,7 @@ export function TimeClockWidget() {
   }
 
   return (
-    <Card className="border-2">
+    <Card className="border-2 max-w-3xl mx-auto">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -96,7 +96,7 @@ export function TimeClockWidget() {
       <CardContent className="space-y-4">
         {/* Time Display */}
         <div className="text-center">
-          <div className="text-4xl font-mono font-bold tracking-wider">
+          <div className="text-3xl sm:text-4xl font-mono font-bold tracking-wider">
             {elapsedTime}
           </div>
           {activeEntry && (
@@ -126,7 +126,7 @@ export function TimeClockWidget() {
           ) : (
             <>
               {!isOnBreak ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Button
                     onClick={() => startBreak(activeEntry.id)}
                     variant="outline"

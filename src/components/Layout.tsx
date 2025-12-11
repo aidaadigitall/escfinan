@@ -8,7 +8,7 @@ import { useAIAssistant } from "@/hooks/useAIAssistant";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useTaskDueNotifications } from "@/hooks/useTaskDueNotifications";
 import { useTasks } from "@/hooks/useTasks";
-import { UrgentTasksWidget } from "./UrgentTasksWidget";
+// import { UrgentTasksWidget } from "./UrgentTasksWidget";
 import { useFavicon } from "@/hooks/useFavicon";
 
 interface LayoutProps {
@@ -26,8 +26,8 @@ export const Layout = ({ children }: LayoutProps) => {
   // Enable realtime notifications for tasks and comments
   useRealtimeNotifications();
   
-  // Enable task due notifications globally
-  useTaskDueNotifications(tasks);
+  // Desativado: notificações globais de tarefas vencidas
+  // useTaskDueNotifications(tasks);
 
   // Apply custom favicon
   useFavicon();
@@ -69,8 +69,7 @@ export const Layout = ({ children }: LayoutProps) => {
         </main>
       </div>
 
-      {/* Urgent Tasks Widget - global visibility */}
-      <UrgentTasksWidget />
+      {/* Urgent Tasks Widget desativado por solicitação do usuário */}
 
       {/* AI Assistant */}
       <AIAssistant systemData={systemData} />

@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLeads, Lead, LeadFormData } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
+import { useLeadSources } from "@/hooks/useLeadSources";
+import { QuickLeadSourceDialog } from "./QuickLeadSourceDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,7 +39,9 @@ interface LeadDialogProps {
 export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
   const { createLead, updateLead } = useLeads();
   const { stages } = usePipelineStages();
+  const { sources } = useLeadSources();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [leadSourceDialogOpen, setLeadSourceDialogOpen] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<LeadFormData>({
     resolver: zodResolver(leadSchema),
@@ -155,15 +159,22 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* opções do sistema */}
                   <SelectItem value="manual">Manual</SelectItem>
                   <SelectItem value="website">Website</SelectItem>
                   <SelectItem value="indication">Indicação</SelectItem>
                   <SelectItem value="cold_call">Cold Call</SelectItem>
                   <SelectItem value="social_media">Redes Sociais</SelectItem>
                   <SelectItem value="event">Evento</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
+                  {/* origens personalizadas da base */}
+                  {sources.map((s) => (
+                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setLeadSourceDialogOpen(true)}>
+                + Nova origem
+              </Button>
             </div>
           </div>
 
@@ -249,6 +260,11 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
             </Button>
           </DialogFooter>
         </form>
+        <QuickLeadSourceDialog
+          open={leadSourceDialogOpen}
+          onOpenChange={setLeadSourceDialogOpen}
+          onSuccess={(name) => setValue("source", name)}
+        />
       </DialogContent>
     </Dialog>
   );

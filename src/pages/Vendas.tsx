@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLeads } from "@/hooks/useLeads";
+import { useSearchParams } from "react-router-dom";
 import { useSales } from "@/hooks/useSales";
 import { useClients } from "@/hooks/useClients";
 import { useProducts } from "@/hooks/useProducts";
@@ -58,6 +60,8 @@ const Vendas = () => {
   const { services } = useServices();
   const { employees } = useEmployees();
   const { paymentMethods } = usePaymentMethods();
+  const { leads } = useLeads();
+  const [searchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,6 +79,28 @@ const Vendas = () => {
     notes: "",
     warranty_terms: "",
   });
+
+  // Pré-preenchimento a partir do leadId na URL
+  const [prefilledFromLead, setPrefilledFromLead] = useState(false);
+  useEffect(() => {
+    const leadId = searchParams.get("leadId");
+    if (!leadId || prefilledFromLead || editingSale) return;
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) return;
+    const clientId = lead.client_id || "";
+    const notes = lead.notes || "";
+    const seller = lead.assigned_to || "";
+    const delivery = lead.expected_close_date || "";
+    setFormData((prev) => ({
+      ...prev,
+      client_id: clientId,
+      seller_id: seller || prev.seller_id,
+      notes,
+      delivery_date: delivery || prev.delivery_date,
+    }));
+    setPrefilledFromLead(true);
+    setDialogOpen(true);
+  }, [searchParams, leads, editingSale]);
 
   const filteredSales = sales.filter(
     (s: any) => s.sale_number?.toString().includes(searchTerm) ||
