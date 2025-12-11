@@ -61,6 +61,7 @@ export const usePipelineStages = () => {
   return {
     stages,
     isLoading,
+    error: null,
     createStage,
     updateStage,
     deleteStage,

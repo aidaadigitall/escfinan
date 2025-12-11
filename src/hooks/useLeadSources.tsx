@@ -21,8 +21,8 @@ export const useLeadSources = () => {
   const [isLoading] = useState(false);
 
   const createSource = {
-    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
-    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutate: (_name: string) => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async (_name: string) => { toast.info("Funcionalidade CRM em desenvolvimento"); },
     isPending: false,
   };
 
