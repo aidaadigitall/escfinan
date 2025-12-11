@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
 const CRM = () => {
-  const { leads, isLoading, moveToPipelineStage } = useLeads();
-  const { stages } = usePipelineStages();
+  const { leads = [], isLoading, moveToPipelineStage } = useLeads();
+  const { stages = [] } = usePipelineStages();
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activityLeadId, setActivityLeadId] = useState<string | null>(null);
@@ -19,17 +19,17 @@ const CRM = () => {
 
   // Agrupar leads por estágio
   const leadsByStage = stages.reduce((acc, stage) => {
-    acc[stage.id] = leads.filter(lead => lead.pipeline_stage_id === stage.id);
+    acc[stage.id] = (leads || []).filter(lead => lead.pipeline_stage_id === stage.id);
     return acc;
   }, {} as Record<string, typeof leads>);
 
   // Leads sem estágio
-  const leadsWithoutStage = leads.filter(lead => !lead.pipeline_stage_id);
+  const leadsWithoutStage = (leads || []).filter(lead => !lead.pipeline_stage_id);
 
   // Métricas
-  const totalLeads = leads.length;
-  const totalValue = leads.reduce((sum, lead) => sum + (lead.expected_value || 0), 0);
-  const wonLeads = leads.filter(lead => lead.status === 'won').length;
+  const totalLeads = (leads || []).length;
+  const totalValue = (leads || []).reduce((sum, lead) => sum + (lead.expected_value || 0), 0);
+  const wonLeads = (leads || []).filter(lead => lead.status === 'won').length;
   const conversionRate = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) : 0;
 
   const handleDragStart = (leadId: string) => {

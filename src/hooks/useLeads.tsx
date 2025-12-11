@@ -66,19 +66,19 @@ export const useLeads = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: leads, isLoading, error } = useQuery({
+  const { data: leads = [], isLoading, error } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select(`
-          *,
-          pipeline_stage:pipeline_stages(id, name, color)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Lead[];
+      if (error) {
+        console.error("Erro ao buscar leads:", error);
+        throw error;
+      }
+      return (data || []) as Lead[];
     },
     enabled: !!user,
   });

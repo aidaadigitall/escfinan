@@ -29,7 +29,7 @@ export const usePipelineStages = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: stages, isLoading } = useQuery({
+  const { data: stages = [], isLoading } = useQuery({
     queryKey: ["pipeline-stages"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,8 +38,11 @@ export const usePipelineStages = () => {
         .eq("is_active", true)
         .order("order", { ascending: true });
 
-      if (error) throw error;
-      return data as PipelineStage[];
+      if (error) {
+        console.error("Erro ao buscar pipeline stages:", error);
+        throw error;
+      }
+      return (data || []) as PipelineStage[];
     },
     enabled: !!user,
   });
