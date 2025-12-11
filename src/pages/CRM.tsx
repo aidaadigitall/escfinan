@@ -213,9 +213,9 @@ const CRM = () => {
                         >
                           + Atividade
                         </Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?lead=${lead.id}`); }}>Orçamento</Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?lead=${lead.id}`); }}>OS</Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?lead=${lead.id}`); }}>Venda</Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?leadId=${lead.id}`); }}>Orçamento</Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?leadId=${lead.id}`); }}>OS</Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?leadId=${lead.id}`); }}>Venda</Button>
                         </div>
                       </div>
                     </div>
