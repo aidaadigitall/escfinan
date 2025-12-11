@@ -38,20 +38,23 @@ Responda sempre em português brasileiro.`;
 - Contas bancárias: ${systemData.accountsCount || 0}`;
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const gatewayUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const requestPayload = {
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+      stream: false,
+    };
+
+    const response = await fetch(gatewayUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        stream: false,
-      }),
+      body: JSON.stringify(requestPayload),
     });
 
     if (!response.ok) {
@@ -68,14 +71,36 @@ Responda sempre em português brasileiro.`;
         );
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error", {
+        status: response.status,
+        statusText: response.statusText,
+        url: gatewayUrl,
+        requestPayload,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText,
+      });
       return new Response(
-        JSON.stringify({ error: "Erro ao processar sua solicitação" }),
+        JSON.stringify({ 
+          error: "Erro ao processar sua solicitação",
+          details: {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText?.slice(0, 1000),
+          }
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const data = await response.json();
+    // Log mínimo para rastrear retorno do gateway
+    try {
+      console.log("AI gateway ok", {
+        model: data.model,
+        usage: data.usage,
+        choice_preview: data.choices?.[0]?.message?.content?.slice(0, 200),
+      });
+    } catch (_) {}
     const aiResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua solicitação.";
 
     return new Response(
