@@ -29,7 +29,7 @@ export const usePipelineStages = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: stages = [], isLoading } = useQuery({
+  const { data: stages = [], isLoading, error } = useQuery({
     queryKey: ["pipeline-stages"],
     queryFn: async () => {
       const { data, error } = await supabase

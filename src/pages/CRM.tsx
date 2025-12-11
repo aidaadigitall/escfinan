@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
 const CRM = () => {
-  const { leads = [], isLoading, moveToPipelineStage } = useLeads();
-  const { stages = [] } = usePipelineStages();
+  const { leads = [], isLoading: loadingLeads, error: errorLeads, moveToPipelineStage } = useLeads();
+  const { stages = [], isLoading: loadingStages, error: errorStages } = usePipelineStages();
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activityLeadId, setActivityLeadId] = useState<string | null>(null);
@@ -60,10 +60,21 @@ const CRM = () => {
     setIsLeadDialogOpen(true);
   };
 
-  if (isLoading) {
+  if (loadingLeads || loadingStages) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (errorLeads || errorStages) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center space-y-2">
+          <p className="text-red-500 font-medium">Erro ao carregar CRM.</p>
+          <p className="text-sm text-muted-foreground">Tente recarregar a página. Se persistir, verifique políticas RLS das tabelas leads e pipeline_stages.</p>
+        </div>
       </div>
     );
   }
