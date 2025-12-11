@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useCreateProject, useUpdateProject, type Project } from "@/hooks/useProjects";
 import { useClients } from "@/hooks/useClients";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 
 const projectSchema = z.object({
   name: z.string().min(1, "Nome obrigatório"),
@@ -29,6 +30,7 @@ const projectSchema = z.object({
   description: z.string().optional(),
   client_id: z.string().optional(),
   project_type: z.enum(["fixed_price", "time_material", "retainer", "internal"]).optional(),
+  payment_method_id: z.string().optional(),
   budget_amount: z.number().min(0).default(0),
   budget_hours: z.number().min(0).default(0),
   hourly_rate: z.number().min(0).optional(),
@@ -51,10 +53,15 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const [selectedType, setSelectedType] = useState<string>(project?.project_type || "fixed_price");
   const [selectedStatus, setSelectedStatus] = useState<string>(project?.status || "planning");
   const [selectedPriority, setSelectedPriority] = useState<string>(project?.priority || "medium");
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
 
   const { data: clients } = useClients();
+  const { data: paymentMethods } = usePaymentMethods();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
+  
+  // Buscar dados do cliente selecionado
+  const selectedClient = clients?.find(c => c.id === selectedClientId);
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -167,7 +174,17 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
               <Label htmlFor="client_id">Cliente</Label>
               <Select
                 value={form.watch("client_id")}
-                onValueChange={(value) => form.setValue("client_id", value)}
+                onValueChange={(value) => {
+                  form.setValue("client_id", value);
+                  setSelectedClientId(value);
+                  // Auto-preencher código do projeto
+                  const client = clients?.find(c => c.id === value);
+                  if (client && !project) {
+                    const initials = client.name.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 3);
+                    const code = `${initials}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                    form.setValue("code", code);
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o cliente" />
@@ -180,6 +197,11 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   ))}
                 </SelectContent>
               </Select>
+              {selectedClient && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  📧 {selectedClient.email} | 📞 {selectedClient.phone}
+                </p>
+              )}
             </div>
 
             {/* Tipo de Projeto */}
@@ -231,6 +253,26 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
               </Select>
             </div>
 
+            {/* Forma de Pagamento */}
+            <div>
+              <Label htmlFor="payment_method_id">Forma de Pagamento</Label>
+              <Select
+                value={form.watch("payment_method_id")}
+                onValueChange={(value) => form.setValue("payment_method_id", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a forma de pagamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {paymentMethods?.map((method) => (
+                    <SelectItem key={method.id} value={method.id}>
+                      {method.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Orçamento */}
             <div>
               <Label htmlFor="budget_amount">Orçamento (R$)</Label>
@@ -240,6 +282,16 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 step="0.01"
                 {...form.register("budget_amount", { valueAsNumber: true })}
                 placeholder="0,00"
+                onFocus={(e) => {
+                  if (e.target.value === '0' || e.target.value === '0.00') {
+                    e.target.value = '';
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === '') {
+                    form.setValue('budget_amount', 0);
+                  }
+                }}
               />
             </div>
 
@@ -252,19 +304,47 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 step="0.5"
                 {...form.register("budget_hours", { valueAsNumber: true })}
                 placeholder="0"
+                onFocus={(e) => {
+                  if (e.target.value === '0') {
+                    e.target.value = '';
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === '') {
+                    form.setValue('budget_hours', 0);
+                  }
+                }}
               />
             </div>
 
             {/* Taxa Horária */}
             <div>
-              <Label htmlFor="hourly_rate">Taxa Horária (R$)</Label>
+              <Label htmlFor="hourly_rate" className="flex items-center gap-2">
+                Taxa Horária (R$)
+                <span className="text-xs text-muted-foreground" title="Valor cobrado por hora trabalhada. Multiplica pelas horas para calcular custo total do projeto.">
+                  ℹ️
+                </span>
+              </Label>
               <Input
                 id="hourly_rate"
                 type="number"
                 step="0.01"
                 {...form.register("hourly_rate", { valueAsNumber: true })}
                 placeholder="0,00"
+                onFocus={(e) => {
+                  if (e.target.value === '0' || e.target.value === '0.00') {
+                    e.target.value = '';
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === '') {
+                    e.target.value = '0';
+                  }
+                }}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                💡 Usado para calcular custo das horas trabalhadas
+              </p>
             </div>
 
             {/* Data Início */}
