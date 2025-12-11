@@ -31,10 +31,15 @@ export const useClients = () => {
       const { data, error } = await supabase
         .from("clients")
         .select("*")
+        .eq("is_active", true)
         .order("name");
 
-      if (error) throw error;
-      return data as Client[];
+      if (error) {
+        console.error("Erro ao buscar clientes:", error);
+        throw error;
+      }
+      console.log("Clientes encontrados:", data?.length);
+      return (data || []) as Client[];
     },
   });
 

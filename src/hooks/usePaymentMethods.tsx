@@ -22,10 +22,15 @@ export const usePaymentMethods = () => {
       const { data, error } = await supabase
         .from("payment_methods")
         .select("*")
+        .eq("is_active", true)
         .order("name");
 
-      if (error) throw error;
-      return data.map(m => ({
+      if (error) {
+        console.error("Erro ao buscar formas de pagamento:", error);
+        throw error;
+      }
+      console.log("Formas de pagamento encontradas:", data?.length);
+      return (data || []).map(m => ({
         ...m,
         fee_type: (m as any).fee_type || "percentage"
       })) as PaymentMethod[];

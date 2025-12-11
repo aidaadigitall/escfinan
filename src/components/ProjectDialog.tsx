@@ -55,10 +55,14 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const [selectedPriority, setSelectedPriority] = useState<string>(project?.priority || "medium");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
 
-  const { data: clients } = useClients();
-  const { data: paymentMethods } = usePaymentMethods();
+  const { data: clients = [], isLoading: loadingClients } = useClients();
+  const { data: paymentMethods = [], isLoading: loadingPaymentMethods } = usePaymentMethods();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
+  
+  // Debug: ver se os dados estão carregando
+  console.log('Clientes carregados:', clients?.length, clients);
+  console.log('Formas de pagamento:', paymentMethods?.length, paymentMethods);
   
   // Buscar dados do cliente selecionado
   const selectedClient = clients?.find(c => c.id === selectedClientId);
