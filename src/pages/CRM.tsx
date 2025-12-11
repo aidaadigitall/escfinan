@@ -199,13 +199,14 @@ const CRM = () => {
                         <p className="text-xs text-muted-foreground">{lead.phone}</p>
                       )}
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center gap-1 mt-2">
                         <Badge variant="secondary" className="text-xs">
                           {lead.probability || 0}%
                         </Badge>
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="text-xs h-7 px-2"
                           onClick={(e) => {
                             e.stopPropagation();
                             setActivityLeadId(lead.id);
@@ -213,10 +214,9 @@ const CRM = () => {
                         >
                           + Atividade
                         </Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?leadId=${lead.id}`); }}>Orçamento</Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?leadId=${lead.id}`); }}>OS</Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?leadId=${lead.id}`); }}>Venda</Button>
-                        </div>
+                        <Button size="sm" variant="outline" className="text-xs h-7 px-2" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?leadId=${lead.id}`); }}>Orçamento</Button>
+                        <Button size="sm" variant="outline" className="text-xs h-7 px-2" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?leadId=${lead.id}`); }}>OS</Button>
+                        <Button size="sm" variant="outline" className="text-xs h-7 px-2" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?leadId=${lead.id}`); }}>Venda</Button>
                       </div>
                     </div>
                   </Card>

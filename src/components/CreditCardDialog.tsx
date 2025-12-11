@@ -113,9 +113,15 @@ export const CreditCardDialog = ({ open, onOpenChange, card, onSave }: CreditCar
               <Input
                 id="card_number"
                 value={formData.card_number}
-                onChange={(e) => setFormData({ ...formData, card_number: e.target.value.slice(0, 4) })}
+                onChange={(e) => {
+                  // Only allow digits and max 4 characters
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setFormData({ ...formData, card_number: value });
+                }}
                 placeholder="1234"
                 maxLength={4}
+                pattern="[0-9]{4}"
+                inputMode="numeric"
                 required
               />
             </div>
