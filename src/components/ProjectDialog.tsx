@@ -61,8 +61,8 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
-  const { data: clients = [], isLoading: loadingClients } = useClients();
-  const { data: paymentMethods = [], isLoading: loadingPaymentMethods } = usePaymentMethods();
+  const { clients, isLoading: loadingClients } = useClients();
+  const { paymentMethods, isLoading: loadingPaymentMethods } = usePaymentMethods();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   

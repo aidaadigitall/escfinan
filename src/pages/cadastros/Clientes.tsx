@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useClients, Client } from "@/hooks/useClients";
+import { useClients, usePaginatedClients, Client } from "@/hooks/useClients";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,52 +27,32 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdvancedSearchBar, AdvancedFilters } from "@/components/AdvancedSearchBar";
 
 const Clientes = () => {
-  const { clients, isLoading, createClient, updateClient, deleteClient } = useClients();
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [page, setPage] = useState<number>(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({ type: "all", status: "all" });
+
+  const { clients: paginatedClients, totalCount: totalItems, isLoading, createClient, updateClient, deleteClient } = usePaginatedClients({
+    page,
+    pageSize,
+    searchTerm,
+    filters: advancedFilters
+  });
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [formData, setFormData] = useState<Partial<Client> & { document_type?: string }>({});
-  const [searchTerm, setSearchTerm] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
-  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({ type: "all", status: "all" });
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = page;
 
-  const applyClientFilters = (c: Client) => {
-    // Texto livre
-    const textMatch =
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (c.cnpj && c.cnpj.includes(searchTerm)) ||
-      (c.cpf && c.cpf.includes(searchTerm));
-
-    // Tipo
-    const typeOk =
-      advancedFilters.type === "all" ||
-      (advancedFilters.type === "pf" && !!c.cpf) ||
-      (advancedFilters.type === "pj" && !!c.cnpj);
-
-    // Código (usa id)
-    const codeOk = !advancedFilters.code || (c.id || "").toString().includes(advancedFilters.code);
-
-    // Campos específicos
-    const nameOk = !advancedFilters.name || c.name.toLowerCase().includes(advancedFilters.name.toLowerCase());
-    const docOk = !advancedFilters.cpfCnpj || (c.cpf || c.cnpj || "").includes(advancedFilters.cpfCnpj);
-    const phoneOk = !advancedFilters.phone || (c.phone || "").includes(advancedFilters.phone);
-    const emailOk = !advancedFilters.email || (c.email || "").toLowerCase().includes(advancedFilters.email.toLowerCase());
-    const cityOk = !advancedFilters.city || (c.city || "").toLowerCase().includes(advancedFilters.city.toLowerCase());
-    const stateOk = !advancedFilters.state || (c.state || "").toLowerCase().includes(advancedFilters.state.toLowerCase());
-
-    // Status
-    const statusOk =
-      advancedFilters.status === "all" ||
-      (advancedFilters.status === "active" && !!c.is_active) ||
-      (advancedFilters.status === "inactive" && !c.is_active);
-
-    return textMatch && typeOk && codeOk && nameOk && docOk && phoneOk && emailOk && cityOk && stateOk && statusOk;
-  };
-
-  const filteredClients = clients.filter(applyClientFilters);
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, advancedFilters, pageSize]);
 
   useEffect(() => {
     if (editingClient) {
@@ -229,6 +209,24 @@ const Clientes = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="border-0"
           />
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Itens por página</span>
+            <select
+              className="border rounded px-2 py-1 text-sm"
+              value={pageSize}
+              onChange={(e) => {
+                const newSize = parseInt(e.target.value) || 50;
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            >
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={150}>150</option>
+              <option value={300}>300</option>
+            </select>
+          </div>
         </div>
 
         <AdvancedSearchBar
@@ -256,7 +254,7 @@ const Clientes = () => {
                   <Loader className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ) : filteredClients.map((cliente) => (
+            ) : paginatedClients.map((cliente) => (
               <TableRow key={cliente.id}>
                 <TableCell>{cliente.name}</TableCell>
                 <TableCell>{cliente.cpf || cliente.cnpj}</TableCell>
@@ -296,6 +294,29 @@ const Clientes = () => {
             ))}
           </TableBody>
         </Table>
+
+        <div className="p-4 border-t flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            Exibindo {paginatedClients.length} de {totalItems}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              disabled={currentPage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm">Página {currentPage} / {totalPages}</span>
+            <Button
+              variant="outline"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Próxima
+            </Button>
+          </div>
+        </div>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

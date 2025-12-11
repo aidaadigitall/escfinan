@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Plus, Users, TrendingUp, DollarSign } from "lucide-react";
@@ -9,6 +9,7 @@ import { LeadDialog } from "@/components/LeadDialog";
 import { LeadActivityDialog } from "@/components/LeadActivityDialog";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 const CRM = () => {
   const navigate = useNavigate();
@@ -17,7 +18,37 @@ const CRM = () => {
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activityLeadId, setActivityLeadId] = useState<string | null>(null);
-  const [draggedLead, setDraggedLead] = useState<string | null>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    // Only enable drag scrolling if clicking on the background (not on a card)
+    if ((e.target as HTMLElement).closest('.draggable-card')) return;
+    
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed multiplier
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   // Agrupar leads por estágio
   const leadsByStage = stages.reduce((acc, stage) => {
@@ -34,22 +65,26 @@ const CRM = () => {
   const wonLeads = (leads || []).filter(lead => lead.status === 'won').length;
   const conversionRate = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) : 0;
 
-  const handleDragStart = (leadId: string) => {
-    setDraggedLead(leadId);
-  };
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = async (stageId: string) => {
-    if (draggedLead) {
-      await moveToPipelineStage.mutateAsync({
-        leadId: draggedLead,
-        stageId,
-      });
-      setDraggedLead(null);
+    if (!destination) {
+      return;
     }
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const stageId = destination.droppableId;
+    
+    moveToPipelineStage.mutate({
+      leadId: draggableId,
+      stageId: stageId,
+    });
   };
 
   const handleEditLead = (lead: any) => {
@@ -139,127 +174,178 @@ const CRM = () => {
       </div>
 
       {/* Funil Kanban */}
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {stages.map((stage) => (
-          <div
-            key={stage.id}
-            className="min-w-[300px] flex-shrink-0"
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(stage.id)}
-          >
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: stage.color }}
-                    />
-                    <h3 className="font-semibold">{stage.name}</h3>
-                  </div>
-                  <Badge variant="secondary">
-                    {leadsByStage[stage.id]?.length || 0}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {formatCurrency(
-                    leadsByStage[stage.id]?.reduce((sum, l) => sum + (l.expected_value || 0), 0) || 0
-                  )}
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-2 max-h-[600px] overflow-y-auto">
-                {leadsByStage[stage.id]?.map((lead) => (
-                  <Card
-                    key={lead.id}
-                    className="p-3 cursor-move hover:shadow-md transition-shadow"
-                    draggable
-                    onDragStart={() => handleDragStart(lead.id)}
-                    onClick={() => handleEditLead(lead)}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-semibold text-sm">{lead.name}</p>
-                          {lead.company && (
-                            <p className="text-xs text-muted-foreground">{lead.company}</p>
-                          )}
-                        </div>
-                        {lead.expected_value && (
-                          <Badge variant="outline" className="text-xs">
-                            {formatCurrency(lead.expected_value)}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {lead.email && (
-                        <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
-                      )}
-
-                      {lead.phone && (
-                        <p className="text-xs text-muted-foreground">{lead.phone}</p>
-                      )}
-
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-250px)] cursor-grab active:cursor-grabbing select-none custom-scrollbar"
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+        >
+          {stages.map((stage) => (
+            <Droppable key={stage.id} droppableId={stage.id}>
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="min-w-[320px] flex-shrink-0 h-full"
+                >
+                  <Card className="h-full flex flex-col bg-muted/30 border-muted">
+                    <CardHeader className="pb-3 flex-shrink-0">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-xs">
-                          {lead.probability || 0}%
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActivityLeadId(lead.id);
-                          }}
-                        >
-                          + Atividade
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?leadId=${lead.id}`); }}>Orçamento</Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?leadId=${lead.id}`); }}>OS</Button>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?leadId=${lead.id}`); }}>Venda</Button>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: stage.color }}
+                          />
+                          <h3 className="font-semibold text-sm uppercase tracking-wider">{stage.name}</h3>
                         </div>
+                        <Badge variant="secondary" className="bg-background">
+                          {leadsByStage[stage.id]?.length || 0}
+                        </Badge>
                       </div>
-                    </div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {formatCurrency(
+                          leadsByStage[stage.id]?.reduce((sum, l) => sum + (l.expected_value || 0), 0) || 0
+                        )}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                      {leadsByStage[stage.id]?.map((lead, index) => (
+                        <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              style={{ ...provided.draggableProps.style }}
+                              className="mb-2 draggable-card"
+                            >
+                              <Card
+                                className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all border-l-4 ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20 rotate-2" : ""}`}
+                                style={{ borderLeftColor: stage.color }}
+                                onClick={() => handleEditLead(lead)}
+                              >
+                                <div className="space-y-2">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="font-semibold text-sm truncate">{lead.name}</p>
+                                      {lead.company && (
+                                        <p className="text-xs text-muted-foreground truncate">{lead.company}</p>
+                                      )}
+                                    </div>
+                                    {lead.expected_value && (
+                                      <Badge variant="outline" className="text-[10px] px-1 h-5 whitespace-nowrap bg-background">
+                                        {formatCurrency(lead.expected_value)}
+                                      </Badge>
+                                    )}
+                                  </div>
+
+                                  {(lead.email || lead.phone) && (
+                                    <div className="space-y-0.5">
+                                      {lead.email && (
+                                        <p className="text-[10px] text-muted-foreground truncate">{lead.email}</p>
+                                      )}
+                                      {lead.phone && (
+                                        <p className="text-[10px] text-muted-foreground">{lead.phone}</p>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-between gap-2 pt-1">
+                                    <Badge variant={lead.probability > 70 ? "default" : "secondary"} className="text-[10px] h-5">
+                                      {lead.probability || 0}%
+                                    </Badge>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-6 w-6"
+                                        title="Nova Atividade"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActivityLeadId(lead.id);
+                                        }}
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex gap-1 pt-1 border-t mt-1">
+                                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 flex-1" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?leadId=${lead.id}`); }}>Orçamento</Button>
+                                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 flex-1" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?leadId=${lead.id}`); }}>OS</Button>
+                                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 flex-1" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?leadId=${lead.id}`); }}>Venda</Button>
+                                  </div>
+                                </div>
+                              </Card>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                      {(!leadsByStage[stage.id] || leadsByStage[stage.id].length === 0) && (
+                        <div className="h-24 border-2 border-dashed border-muted-foreground/20 rounded-lg flex items-center justify-center">
+                          <p className="text-xs text-muted-foreground">Arraste leads para cá</p>
+                        </div>
+                      )}
+                    </CardContent>
                   </Card>
-                ))}
-
-                {(!leadsByStage[stage.id] || leadsByStage[stage.id].length === 0) && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum lead neste estágio
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ))}
-
-        {/* Leads sem estágio */}
-        {leadsWithoutStage.length > 0 && (
-          <div className="min-w-[300px] flex-shrink-0">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Sem Estágio</h3>
-                  <Badge variant="secondary">{leadsWithoutStage.length}</Badge>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {leadsWithoutStage.map((lead) => (
-                  <Card
-                    key={lead.id}
-                    className="p-3 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleEditLead(lead)}
-                  >
-                    <p className="font-semibold text-sm">{lead.name}</p>
-                    {lead.company && (
-                      <p className="text-xs text-muted-foreground">{lead.company}</p>
-                    )}
+              )}
+            </Droppable>
+          ))}
+
+          {/* Leads sem estágio */}
+          {leadsWithoutStage.length > 0 && (
+            <Droppable droppableId="no-stage">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="min-w-[320px] flex-shrink-0 h-full"
+                >
+                  <Card className="h-full flex flex-col bg-muted/30 border-muted">
+                    <CardHeader className="pb-3 flex-shrink-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-sm uppercase tracking-wider">Sem Estágio</h3>
+                        <Badge variant="secondary" className="bg-background">{leadsWithoutStage.length}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                      {leadsWithoutStage.map((lead, index) => (
+                        <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              style={{ ...provided.draggableProps.style }}
+                              className="mb-2 draggable-card"
+                            >
+                              <Card
+                                className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20 rotate-2" : ""}`}
+                                onClick={() => handleEditLead(lead)}
+                              >
+                                <p className="font-semibold text-sm">{lead.name}</p>
+                                {lead.company && (
+                                  <p className="text-xs text-muted-foreground">{lead.company}</p>
+                                )}
+                              </Card>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </CardContent>
                   </Card>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
+                </div>
+              )}
+            </Droppable>
+          )}
+        </div>
+      </DragDropContext>
 
       {/* Dialogs */}
       <LeadDialog

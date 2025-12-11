@@ -71,6 +71,8 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
         email: data.email || undefined,
         expected_value: data.expected_value ? Number(data.expected_value) : undefined,
         probability: data.probability ? Number(data.probability) : undefined,
+        pipeline_stage_id: data.pipeline_stage_id || undefined,
+        expected_close_date: data.expected_close_date || undefined,
       };
 
       if (lead) {
@@ -79,6 +81,8 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
         await createLead.mutateAsync(formattedData);
       }
       onOpenChange(false);
+    } catch (error) {
+      console.error("Erro ao salvar lead:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -173,7 +177,7 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
                 </SelectContent>
               </Select>
               <Button type="button" variant="ghost" size="sm" onClick={() => setLeadSourceDialogOpen(true)}>
-                + Nova origem
+                + Gerenciar origens
               </Button>
             </div>
           </div>

@@ -16,8 +16,8 @@ export const useLeadSources = () => {
     queryKey: ["lead_sources"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from("lead_sources")
+        const { data, error } = await (supabase as any)
+          .from("lead_sources" as any)
           .select("*")
           .eq("is_active", true)
           .order("name");
@@ -36,8 +36,8 @@ export const useLeadSources = () => {
   const createSource = useMutation({
     mutationFn: async (name: string) => {
       const { data: userData } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("lead_sources")
+      const { data, error } = await (supabase as any)
+        .from("lead_sources" as any)
         .insert({ name, user_id: userData?.user?.id })
         .select()
         .single();
@@ -49,5 +49,18 @@ export const useLeadSources = () => {
     },
   });
 
-  return { sources, isLoading, createSource };
+  const deleteSource = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any)
+        .from("lead_sources" as any)
+        .update({ is_active: false })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead_sources"] });
+    },
+  });
+
+  return { sources, isLoading, createSource, deleteSource };
 };

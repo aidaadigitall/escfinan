@@ -70,8 +70,8 @@ export const useLeads = () => {
     queryKey: ["leads"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from("leads")
+        const { data, error } = await (supabase as any)
+          .from("leads" as any)
           .select("*")
           .order("created_at", { ascending: false });
 
@@ -90,8 +90,8 @@ export const useLeads = () => {
 
   const createLead = useMutation({
     mutationFn: async (leadData: LeadFormData) => {
-      const { data, error } = await supabase
-        .from("leads")
+      const { data, error } = await (supabase as any)
+        .from("leads" as any)
         .insert([{
           ...leadData,
           user_id: user?.id,
@@ -115,8 +115,8 @@ export const useLeads = () => {
 
   const updateLead = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<LeadFormData> }) => {
-      const { data: updated, error } = await supabase
-        .from("leads")
+      const { data: updated, error } = await (supabase as any)
+        .from("leads" as any)
         .update(data)
         .eq("id", id)
         .select()
@@ -136,8 +136,8 @@ export const useLeads = () => {
 
   const deleteLead = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("leads")
+      const { error } = await (supabase as any)
+        .from("leads" as any)
         .delete()
         .eq("id", id);
 
@@ -167,8 +167,8 @@ export const useLeads = () => {
       };
     }) => {
       // 1. Criar o cliente
-      const { data: client, error: clientError } = await supabase
-        .from("clients")
+      const { data: client, error: clientError } = await (supabase as any)
+        .from("clients" as any)
         .insert([{
           ...clientData,
           user_id: user?.id,
@@ -179,8 +179,8 @@ export const useLeads = () => {
       if (clientError) throw clientError;
 
       // 2. Atualizar o lead
-      const { error: leadError } = await supabase
-        .from("leads")
+      const { error: leadError } = await (supabase as any)
+        .from("leads" as any)
         .update({
           converted_to_client: true,
           client_id: client.id,
@@ -205,8 +205,8 @@ export const useLeads = () => {
 
   const moveToPipelineStage = useMutation({
     mutationFn: async ({ leadId, stageId }: { leadId: string; stageId: string }) => {
-      const { error } = await supabase
-        .from("leads")
+      const { error } = await (supabase as any)
+        .from("leads" as any)
         .update({ 
           pipeline_stage_id: stageId,
           last_activity_date: new Date().toISOString(),
