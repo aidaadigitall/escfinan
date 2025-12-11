@@ -3,6 +3,8 @@ import { useServices, Service } from "@/hooks/useServices";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -267,13 +269,12 @@ const Servicos = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: !!checked })}
                 id="is_active"
               />
-              <label htmlFor="is_active" className="text-sm font-medium">Ativo</label>
+              <Label htmlFor="is_active">Ativo</Label>
             </div>
           </div>
 

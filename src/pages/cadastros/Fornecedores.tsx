@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Table,
@@ -447,11 +448,10 @@ const Fornecedores = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={formData.is_active}
-                onChange={(e) =>
-                  setFormData({ ...formData, is_active: e.target.checked })
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, is_active: !!checked })
                 }
                 id="is_active"
               />
