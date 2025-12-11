@@ -7,6 +7,8 @@ import { useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PeriodFilter } from "@/components/PeriodFilter";
+import { FinancialDashboard } from "@/components/FinancialDashboard";
+import { BarChart3 } from "lucide-react";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088fe", "#00c49f", "#ffbb28"];
 
@@ -163,13 +165,21 @@ export default function RelatoriosGerenciais() {
         </div>
       </div>
 
-      <Tabs defaultValue="distribuicao" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="dashboard" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="dashboard" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </TabsTrigger>
           <TabsTrigger value="distribuicao">Distribuição</TabsTrigger>
           <TabsTrigger value="evolucao">Evolução</TabsTrigger>
           <TabsTrigger value="comparativos">Comparativos</TabsTrigger>
           <TabsTrigger value="tendencias">Tendências</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard">
+          <FinancialDashboard />
+        </TabsContent>
 
         <TabsContent value="distribuicao" className="space-y-6">
           <div className="mb-4">
