@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export interface LeadSource {
   id: string;
@@ -9,45 +9,22 @@ export interface LeadSource {
   created_at: string;
 }
 
+// Hook stub - CRM tables not yet implemented in database
 export const useLeadSources = () => {
-  const queryClient = useQueryClient();
+  const [sources] = useState<LeadSource[]>([
+    { id: "1", user_id: "", name: "Website", is_active: true, created_at: new Date().toISOString() },
+    { id: "2", user_id: "", name: "Indicação", is_active: true, created_at: new Date().toISOString() },
+    { id: "3", user_id: "", name: "Redes Sociais", is_active: true, created_at: new Date().toISOString() },
+    { id: "4", user_id: "", name: "Google", is_active: true, created_at: new Date().toISOString() },
+    { id: "5", user_id: "", name: "Evento", is_active: true, created_at: new Date().toISOString() },
+  ]);
+  const [isLoading] = useState(false);
 
-  const { data: sources = [], isLoading } = useQuery({
-    queryKey: ["lead_sources"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("lead_sources")
-          .select("*")
-          .eq("is_active", true)
-          .order("name");
-        if (error) {
-          console.error("Erro ao buscar lead_sources:", error);
-          return [] as LeadSource[];
-        }
-        return (data || []) as LeadSource[];
-      } catch (err) {
-        console.error("Exceção ao buscar lead_sources:", err);
-        return [] as LeadSource[];
-      }
-    },
-  });
-
-  const createSource = useMutation({
-    mutationFn: async (name: string) => {
-      const { data: userData } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("lead_sources")
-        .insert({ name, user_id: userData?.user?.id })
-        .select()
-        .single();
-      if (error) throw error;
-      return data as LeadSource;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead_sources"] });
-    },
-  });
+  const createSource = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
   return { sources, isLoading, createSource };
 };

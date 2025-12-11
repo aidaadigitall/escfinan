@@ -1,7 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useAuth } from "./useAuth";
 
 export interface Lead {
   id: string;
@@ -62,171 +60,45 @@ export interface LeadFormData {
   notes?: string;
 }
 
+// Hook stub - CRM tables not yet implemented in database
 export const useLeads = () => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const [leads] = useState<Lead[]>([]);
+  const [isLoading] = useState(false);
 
-  const { data: leads = [], isLoading, error } = useQuery({
-    queryKey: ["leads"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("leads")
-          .select("*")
-          .order("created_at", { ascending: false });
+  const createLead = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
-        if (error) {
-          console.error("Erro ao buscar leads:", error);
-          return [] as Lead[];
-        }
-        return (data || []) as Lead[];
-      } catch (err) {
-        console.error("Exceção ao buscar leads:", err);
-        return [] as Lead[];
-      }
-    },
-    enabled: !!user,
-  });
+  const updateLead = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
-  const createLead = useMutation({
-    mutationFn: async (leadData: LeadFormData) => {
-      const { data, error } = await supabase
-        .from("leads")
-        .insert([{
-          ...leadData,
-          user_id: user?.id,
-          owner_user_id: user?.id,
-          created_by: user?.id,
-        }])
-        .select()
-        .single();
+  const deleteLead = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success("Lead criado com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao criar lead: " + error.message);
-    },
-  });
+  const convertToClient = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
-  const updateLead = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<LeadFormData> }) => {
-      const { data: updated, error } = await supabase
-        .from("leads")
-        .update(data)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return updated;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success("Lead atualizado com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao atualizar lead: " + error.message);
-    },
-  });
-
-  const deleteLead = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("leads")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success("Lead excluído com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao excluir lead: " + error.message);
-    },
-  });
-
-  const convertToClient = useMutation({
-    mutationFn: async ({ leadId, clientData }: { 
-      leadId: string; 
-      clientData: {
-        name: string;
-        email?: string;
-        phone?: string;
-        document?: string;
-        address?: string;
-        city?: string;
-        state?: string;
-        zip_code?: string;
-      };
-    }) => {
-      // 1. Criar o cliente
-      const { data: client, error: clientError } = await supabase
-        .from("clients")
-        .insert([{
-          ...clientData,
-          user_id: user?.id,
-        }])
-        .select()
-        .single();
-
-      if (clientError) throw clientError;
-
-      // 2. Atualizar o lead
-      const { error: leadError } = await supabase
-        .from("leads")
-        .update({
-          converted_to_client: true,
-          client_id: client.id,
-          converted_at: new Date().toISOString(),
-          status: 'won',
-        })
-        .eq("id", leadId);
-
-      if (leadError) throw leadError;
-
-      return { client, leadId };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-      toast.success("Lead convertido em cliente com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao converter lead: " + error.message);
-    },
-  });
-
-  const moveToPipelineStage = useMutation({
-    mutationFn: async ({ leadId, stageId }: { leadId: string; stageId: string }) => {
-      const { error } = await supabase
-        .from("leads")
-        .update({ 
-          pipeline_stage_id: stageId,
-          last_activity_date: new Date().toISOString(),
-        })
-        .eq("id", leadId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao mover lead: " + error.message);
-    },
-  });
+  const moveToPipelineStage = {
+    mutate: () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    mutateAsync: async () => toast.info("Funcionalidade CRM em desenvolvimento"),
+    isPending: false,
+  };
 
   return {
-    leads: leads || [],
+    leads,
     isLoading,
-    error,
+    error: null,
     createLead,
     updateLead,
     deleteLead,

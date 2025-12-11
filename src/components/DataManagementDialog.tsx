@@ -108,23 +108,87 @@ export function DataManagementDialog({ open, onOpenChange }: DataManagementDialo
       if (!user) throw new Error("Usuário não autenticado");
 
       // Delete data in reverse dependency order
-      // First delete audit records (no FK constraint on transaction_id for deletes)
-      await supabase.from("bank_balance_audit").delete().eq("user_id", user.id);
-      await supabase.from("credit_card_transactions").delete().eq("user_id", user.id);
-      await supabase.from("transaction_status_history").delete().eq("user_id", user.id);
-      await supabase.from("notifications").delete().eq("user_id", user.id);
-      await supabase.from("transactions").delete().eq("user_id", user.id);
-      await supabase.from("recurring_bills").delete().eq("user_id", user.id);
-      await supabase.from("credit_cards").delete().eq("user_id", user.id);
-      await supabase.from("chart_of_accounts").delete().eq("user_id", user.id);
-      await supabase.from("cost_centers").delete().eq("user_id", user.id);
-      await supabase.from("payment_methods").delete().eq("user_id", user.id);
-      await supabase.from("categories").delete().eq("user_id", user.id);
-      await supabase.from("clients").delete().eq("user_id", user.id);
-      await supabase.from("suppliers").delete().eq("user_id", user.id);
-      await supabase.from("employees").delete().eq("user_id", user.id);
-      await supabase.from("bank_accounts").delete().eq("user_id", user.id);
-      await supabase.from("system_settings").delete().eq("user_id", user.id);
+      // First delete items that reference other tables
+      const { error: e1 } = await supabase.from("task_comments").delete().eq("user_id", user.id);
+      if (e1) console.error("task_comments delete error:", e1);
+      
+      const { error: e2 } = await supabase.from("tasks").delete().eq("user_id", user.id);
+      if (e2) console.error("tasks delete error:", e2);
+      
+      const { error: e3 } = await supabase.from("task_labels").delete().eq("user_id", user.id);
+      if (e3) console.error("task_labels delete error:", e3);
+      
+      const { error: e4 } = await supabase.from("quote_items").delete().eq("user_id", user.id);
+      if (e4) console.error("quote_items delete error:", e4);
+      
+      const { error: e5 } = await supabase.from("quotes").delete().eq("user_id", user.id);
+      if (e5) console.error("quotes delete error:", e5);
+      
+      const { error: e6 } = await supabase.from("sale_items").delete().eq("user_id", user.id);
+      if (e6) console.error("sale_items delete error:", e6);
+      
+      const { error: e7 } = await supabase.from("sales").delete().eq("user_id", user.id);
+      if (e7) console.error("sales delete error:", e7);
+      
+      const { error: e8 } = await supabase.from("service_order_items").delete().eq("user_id", user.id);
+      if (e8) console.error("service_order_items delete error:", e8);
+      
+      const { error: e9 } = await supabase.from("service_orders").delete().eq("user_id", user.id);
+      if (e9) console.error("service_orders delete error:", e9);
+      
+      const { error: e10 } = await supabase.from("stock_movements").delete().eq("user_id", user.id);
+      if (e10) console.error("stock_movements delete error:", e10);
+      
+      const { error: e11 } = await supabase.from("products").delete().eq("user_id", user.id);
+      if (e11) console.error("products delete error:", e11);
+      
+      const { error: e12 } = await supabase.from("services").delete().eq("user_id", user.id);
+      if (e12) console.error("services delete error:", e12);
+      
+      const { error: e13 } = await supabase.from("time_entries").delete().eq("user_id", user.id);
+      if (e13) console.error("time_entries delete error:", e13);
+      
+      const { error: e14 } = await supabase.from("transaction_status_history").delete().eq("user_id", user.id);
+      if (e14) console.error("transaction_status_history delete error:", e14);
+      
+      const { error: e15 } = await supabase.from("notifications").delete().eq("user_id", user.id);
+      if (e15) console.error("notifications delete error:", e15);
+      
+      const { error: e16 } = await supabase.from("credit_card_transactions").delete().eq("user_id", user.id);
+      if (e16) console.error("credit_card_transactions delete error:", e16);
+      
+      const { error: e17 } = await supabase.from("transactions").delete().eq("user_id", user.id);
+      if (e17) console.error("transactions delete error:", e17);
+      
+      const { error: e18 } = await supabase.from("recurring_bills").delete().eq("user_id", user.id);
+      if (e18) console.error("recurring_bills delete error:", e18);
+      
+      const { error: e19 } = await supabase.from("credit_cards").delete().eq("user_id", user.id);
+      if (e19) console.error("credit_cards delete error:", e19);
+      
+      const { error: e20 } = await supabase.from("chart_of_accounts").delete().eq("user_id", user.id);
+      if (e20) console.error("chart_of_accounts delete error:", e20);
+      
+      const { error: e21 } = await supabase.from("cost_centers").delete().eq("user_id", user.id);
+      if (e21) console.error("cost_centers delete error:", e21);
+      
+      const { error: e22 } = await supabase.from("payment_methods").delete().eq("user_id", user.id);
+      if (e22) console.error("payment_methods delete error:", e22);
+      
+      const { error: e23 } = await supabase.from("categories").delete().eq("user_id", user.id);
+      if (e23) console.error("categories delete error:", e23);
+      
+      const { error: e24 } = await supabase.from("clients").delete().eq("user_id", user.id);
+      if (e24) console.error("clients delete error:", e24);
+      
+      const { error: e25 } = await supabase.from("suppliers").delete().eq("user_id", user.id);
+      if (e25) console.error("suppliers delete error:", e25);
+      
+      const { error: e26 } = await supabase.from("employees").delete().eq("user_id", user.id);
+      if (e26) console.error("employees delete error:", e26);
+      
+      const { error: e27 } = await supabase.from("bank_accounts").delete().eq("user_id", user.id);
+      if (e27) console.error("bank_accounts delete error:", e27);
 
       toast.success("Todos os dados foram excluídos com sucesso!");
       setFinalDeleteConfirmOpen(false);
