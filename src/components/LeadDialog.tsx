@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Command, CommandInput, CommandItem, CommandList, CommandEmpty, CommandGroup } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,10 +152,23 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
     }
   };
 
+  // Busca local por clientes
+  const [clientSearch, setClientSearch] = useState("");
+
+  const filteredClients = clients.filter((c) => {
+    const q = clientSearch.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      (c.email || "").toLowerCase().includes(q) ||
+      (c.phone || "").toLowerCase().includes(q) ||
+      (c.company_name || "").toLowerCase().includes(q)
+    );
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent draggable className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="draggable-handle">
           <DialogTitle>{lead ? "Editar Lead" : "Novo Lead"}</DialogTitle>
         </DialogHeader>
 
@@ -176,36 +190,40 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
 
             {showClientSearch && (
               <div className="space-y-2">
-                <Select
-                  value={selectedClientId}
-                  onValueChange={(value) => {
-                    setSelectedClientId(value);
-                    // Preencher dados do cliente no formulário
-                    const client = clients.find(c => c.id === value);
-                    if (client) {
-                      setValue("name", client.name);
-                      setValue("email", client.email || "");
-                      setValue("phone", client.phone || "");
-                      setValue("company", client.company || "");
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um cliente existente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{client.name}</span>
-                          {client.email && (
-                            <span className="text-xs text-muted-foreground">{client.email}</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Command className="border rounded-md">
+                  <CommandInput
+                    placeholder="Pesquise por nome, email, telefone..."
+                    value={clientSearch}
+                    onValueChange={setClientSearch}
+                  />
+                  <CommandList className="max-h-64 overflow-y-auto">
+                    <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                    <CommandGroup heading="Clientes">
+                      {filteredClients.map((client) => (
+                        <CommandItem
+                          key={client.id}
+                          value={client.id}
+                          onSelect={() => {
+                            setSelectedClientId(client.id);
+                            setValue("name", client.name);
+                            setValue("email", client.email || "");
+                            setValue("phone", client.phone || "");
+                            setValue("company", client.company_name || client.company || "");
+                          }}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{client.name}</span>
+                            {(client.email || client.phone) && (
+                              <span className="text-xs text-muted-foreground">
+                                {[client.email, client.phone].filter(Boolean).join(" • ")}
+                              </span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
 
                 <Button
                   type="button"
