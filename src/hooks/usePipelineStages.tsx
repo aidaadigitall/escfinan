@@ -35,7 +35,7 @@ export const usePipelineStages = () => {
       console.log("🔍 Buscando estágios do pipeline para usuário:", user?.id);
       
       const { data, error } = await supabase
-        .from("pipeline_stages" as any)
+        .from("pipeline_stages")
         .select("*")
         .order("order_index", { ascending: true });
 
@@ -70,7 +70,7 @@ export const usePipelineStages = () => {
   const createStage = useMutation({
     mutationFn: async (stageData: PipelineStageFormData) => {
       const { data, error } = await supabase
-        .from("pipeline_stages" as any)
+        .from("pipeline_stages")
         .insert([{
           name: stageData.name,
           description: stageData.description,
@@ -104,7 +104,7 @@ export const usePipelineStages = () => {
       if (data.probability_default !== undefined) updateData.probability_default = data.probability_default;
 
       const { data: updated, error } = await supabase
-        .from("pipeline_stages" as any)
+        .from("pipeline_stages")
         .update(updateData)
         .eq("id", id)
         .select()
@@ -124,7 +124,7 @@ export const usePipelineStages = () => {
 
   const deleteStage = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("pipeline_stages")
         .delete()
         .eq("id", id);
@@ -143,7 +143,7 @@ export const usePipelineStages = () => {
   const reorderStages = useMutation({
     mutationFn: async (orderedIds: string[]) => {
       const updates = orderedIds.map((id, index) => 
-        (supabase as any)
+        supabase
           .from("pipeline_stages")
           .update({ order_index: index })
           .eq("id", id)
