@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { useDashboardPreferences } from "@/hooks/useDashboardPreferences";
 
 type ThemeMode = "light" | "dark" | "auto";
 
@@ -13,11 +12,13 @@ interface ThemeContextType {
   mode: ThemeMode;
   resolvedTheme: "light" | "dark";
   customColors?: ThemeColors;
+  setMode: (mode: ThemeMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   mode: "auto",
   resolvedTheme: "light",
+  setMode: () => {},
 });
 
 export const useTheme = () => {
@@ -33,14 +34,18 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const { preferences } = useDashboardPreferences();
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem("theme-mode");
+    return (saved as ThemeMode) || "auto";
+  });
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
-
-  const mode: ThemeMode = preferences?.theme_mode || "auto";
-  const customColors = preferences?.custom_theme;
+  const [customColors, setCustomColors] = useState<ThemeColors | undefined>();
 
   useEffect(() => {
-    // Detecta a preferência do sistema
+    localStorage.setItem("theme-mode", mode);
+  }, [mode]);
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const updateTheme = () => {
@@ -56,18 +61,14 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
 
       setResolvedTheme(theme);
 
-      // Aplica a classe no elemento raiz
       const root = document.documentElement;
       root.classList.remove("light", "dark");
       root.classList.add(theme);
-
-      // Atualiza o atributo data-theme para compatibilidade
       root.setAttribute("data-theme", theme);
     };
 
     updateTheme();
 
-    // Escuta mudanças na preferência do sistema
     const handleChange = () => {
       if (mode === "auto") {
         updateTheme();
@@ -79,7 +80,6 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   }, [mode]);
 
   useEffect(() => {
-    // Aplica cores customizadas via CSS variables
     if (customColors) {
       const root = document.documentElement;
 
@@ -93,7 +93,6 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
         root.style.setProperty("--theme-accent", customColors.accent);
       }
     } else {
-      // Remove cores customizadas se não houver
       const root = document.documentElement;
       root.style.removeProperty("--theme-primary");
       root.style.removeProperty("--theme-secondary");
@@ -102,7 +101,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   }, [customColors]);
 
   return (
-    <ThemeContext.Provider value={{ mode, resolvedTheme, customColors }}>
+    <ThemeContext.Provider value={{ mode, resolvedTheme, customColors, setMode }}>
       {children}
     </ThemeContext.Provider>
   );
