@@ -210,6 +210,35 @@ export const useLeads = () => {
     },
   });
 
+  const updateLeadStatus = useMutation({
+    mutationFn: async ({ leadId, status }: { leadId: string; status: 'won' | 'lost' | 'active' }) => {
+      const updateData: LeadUpdate = {
+        status,
+        last_activity_date: new Date().toISOString(),
+      };
+
+      // Se ganhou, marcar data de conversão
+      if (status === 'won') {
+        updateData.converted_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from("leads")
+        .update(updateData)
+        .eq("id", leadId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Status do lead atualizado!");
+    },
+    onError: (error: any) => {
+      const message = error?.message || "Erro desconhecido";
+      toast.error("Erro ao atualizar status: " + message);
+    },
+  });
+
   return {
     leads,
     isLoading,
@@ -219,5 +248,6 @@ export const useLeads = () => {
     deleteLead,
     convertToClient,
     moveToPipelineStage,
+    updateLeadStatus,
   };
 };

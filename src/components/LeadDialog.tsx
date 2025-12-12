@@ -8,11 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLeads, Lead, LeadFormData } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
 import { useLeadSources } from "@/hooks/useLeadSources";
+import { useClients } from "@/hooks/useClients";
 import { QuickLeadSourceDialog } from "./QuickLeadSourceDialog";
+import { QuickClientDialog } from "./QuickClientDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
+import { Search, UserPlus } from "lucide-react";
 
 // Validação de telefone brasileiro (aceita vários formatos)
 const phoneRegex = /^(\+55\s?)?(\(?\d{2}\)?[\s.-]?)?\d{4,5}[\s.-]?\d{4}$/;
@@ -65,8 +68,12 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
   const { createLead, updateLead } = useLeads();
   const { stages } = usePipelineStages();
   const { sources } = useLeadSources();
+  const { clients } = useClients();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leadSourceDialogOpen, setLeadSourceDialogOpen] = useState(false);
+  const [quickClientDialogOpen, setQuickClientDialogOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [showClientSearch, setShowClientSearch] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<LeadFormData>({
     resolver: zodResolver(leadSchema),
@@ -79,6 +86,7 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
   useEffect(() => {
     if (open) {
       if (lead) {
+        setSelectedClientId(lead.client_id || "");
         reset({
           name: lead.name,
           email: lead.email || "",
@@ -94,6 +102,7 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
           notes: lead.notes || "",
         });
       } else {
+        setSelectedClientId("");
         reset({
           name: "",
           email: "",
@@ -119,13 +128,14 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
       const expectedValue = data.expected_value ? Number(data.expected_value) : undefined;
       const probability = data.probability ? Number(data.probability) : undefined;
       
-      const formattedData = {
+      const formattedData: any = {
         ...data,
         email: data.email || undefined,
         expected_value: expectedValue && !isNaN(expectedValue) ? expectedValue : undefined,
         probability: probability && !isNaN(probability) ? probability : undefined,
         pipeline_stage_id: data.pipeline_stage_id || undefined,
         expected_close_date: data.expected_close_date || undefined,
+        client_id: selectedClientId || undefined,
       };
 
       if (lead) {
@@ -149,6 +159,81 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Vincular com Cliente */}
+          <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-semibold">Vincular com Cliente</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowClientSearch(!showClientSearch)}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                {showClientSearch ? "Ocultar" : "Buscar Cliente"}
+              </Button>
+            </div>
+
+            {showClientSearch && (
+              <div className="space-y-2">
+                <Select
+                  value={selectedClientId}
+                  onValueChange={(value) => {
+                    setSelectedClientId(value);
+                    // Preencher dados do cliente no formulário
+                    const client = clients.find(c => c.id === value);
+                    if (client) {
+                      setValue("name", client.name);
+                      setValue("email", client.email || "");
+                      setValue("phone", client.phone || "");
+                      setValue("company", client.company || "");
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente existente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{client.name}</span>
+                          {client.email && (
+                            <span className="text-xs text-muted-foreground">{client.email}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setQuickClientDialogOpen(true)}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Criar Novo Cliente
+                </Button>
+
+                {selectedClientId && (
+                  <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      Cliente vinculado: {clients.find(c => c.id === selectedClientId)?.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              💡 Vincule o lead a um cliente para facilitar a conversão em orçamentos, vendas e OS
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome *</Label>
@@ -334,6 +419,14 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
           open={leadSourceDialogOpen}
           onOpenChange={setLeadSourceDialogOpen}
           onSuccess={(name) => setValue("source", name)}
+        />
+        <QuickClientDialog
+          open={quickClientDialogOpen}
+          onOpenChange={setQuickClientDialogOpen}
+          onClientCreated={(clientId) => {
+            setSelectedClientId(clientId);
+            setQuickClientDialogOpen(false);
+          }}
         />
       </DialogContent>
     </Dialog>
