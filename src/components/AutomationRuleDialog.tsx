@@ -38,6 +38,7 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
   const { stages } = usePipelineStages();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actions, setActions] = useState<any[]>(rule?.actions || []);
+  const [triggerConfig, setTriggerConfig] = useState<any>(rule?.trigger_config || {});
 
   const { register, handleSubmit, formState: { errors }, control, watch } = useForm<AutomationRuleFormData>({
     resolver: zodResolver(automationSchema),
@@ -57,6 +58,7 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
       const formattedData = {
         ...data,
         actions,
+        trigger_config: triggerConfig,
       };
 
       if (rule) {
@@ -167,7 +169,10 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
             {triggerType === 'stage_change' && (
               <div className="space-y-2">
                 <Label>Estágio de Destino</Label>
-                <Select>
+                <Select 
+                  value={triggerConfig.stage_id || ""}
+                  onValueChange={(value) => setTriggerConfig({ ...triggerConfig, stage_id: value })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um estágio" />
                   </SelectTrigger>
@@ -185,14 +190,24 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
             {triggerType === 'time_in_stage' && (
               <div className="space-y-2">
                 <Label>Dias no Estágio</Label>
-                <Input type="number" placeholder="Ex: 7" />
+                <Input 
+                  type="number" 
+                  placeholder="Ex: 7" 
+                  value={triggerConfig.days || ""}
+                  onChange={(e) => setTriggerConfig({ ...triggerConfig, days: parseInt(e.target.value) || 0 })}
+                />
               </div>
             )}
 
             {triggerType === 'no_activity' && (
               <div className="space-y-2">
                 <Label>Dias sem Atividade</Label>
-                <Input type="number" placeholder="Ex: 7" />
+                <Input 
+                  type="number" 
+                  placeholder="Ex: 7"
+                  value={triggerConfig.days || ""}
+                  onChange={(e) => setTriggerConfig({ ...triggerConfig, days: parseInt(e.target.value) || 0 })}
+                />
               </div>
             )}
           </div>

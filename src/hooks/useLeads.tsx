@@ -2,37 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
 
-export interface Lead {
-  id: string;
-  user_id: string;
-  owner_user_id?: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  position?: string;
-  source: string;
-  source_details?: string;
-  pipeline_stage_id?: string;
-  status: string;
-  score: number;
-  expected_value?: number;
-  probability?: number;
-  expected_close_date?: string;
-  lost_reason?: string;
-  lost_date?: string;
-  converted_to_client: boolean;
-  client_id?: string;
-  converted_at?: string;
-  assigned_to?: string;
-  first_contact_date?: string;
-  last_contact_date?: string;
-  last_activity_date?: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-  created_by?: string;
+// Tipo derivado do Supabase
+type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
+type LeadUpdate = Database["public"]["Tables"]["leads"]["Update"];
+
+export interface Lead extends LeadRow {
   pipeline_stage?: {
     id: string;
     name: string;
@@ -69,8 +46,8 @@ export const useLeads = () => {
   const { data: leads = [], isLoading, error } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("leads" as any)
+      const { data, error } = await supabase
+        .from("leads")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -86,14 +63,17 @@ export const useLeads = () => {
 
   const createLead = useMutation({
     mutationFn: async (leadData: LeadFormData) => {
-      const { data, error } = await (supabase as any)
-        .from("leads" as any)
-        .insert([{
-          ...leadData,
-          user_id: user?.id,
-          owner_user_id: user?.id,
-          created_by: user?.id,
-        }])
+      const insertData: LeadInsert = {
+        ...leadData,
+        name: leadData.name,
+        user_id: user?.id || "",
+        owner_user_id: user?.id,
+        created_by: user?.id,
+      };
+      
+      const { data, error } = await supabase
+        .from("leads")
+        .insert([insertData])
         .select()
         .single();
 
@@ -105,15 +85,18 @@ export const useLeads = () => {
       toast.success("Lead criado com sucesso!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao criar lead: " + error.message);
+      const message = error?.message || "Erro desconhecido";
+      toast.error("Erro ao criar lead: " + message);
     },
   });
 
   const updateLead = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<LeadFormData> }) => {
-      const { data: updated, error } = await (supabase as any)
-        .from("leads" as any)
-        .update(data)
+      const updateData: LeadUpdate = { ...data };
+      
+      const { data: updated, error } = await supabase
+        .from("leads")
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -126,14 +109,15 @@ export const useLeads = () => {
       toast.success("Lead atualizado com sucesso!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao atualizar lead: " + error.message);
+      const message = error?.message || "Erro desconhecido";
+      toast.error("Erro ao atualizar lead: " + message);
     },
   });
 
   const deleteLead = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
-        .from("leads" as any)
+      const { error } = await supabase
+        .from("leads")
         .delete()
         .eq("id", id);
 
@@ -144,7 +128,8 @@ export const useLeads = () => {
       toast.success("Lead excluído com sucesso!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao excluir lead: " + error.message);
+      const message = error?.message || "Erro desconhecido";
+      toast.error("Erro ao excluir lead: " + message);
     },
   });
 
@@ -163,11 +148,11 @@ export const useLeads = () => {
       };
     }) => {
       // 1. Criar o cliente
-      const { data: client, error: clientError } = await (supabase as any)
-        .from("clients" as any)
+      const { data: client, error: clientError } = await supabase
+        .from("clients")
         .insert([{
           ...clientData,
-          user_id: user?.id,
+          user_id: user?.id || "",
         }])
         .select()
         .single();
@@ -175,8 +160,8 @@ export const useLeads = () => {
       if (clientError) throw clientError;
 
       // 2. Atualizar o lead
-      const { error: leadError } = await (supabase as any)
-        .from("leads" as any)
+      const { error: leadError } = await supabase
+        .from("leads")
         .update({
           converted_to_client: true,
           client_id: client.id,
@@ -195,7 +180,8 @@ export const useLeads = () => {
       toast.success("Lead convertido em cliente com sucesso!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao converter lead: " + error.message);
+      const message = error?.message || "Erro desconhecido";
+      toast.error("Erro ao converter lead: " + message);
     },
   });
 
@@ -204,8 +190,8 @@ export const useLeads = () => {
       // Tratar o caso especial "no-stage" - significa remover do estágio
       const finalStageId = stageId === "no-stage" ? null : stageId;
       
-      const { error } = await (supabase as any)
-        .from("leads" as any)
+      const { error } = await supabase
+        .from("leads")
         .update({ 
           pipeline_stage_id: finalStageId,
           last_activity_date: new Date().toISOString(),
@@ -219,7 +205,8 @@ export const useLeads = () => {
       toast.success("Lead movido com sucesso!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao mover lead: " + error.message);
+      const message = error?.message || "Erro desconhecido";
+      toast.error("Erro ao mover lead: " + message);
     },
   });
 

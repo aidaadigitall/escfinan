@@ -26,9 +26,6 @@ import {
   Cell,
   LineChart,
   Line,
-  FunnelChart,
-  Funnel,
-  LabelList
 } from "recharts";
 import { useMemo } from "react";
 import { differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";

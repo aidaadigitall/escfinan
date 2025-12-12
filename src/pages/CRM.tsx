@@ -1,16 +1,22 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Users, TrendingUp, DollarSign, BarChart3, Workflow, ClipboardList, Sparkles, Settings } from "lucide-react";
+import { Plus, Users, TrendingUp, DollarSign, BarChart3, Workflow, ClipboardList, Sparkles, Settings, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
+import { useLeadSources } from "@/hooks/useLeadSources";
+import { useAllLeadActivities } from "@/hooks/useAllLeadActivities";
+import { useFilteredLeads } from "@/hooks/useFilteredLeads";
 import { LeadDialog } from "@/components/LeadDialog";
 import { LeadActivityDialog } from "@/components/LeadActivityDialog";
+import { LeadCard } from "@/components/LeadCard";
+import { CRMFilters, defaultFilters, LeadFilters } from "@/components/CRMFilters";
 import { CRMAnalytics } from "@/components/CRMAnalytics";
 import { AutomationsList } from "@/components/AutomationsList";
 import { DashboardSettingsDialog } from "@/components/DashboardSettingsDialog";
+import { VirtualizedPipelineColumn } from "@/components/VirtualizedPipelineColumn";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -19,6 +25,13 @@ const CRM = () => {
   const navigate = useNavigate();
   const { leads = [], isLoading: loadingLeads, error: errorLeads, moveToPipelineStage } = useLeads();
   const { stages = [], isLoading: loadingStages, error: errorStages } = usePipelineStages();
+  const { sources = [] } = useLeadSources();
+  const { getActivitiesForLead, metrics: activityMetrics } = useAllLeadActivities();
+  
+  // Filtros
+  const [filters, setFilters] = useState<LeadFilters>(defaultFilters);
+  const { filteredLeads, isFiltered } = useFilteredLeads(leads, filters);
+  
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activityLeadId, setActivityLeadId] = useState<string | null>(null);
@@ -56,19 +69,26 @@ const CRM = () => {
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
+  // Usar leads filtrados para o pipeline
+  const leadsToDisplay = filteredLeads;
+
   // Agrupar leads por estágio
-  const leadsByStage = stages.reduce((acc, stage) => {
-    acc[stage.id] = (leads || []).filter(lead => lead.pipeline_stage_id === stage.id);
-    return acc;
-  }, {} as Record<string, typeof leads>);
+  const leadsByStage = useMemo(() => {
+    return stages.reduce((acc, stage) => {
+      acc[stage.id] = leadsToDisplay.filter(lead => lead.pipeline_stage_id === stage.id);
+      return acc;
+    }, {} as Record<string, typeof leadsToDisplay>);
+  }, [stages, leadsToDisplay]);
 
   // Leads sem estágio
-  const leadsWithoutStage = (leads || []).filter(lead => !lead.pipeline_stage_id);
+  const leadsWithoutStage = useMemo(() => {
+    return leadsToDisplay.filter(lead => !lead.pipeline_stage_id);
+  }, [leadsToDisplay]);
 
-  // Métricas
-  const totalLeads = (leads || []).length;
-  const totalValue = (leads || []).reduce((sum, lead) => sum + (lead.expected_value || 0), 0);
-  const wonLeads = (leads || []).filter(lead => lead.status === 'won').length;
+  // Métricas (dos leads filtrados)
+  const totalLeads = leadsToDisplay.length;
+  const totalValue = leadsToDisplay.reduce((sum, lead) => sum + (lead.expected_value || 0), 0);
+  const wonLeads = leadsToDisplay.filter(lead => lead.status === 'won').length;
   const conversionRate = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) : 0;
 
   const onDragEnd = (result: DropResult) => {
@@ -168,6 +188,44 @@ const CRM = () => {
 
         {/* Aba: Funil de Vendas */}
         <TabsContent value="pipeline" className="space-y-4 mt-6">
+          {/* Filtros */}
+          <CRMFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            stages={stages}
+            sources={sources}
+          />
+
+          {/* Indicador de filtros ativos */}
+          {isFiltered && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Exibindo {totalLeads} de {leads.length} leads</span>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="h-auto p-0 text-primary"
+                onClick={() => setFilters(defaultFilters)}
+              >
+                Limpar filtros
+              </Button>
+            </div>
+          )}
+
+          {/* Alerta de atividades atrasadas */}
+          {activityMetrics.overdue > 0 && (
+            <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                  {activityMetrics.overdue} atividade(s) atrasada(s)
+                </p>
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  Revise os leads com atividades pendentes para não perder oportunidades
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Métricas Rápidas */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -215,124 +273,22 @@ const CRM = () => {
           <DragDropContext onDragEnd={onDragEnd}>
         <div 
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-250px)] cursor-grab active:cursor-grabbing select-none custom-scrollbar"
+          className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-350px)] cursor-grab active:cursor-grabbing select-none custom-scrollbar"
           onMouseDown={handleMouseDown}
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
           {stages.map((stage) => (
-            <Droppable key={stage.id} droppableId={stage.id}>
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className="min-w-[320px] flex-shrink-0 h-full"
-                >
-                  <Card className="h-full flex flex-col bg-muted/30 border-muted">
-                    <CardHeader className="pb-3 flex-shrink-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: stage.color }}
-                          />
-                          <h3 className="font-semibold text-sm uppercase tracking-wider">{stage.name}</h3>
-                        </div>
-                        <Badge variant="secondary" className="bg-background">
-                          {leadsByStage[stage.id]?.length || 0}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        {formatCurrency(
-                          leadsByStage[stage.id]?.reduce((sum, l) => sum + (l.expected_value || 0), 0) || 0
-                        )}
-                      </p>
-                    </CardHeader>
-                    <CardContent className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                      {leadsByStage[stage.id]?.map((lead, index) => (
-                        <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              style={{ ...provided.draggableProps.style }}
-                              className="mb-2 draggable-card"
-                            >
-                              <Card
-                                className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all border-l-4 ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20 rotate-2" : ""}`}
-                                style={{ borderLeftColor: stage.color }}
-                                onClick={() => handleEditLead(lead)}
-                              >
-                                <div className="space-y-2">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <p className="font-semibold text-sm truncate">{lead.name}</p>
-                                      {lead.company && (
-                                        <p className="text-xs text-muted-foreground truncate">{lead.company}</p>
-                                      )}
-                                    </div>
-                                    {lead.expected_value && (
-                                      <Badge variant="outline" className="text-[10px] px-1 h-5 whitespace-nowrap bg-background">
-                                        {formatCurrency(lead.expected_value)}
-                                      </Badge>
-                                    )}
-                                  </div>
-
-                                  {(lead.email || lead.phone) && (
-                                    <div className="space-y-0.5">
-                                      {lead.email && (
-                                        <p className="text-[10px] text-muted-foreground truncate">{lead.email}</p>
-                                      )}
-                                      {lead.phone && (
-                                        <p className="text-[10px] text-muted-foreground">{lead.phone}</p>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  <div className="flex items-center justify-between gap-2 pt-1">
-                                    <Badge variant={lead.probability > 70 ? "default" : "secondary"} className="text-[10px] h-5">
-                                      {lead.probability || 0}%
-                                    </Badge>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-6 w-6"
-                                        title="Nova Atividade"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setActivityLeadId(lead.id);
-                                        }}
-                                      >
-                                        <Plus className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex gap-1 pt-1 border-t mt-1">
-                                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 flex-1" onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos?leadId=${lead.id}`); }}>Orçamento</Button>
-                                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 flex-1" onClick={(e) => { e.stopPropagation(); navigate(`/ordens-servico?leadId=${lead.id}`); }}>OS</Button>
-                                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 flex-1" onClick={(e) => { e.stopPropagation(); navigate(`/vendas?leadId=${lead.id}`); }}>Venda</Button>
-                                  </div>
-                                </div>
-                              </Card>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                      {(!leadsByStage[stage.id] || leadsByStage[stage.id].length === 0) && (
-                        <div className="h-24 border-2 border-dashed border-muted-foreground/20 rounded-lg flex items-center justify-center">
-                          <p className="text-xs text-muted-foreground">Arraste leads para cá</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-            </Droppable>
+            <VirtualizedPipelineColumn
+              key={stage.id}
+              stage={stage}
+              leads={leadsByStage[stage.id] || []}
+              getActivitiesForLead={getActivitiesForLead}
+              onEditLead={handleEditLead}
+              onNewActivity={setActivityLeadId}
+              onNavigate={navigate}
+            />
           ))}
 
           {/* Leads sem estágio */}
@@ -362,15 +318,15 @@ const CRM = () => {
                               style={{ ...provided.draggableProps.style }}
                               className="mb-2 draggable-card"
                             >
-                              <Card
-                                className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20 rotate-2" : ""}`}
-                                onClick={() => handleEditLead(lead)}
-                              >
-                                <p className="font-semibold text-sm">{lead.name}</p>
-                                {lead.company && (
-                                  <p className="text-xs text-muted-foreground">{lead.company}</p>
-                                )}
-                              </Card>
+                              <LeadCard
+                                lead={lead}
+                                stageColor="#6b7280"
+                                isDragging={snapshot.isDragging}
+                                activities={getActivitiesForLead(lead.id)}
+                                onEdit={handleEditLead}
+                                onNewActivity={setActivityLeadId}
+                                onNavigate={navigate}
+                              />
                             </div>
                           )}
                         </Draggable>
