@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Users, TrendingUp, DollarSign, BarChart3, Workflow, ClipboardList, Sparkles, Settings, AlertCircle } from "lucide-react";
+import { Plus, Users, TrendingUp, DollarSign, BarChart3, Workflow, ClipboardList, Sparkles, Settings, AlertCircle, Columns3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
@@ -18,6 +18,7 @@ import { AutomationsList } from "@/components/AutomationsList";
 import { DashboardSettingsDialog } from "@/components/DashboardSettingsDialog";
 import { VirtualizedPipelineColumn } from "@/components/VirtualizedPipelineColumn";
 import { LeadCaptureForm } from "@/components/LeadCaptureForm";
+import { PipelineStageManager } from "@/components/PipelineStageManager";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -38,6 +39,7 @@ const CRM = () => {
   const [activityLeadId, setActivityLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("pipeline");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isStageManagerOpen, setIsStageManagerOpen] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -155,6 +157,10 @@ const CRM = () => {
           <p className="text-muted-foreground">Gerencie leads, automações e análises de vendas</p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setIsStageManagerOpen(true)} variant="outline" size="lg">
+            <Columns3 className="mr-2 h-4 w-4" />
+            Estágios
+          </Button>
           <Button onClick={() => setIsSettingsOpen(true)} variant="outline" size="lg">
             <Settings className="mr-2 h-4 w-4" />
             Dashboard
@@ -377,6 +383,11 @@ const CRM = () => {
       <DashboardSettingsDialog
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
+      />
+
+      <PipelineStageManager
+        open={isStageManagerOpen}
+        onOpenChange={setIsStageManagerOpen}
       />
     </div>
   );
