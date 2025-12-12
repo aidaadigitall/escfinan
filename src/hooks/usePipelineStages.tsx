@@ -32,21 +32,17 @@ export const usePipelineStages = () => {
   const { data: stages = [], isLoading, error } = useQuery({
     queryKey: ["pipeline_stages", user?.id],
     queryFn: async () => {
-      console.log("🔍 Buscando estágios do pipeline para usuário:", user?.id);
-      
-      const { data, error } = await supabase
-        .from("pipeline_stages")
-        .select("*")
-        .order("order_index", { ascending: true });
+      console.log("🔍 Buscando estágios via RPC para usuário:", user?.id);
 
-      console.log("📦 Resposta do Supabase:", { data, error });
+      const { data, error } = await supabase.rpc("get_pipeline_stages");
+
+      console.log("📦 Resposta RPC get_pipeline_stages:", { data, error });
 
       if (error) {
         console.error("❌ Erro ao buscar estágios:", error);
         throw error;
       }
-      
-      // Map database fields to interface
+
       const mappedStages = (data || []).map((stage: any) => ({
         id: stage.id,
         user_id: stage.user_id,
@@ -60,7 +56,7 @@ export const usePipelineStages = () => {
         created_at: stage.created_at,
         updated_at: stage.updated_at || stage.created_at,
       })) as PipelineStage[];
-      
+
       console.log("✅ Estágios mapeados:", mappedStages);
       return mappedStages;
     },
@@ -69,18 +65,13 @@ export const usePipelineStages = () => {
 
   const createStage = useMutation({
     mutationFn: async (stageData: PipelineStageFormData) => {
-      const { data, error } = await supabase
-        .from("pipeline_stages")
-        .insert([{
-          name: stageData.name,
-          description: stageData.description,
-          color: stageData.color || "#6366f1",
-          order_index: stageData.order_index || 0,
-          probability_default: stageData.probability_default || 50,
-          user_id: user?.id,
-        }])
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc("create_pipeline_stage", {
+        p_name: stageData.name,
+        p_description: stageData.description ?? null,
+        p_color: stageData.color || "#6366f1",
+        p_order_index: stageData.order_index ?? null,
+        p_probability: stageData.probability_default ?? 50,
+      });
 
       if (error) throw error;
       return data;
@@ -103,12 +94,15 @@ export const usePipelineStages = () => {
       if (data.order_index !== undefined) updateData.order_index = data.order_index;
       if (data.probability_default !== undefined) updateData.probability_default = data.probability_default;
 
-      const { data: updated, error } = await supabase
-        .from("pipeline_stages")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
+      const { data: updated, error } = await supabase.rpc("update_pipeline_stage", {
+        p_id: id,
+        p_name: updateData.name ?? null,
+        p_description: updateData.description ?? null,
+        p_color: updateData.color ?? null,
+        p_order_index: updateData.order_index ?? null,
+        p_probability: updateData.probability_default ?? null,
+        p_is_active: updateData.is_active ?? null,
+      });
 
       if (error) throw error;
       return updated;
@@ -124,10 +118,7 @@ export const usePipelineStages = () => {
 
   const deleteStage = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("pipeline_stages")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.rpc("delete_pipeline_stage", { p_id: id });
 
       if (error) throw error;
     },
@@ -142,13 +133,8 @@ export const usePipelineStages = () => {
 
   const reorderStages = useMutation({
     mutationFn: async (orderedIds: string[]) => {
-      const updates = orderedIds.map((id, index) => 
-        supabase
-          .from("pipeline_stages")
-          .update({ order_index: index })
-          .eq("id", id)
-      );
-      await Promise.all(updates);
+      const { error } = await supabase.rpc("reorder_pipeline_stages", { p_ids: orderedIds });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline_stages"] });
