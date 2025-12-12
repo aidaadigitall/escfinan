@@ -30,17 +30,24 @@ export const usePipelineStages = () => {
   const queryClient = useQueryClient();
 
   const { data: stages = [], isLoading, error } = useQuery({
-    queryKey: ["pipeline_stages"],
+    queryKey: ["pipeline_stages", user?.id],
     queryFn: async () => {
+      console.log("🔍 Buscando estágios do pipeline para usuário:", user?.id);
+      
       const { data, error } = await supabase
         .from("pipeline_stages" as any)
         .select("*")
         .order("order_index", { ascending: true });
 
-      if (error) throw error;
+      console.log("📦 Resposta do Supabase:", { data, error });
+
+      if (error) {
+        console.error("❌ Erro ao buscar estágios:", error);
+        throw error;
+      }
       
       // Map database fields to interface
-      return (data || []).map((stage: any) => ({
+      const mappedStages = (data || []).map((stage: any) => ({
         id: stage.id,
         user_id: stage.user_id,
         name: stage.name,
@@ -48,11 +55,14 @@ export const usePipelineStages = () => {
         order_index: stage.order_index || 0,
         probability_default: stage.probability_default || 50,
         color: stage.color || "#6366f1",
-        is_active: true,
-        is_system: false,
+        is_active: stage.is_active !== false,
+        is_system: stage.is_system || false,
         created_at: stage.created_at,
         updated_at: stage.updated_at || stage.created_at,
       })) as PipelineStage[];
+      
+      console.log("✅ Estágios mapeados:", mappedStages);
+      return mappedStages;
     },
     enabled: !!user,
   });
