@@ -68,15 +68,25 @@ export const useDashboardPreferences = () => {
 
       try {
         // Tentar buscar preferências existentes
-        const { data, error } = await (supabase as any)
-          .from("dashboard_preferences")
+        const { data, error } = await supabase
+          .from("dashboard_preferences" as any)
           .select("*")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) {
-          // Se não encontrou, retorna preferências padrão (sem erro)
-          if (error.code === 'PGRST116') {
+        // Se não encontrou, criar um registro novo
+        if (!data && !error) {
+          const { data: newPref, error: insertError } = await supabase
+            .from("dashboard_preferences" as any)
+            .insert([{
+              user_id: user.id,
+              ...defaultPreferences,
+            }])
+            .select()
+            .single();
+          
+          if (insertError) {
+            console.error('Erro ao criar preferências:', insertError);
             return {
               id: '',
               user_id: user.id,
@@ -85,8 +95,12 @@ export const useDashboardPreferences = () => {
               updated_at: new Date().toISOString(),
             } as DashboardPreferences;
           }
+          
+          return newPref as unknown as DashboardPreferences;
+        }
+
+        if (error) {
           console.error('Erro ao buscar preferências:', error);
-          // Retorna padrão em caso de erro também
           return {
             id: '',
             user_id: user.id,
@@ -96,7 +110,7 @@ export const useDashboardPreferences = () => {
           } as DashboardPreferences;
         }
 
-        return data as DashboardPreferences;
+        return data as unknown as DashboardPreferences;
       } catch (err) {
         console.error('Erro ao buscar preferências:', err);
         return {
@@ -116,8 +130,8 @@ export const useDashboardPreferences = () => {
     queryKey: ["dashboard_templates"],
     queryFn: async () => {
       try {
-        const { data, error } = await (supabase as any)
-          .from("dashboard_layout_templates")
+        const { data, error } = await supabase
+          .from("dashboard_layout_templates" as any)
           .select("*")
           .order("is_system", { ascending: false })
           .order("usage_count", { ascending: false });
@@ -126,7 +140,7 @@ export const useDashboardPreferences = () => {
           console.error('Erro ao buscar templates:', error);
           return [];
         }
-        return (data || []) as LayoutTemplate[];
+        return (data || []) as unknown as LayoutTemplate[];
       } catch (err) {
         console.error('Erro ao buscar templates:', err);
         return [];
@@ -140,16 +154,16 @@ export const useDashboardPreferences = () => {
     if (!user?.id) throw new Error("Usuário não autenticado");
 
     // Verificar se já existe
-    const { data: existing } = await (supabase as any)
-      .from("dashboard_preferences")
+    const { data: existing } = await supabase
+      .from("dashboard_preferences" as any)
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       // Atualizar
-      const { data, error } = await (supabase as any)
-        .from("dashboard_preferences")
+      const { data, error } = await supabase
+        .from("dashboard_preferences" as any)
         .update(updates)
         .eq("user_id", user.id)
         .select()
@@ -159,8 +173,8 @@ export const useDashboardPreferences = () => {
       return data;
     } else {
       // Criar
-      const { data, error } = await (supabase as any)
-        .from("dashboard_preferences")
+      const { data, error } = await supabase
+        .from("dashboard_preferences" as any)
         .insert([{
           user_id: user.id,
           ...defaultPreferences,
@@ -285,8 +299,8 @@ export const useDashboardPreferences = () => {
     }) => {
       if (!user?.id || !preferences) throw new Error("Usuário não autenticado");
 
-      const { data, error } = await (supabase as any)
-        .from("dashboard_layout_templates")
+      const { data, error } = await supabase
+        .from("dashboard_layout_templates" as any)
         .insert([{
           user_id: user.id,
           name,

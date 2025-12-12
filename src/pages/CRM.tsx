@@ -17,6 +17,7 @@ import { CRMAnalytics } from "@/components/CRMAnalytics";
 import { AutomationsList } from "@/components/AutomationsList";
 import { DashboardSettingsDialog } from "@/components/DashboardSettingsDialog";
 import { VirtualizedPipelineColumn } from "@/components/VirtualizedPipelineColumn";
+import { LeadCaptureForm } from "@/components/LeadCaptureForm";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -354,75 +355,7 @@ const CRM = () => {
 
         {/* Aba: Captura de Leads */}
         <TabsContent value="capture" className="mt-6">
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <ClipboardList className="h-5 w-5" />
-                Formulários de Captura
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Crie formulários personalizados para capturar leads do seu site ou campanhas
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
-                  <ClipboardList className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h4 className="font-semibold mb-2">Crie Seu Primeiro Formulário</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Formulários personalizados com campos customizáveis, rastreamento UTM e integração automática com o pipeline
-                  </p>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Criar Formulário
-                  </Button>
-                </div>
-
-                {/* Templates de formulários */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
-                    <CardContent className="pt-6">
-                      <h4 className="font-semibold mb-2">📋 Formulário de Contato Simples</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Nome, email, telefone e mensagem
-                      </p>
-                      <Badge variant="secondary">3 campos</Badge>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
-                    <CardContent className="pt-6">
-                      <h4 className="font-semibold mb-2">💼 Formulário Corporativo</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Dados completos da empresa e necessidades
-                      </p>
-                      <Badge variant="secondary">7 campos</Badge>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
-                    <CardContent className="pt-6">
-                      <h4 className="font-semibold mb-2">🎯 Captura para Webinar</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Inscrição otimizada para eventos online
-                      </p>
-                      <Badge variant="secondary">4 campos</Badge>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-2 hover:border-primary/50 cursor-pointer transition-colors">
-                    <CardContent className="pt-6">
-                      <h4 className="font-semibold mb-2">📱 Formulário Mobile-First</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Otimizado para dispositivos móveis
-                      </p>
-                      <Badge variant="secondary">5 campos</Badge>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <LeadCaptureForm />
         </TabsContent>
       </Tabs>
 
