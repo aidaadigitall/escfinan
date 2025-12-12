@@ -8,7 +8,7 @@ export interface PipelineStage {
   user_id: string;
   name: string;
   description?: string;
-  order: number;
+  order_index: number;
   probability_default: number;
   color: string;
   is_active: boolean;
@@ -20,7 +20,7 @@ export interface PipelineStage {
 export interface PipelineStageFormData {
   name: string;
   description?: string;
-  order?: number;
+  order_index?: number;
   probability_default?: number;
   color?: string;
 }
@@ -32,8 +32,8 @@ export const usePipelineStages = () => {
   const { data: stages = [], isLoading, error } = useQuery({
     queryKey: ["pipeline_stages"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("pipeline_stages")
+      const { data, error } = await supabase
+        .from("pipeline_stages" as any)
         .select("*")
         .order("order_index", { ascending: true });
 
@@ -45,7 +45,7 @@ export const usePipelineStages = () => {
         user_id: stage.user_id,
         name: stage.name,
         description: stage.description || "",
-        order: stage.order_index || 0,
+        order_index: stage.order_index || 0,
         probability_default: stage.probability_default || 50,
         color: stage.color || "#6366f1",
         is_active: true,
@@ -59,12 +59,14 @@ export const usePipelineStages = () => {
 
   const createStage = useMutation({
     mutationFn: async (stageData: PipelineStageFormData) => {
-      const { data, error } = await (supabase as any)
-        .from("pipeline_stages")
+      const { data, error } = await supabase
+        .from("pipeline_stages" as any)
         .insert([{
           name: stageData.name,
+          description: stageData.description,
           color: stageData.color || "#6366f1",
-          order_index: stageData.order || 0,
+          order_index: stageData.order_index || 0,
+          probability_default: stageData.probability_default || 50,
           user_id: user?.id,
         }])
         .select()
@@ -86,11 +88,13 @@ export const usePipelineStages = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<PipelineStageFormData> }) => {
       const updateData: any = {};
       if (data.name) updateData.name = data.name;
+      if (data.description !== undefined) updateData.description = data.description;
       if (data.color) updateData.color = data.color;
-      if (data.order !== undefined) updateData.order_index = data.order;
+      if (data.order_index !== undefined) updateData.order_index = data.order_index;
+      if (data.probability_default !== undefined) updateData.probability_default = data.probability_default;
 
-      const { data: updated, error } = await (supabase as any)
-        .from("pipeline_stages")
+      const { data: updated, error } = await supabase
+        .from("pipeline_stages" as any)
         .update(updateData)
         .eq("id", id)
         .select()
