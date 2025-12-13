@@ -108,22 +108,11 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
       return format(new Date(dateString), "dd/MM/yyyy - HH:mm", { locale: ptBR });
     };
 
-    const products = items.filter(item => item.item_type === "product");
-    const services = items.filter(item => item.item_type === "service");
-
-    const productsTotal = products.reduce((acc, item) => acc + (item.subtotal || 0), 0);
-    const servicesTotal = services.reduce((acc, item) => acc + (item.subtotal || 0), 0);
-    const totalAmount = data.total_amount || (productsTotal + servicesTotal);
+    const totalAmount = data.total_amount || items.reduce((acc, item) => acc + (item.subtotal || 0), 0);
     const discountTotal = data.discount_total || data.discount_amount || 0;
 
     const client = data.client || {};
     const clientDocument = client.cnpj || client.cpf || client.document || "";
-
-    const getTechnicianName = () => {
-      if (!data.technician) return "";
-      if (typeof data.technician === "string") return data.technician;
-      return data.technician.name || "";
-    };
 
     const getSellerName = () => {
       if (!data.seller) return "";
@@ -132,7 +121,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
     };
 
     return (
-      <div ref={ref} className="bg-white text-black max-w-[210mm] mx-auto font-sans text-[9px] leading-tight p-6">
+      <div ref={ref} className="bg-white text-black max-w-[210mm] mx-auto font-sans text-[10px] leading-tight p-8">
         <style>{`
           @media print {
             @page { size: A4; margin: 10mm; }
@@ -149,317 +138,230 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
         `}</style>
 
         {/* Header */}
-        <div className="flex border border-black mb-3">
+        <div className="flex items-start mb-4 pb-2 border-b-2 border-black">
           {/* Logo */}
-          <div className="w-24 p-2 flex items-center justify-center border-r border-black bg-black">
+          <div className="w-28 mr-4">
             {company.logo_url ? (
-              <img src={company.logo_url} alt="Logo" className="max-h-14 max-w-full object-contain" />
+              <img src={company.logo_url} alt="Logo" className="max-h-16 max-w-full object-contain" />
             ) : (
-              <div className="text-white text-[8px] text-center font-bold">LOGO</div>
+              <div className="h-16 flex items-center justify-center border border-gray-300 text-gray-400 text-xs">LOGO</div>
             )}
           </div>
           
           {/* Company Info */}
-          <div className="flex-1 p-2 text-[8px] border-r border-black">
-            <div className="font-bold text-sm mb-1">{company.name || "EMPRESA"}</div>
+          <div className="flex-1 text-[10px]">
+            <div className="font-bold text-base uppercase">{company.name || "EMPRESA"}</div>
             <div>CNPJ: {company.cnpj || ""}</div>
             <div>{company.address || ""}</div>
           </div>
           
           {/* Contact */}
-          <div className="w-44 p-2 text-[8px] text-right">
+          <div className="text-right text-[10px]">
             <div className="font-bold">{company.phone || ""}</div>
-            <div className="text-blue-600">{company.email || ""}</div>
             <div className="text-blue-600">{company.website || ""}</div>
-            {getSellerName() && <div className="mt-1">Vendedor: {getSellerName()}</div>}
           </div>
         </div>
 
-        {/* Document Title Bar */}
-        <div className="flex bg-black text-white mb-3">
-          <div className="flex-1 p-2 font-bold text-[11px]">
-            {titleMap[type]} Nº {docNumber}
-          </div>
-          <div className="p-2 text-[11px]">{docDate}</div>
+        {/* Document Title */}
+        <div className="flex justify-between items-center bg-black text-white px-3 py-2 mb-4">
+          <span className="font-bold text-sm">{titleMap[type]} Nº {docNumber}</span>
+          <span className="text-sm">{docDate}</span>
         </div>
-
-        {/* Delivery Date */}
-        {deliveryDate && (
-          <div className="bg-gray-200 p-1 mb-3 text-[9px] font-bold border border-black">
-            PREVISÃO DE ENTREGA: {deliveryDate}
-          </div>
-        )}
-
-        {/* OS Specific: Execution Period */}
-        {type === "os" && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold border-b border-black text-[9px]">PERÍODO DE EXECUÇÃO</div>
-            <div className="flex p-1 text-[8px]">
-              <div className="w-1/2 border-r border-black pr-2">
-                Entrada: {formatDateTime(data.entry_date)}
-              </div>
-              <div className="w-1/2 pl-2">
-                Saída: {data.exit_date ? formatDateTime(data.exit_date) : "___/___/_____ - __:__"}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Client Data */}
-        <div className="border border-black mb-3">
-          <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
+        <div className="mb-4">
+          <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
             DADOS DO CLIENTE
           </div>
-          <table className="w-full text-[8px]">
-            <tbody>
-              <tr>
-                <td className="p-1 border-r border-b border-black w-20 font-bold bg-gray-50">Razão social:</td>
-                <td className="p-1 border-r border-b border-black">{client.company_name || client.name || ""}</td>
-                <td className="p-1 border-r border-b border-black w-24 font-bold bg-gray-50">Nome fantasia:</td>
-                <td className="p-1 border-b border-black">{client.fantasy_name || client.name || ""}</td>
-              </tr>
-              <tr>
-                <td className="p-1 border-r border-b border-black font-bold bg-gray-50">CNPJ/CPF:</td>
-                <td className="p-1 border-r border-b border-black">{clientDocument}</td>
-                <td className="p-1 border-r border-b border-black font-bold bg-gray-50">Endereço:</td>
-                <td className="p-1 border-b border-black">{client.address || ""}</td>
-              </tr>
-              <tr>
-                <td className="p-1 border-r border-b border-black font-bold bg-gray-50">CEP:</td>
-                <td className="p-1 border-r border-b border-black">{client.zipcode || client.zip_code || ""}</td>
-                <td className="p-1 border-r border-b border-black font-bold bg-gray-50">Cidade/UF:</td>
-                <td className="p-1 border-b border-black">{client.city || ""}{client.city && client.state ? "/" : ""}{client.state || ""}</td>
-              </tr>
-              <tr>
-                <td className="p-1 border-r border-black font-bold bg-gray-50">Telefone:</td>
-                <td className="p-1 border-r border-black">{client.phone || ""}</td>
-                <td className="p-1 border-r border-black font-bold bg-gray-50">E-mail:</td>
-                <td className="p-1">{client.email || ""}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="border border-black text-[10px]">
+            <div className="flex border-b border-black">
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">Razão social:</div>
+              <div className="flex-1 px-2 py-1 border-r border-black">{client.company_name || client.name || ""}</div>
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">Nome fantasia:</div>
+              <div className="flex-1 px-2 py-1">{client.fantasy_name || client.name || ""}</div>
+            </div>
+            <div className="flex border-b border-black">
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">CNPJ/CPF:</div>
+              <div className="flex-1 px-2 py-1 border-r border-black">{clientDocument}</div>
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">Endereço:</div>
+              <div className="flex-1 px-2 py-1">{client.address || ""}</div>
+            </div>
+            <div className="flex border-b border-black">
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">CEP:</div>
+              <div className="flex-1 px-2 py-1 border-r border-black">{client.zipcode || client.zip_code || ""}</div>
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">Cidade/UF:</div>
+              <div className="flex-1 px-2 py-1">{client.city || ""}{client.city && client.state ? "/" : ""}{client.state || ""}</div>
+            </div>
+            <div className="flex">
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">Telefone:</div>
+              <div className="flex-1 px-2 py-1 border-r border-black">{client.phone || ""}</div>
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-50">E-mail:</div>
+              <div className="flex-1 px-2 py-1">{client.email || ""}</div>
+            </div>
+          </div>
         </div>
 
         {/* Equipment (OS only) */}
         {type === "os" && (data.equipment_name || data.equipment_brand || data.equipment_model) && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
+          <div className="mb-4">
+            <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
               EQUIPAMENTO
             </div>
-            <table className="w-full text-[8px]">
-              <tbody>
-                <tr>
-                  <td className="p-1 border-r border-b border-black w-24 font-bold bg-gray-50">Equipamento:</td>
-                  <td className="p-1 border-r border-b border-black">{data.equipment_name || ""}</td>
-                  <td className="p-1 border-r border-b border-black w-16 font-bold bg-gray-50">Marca:</td>
-                  <td className="p-1 border-b border-black">{data.equipment_brand || ""}</td>
-                </tr>
-                <tr>
-                  <td className="p-1 border-r border-black font-bold bg-gray-50">Modelo:</td>
-                  <td className="p-1 border-r border-black">{data.equipment_model || ""}</td>
-                  <td className="p-1 border-r border-black font-bold bg-gray-50">N/S:</td>
-                  <td className="p-1">{data.equipment_serial || ""}</td>
-                </tr>
-              </tbody>
-            </table>
-            {data.equipment_memory || data.equipment_storage || data.equipment_processor ? (
-              <table className="w-full text-[8px] border-t border-black">
-                <tbody>
-                  <tr>
-                    <td className="p-1 border-r border-black w-20 font-bold bg-gray-50">Memória:</td>
-                    <td className="p-1 border-r border-black">{data.equipment_memory || ""}</td>
-                    <td className="p-1 border-r border-black w-20 font-bold bg-gray-50">HDD/SSD:</td>
-                    <td className="p-1 border-r border-black">{data.equipment_storage || ""}</td>
-                    <td className="p-1 border-r border-black w-20 font-bold bg-gray-50">Processador:</td>
-                    <td className="p-1">{data.equipment_processor || ""}</td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : null}
+            <div className="border border-black text-[10px]">
+              <div className="flex border-b border-black">
+                <div className="w-24 px-2 py-1 font-semibold bg-gray-50">Equipamento:</div>
+                <div className="flex-1 px-2 py-1 border-r border-black">{data.equipment_name || ""}</div>
+                <div className="w-16 px-2 py-1 font-semibold bg-gray-50">Marca:</div>
+                <div className="flex-1 px-2 py-1">{data.equipment_brand || ""}</div>
+              </div>
+              <div className="flex">
+                <div className="w-24 px-2 py-1 font-semibold bg-gray-50">Modelo:</div>
+                <div className="flex-1 px-2 py-1 border-r border-black">{data.equipment_model || ""}</div>
+                <div className="w-16 px-2 py-1 font-semibold bg-gray-50">N/S:</div>
+                <div className="flex-1 px-2 py-1">{data.equipment_serial || ""}</div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Defects (OS only) */}
         {type === "os" && data.defects && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
+          <div className="mb-4">
+            <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
               DEFEITO RELATADO
             </div>
-            <div className="p-2 text-[8px] whitespace-pre-wrap">{data.defects}</div>
-          </div>
-        )}
-
-        {/* Products */}
-        {products.length > 0 && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
-              PRODUTOS
-            </div>
-            <table className="w-full text-[8px]">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-1 border-r border-b border-black w-8 text-left">ITEM</th>
-                  <th className="p-1 border-r border-b border-black text-left">NOME</th>
-                  <th className="p-1 border-r border-b border-black w-12 text-center">UND.</th>
-                  <th className="p-1 border-r border-b border-black w-12 text-center">QTD.</th>
-                  <th className="p-1 border-r border-b border-black w-16 text-right">VR. UNIT.</th>
-                  <th className="p-1 border-b border-black w-16 text-right">SUBTOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((item, idx) => (
-                  <tr key={item.id || idx}>
-                    <td className="p-1 border-r border-b border-black text-center">{idx + 1}</td>
-                    <td className="p-1 border-r border-b border-black">{item.name}</td>
-                    <td className="p-1 border-r border-b border-black text-center">{item.unit || "UN"}</td>
-                    <td className="p-1 border-r border-b border-black text-center">{item.quantity}</td>
-                    <td className="p-1 border-r border-b border-black text-right">{formatCurrency(item.unit_price)}</td>
-                    <td className="p-1 border-b border-black text-right">{formatCurrency(item.subtotal)}</td>
-                  </tr>
-                ))}
-                <tr className="bg-gray-100">
-                  <td colSpan={3} className="p-1 border-r border-black font-bold text-right">TOTAL</td>
-                  <td className="p-1 border-r border-black text-center font-bold">{products.reduce((a, b) => a + b.quantity, 0)}</td>
-                  <td className="p-1 border-r border-black"></td>
-                  <td className="p-1 border-black text-right font-bold">{formatCurrency(productsTotal)}</td>
-                </tr>
-              </tbody>
-            </table>
-            <div className="text-right p-1 bg-gray-200 font-bold text-[9px] border-t border-black">
-              PRODUTOS: {formatCurrency(productsTotal)}
+            <div className="border border-black px-2 py-2 text-[10px] whitespace-pre-wrap">
+              {data.defects}
             </div>
           </div>
         )}
 
-        {/* Services */}
-        {services.length > 0 && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
-              SERVIÇOS
+        {/* Products / Services */}
+        {items.length > 0 && (
+          <div className="mb-4">
+            <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
+              PRODUTOS / SERVIÇOS
             </div>
-            <table className="w-full text-[8px]">
+            <table className="w-full border border-black text-[10px]">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="p-1 border-r border-b border-black w-8 text-left">ITEM</th>
-                  <th className="p-1 border-r border-b border-black text-left">NOME</th>
-                  <th className="p-1 border-r border-b border-black w-12 text-center">QTD.</th>
-                  <th className="p-1 border-r border-b border-black w-16 text-right">VR. UNIT.</th>
-                  <th className="p-1 border-b border-black w-16 text-right">SUBTOTAL</th>
+                  <th className="px-2 py-1 border-r border-b border-black text-left w-12">ITEM</th>
+                  <th className="px-2 py-1 border-r border-b border-black text-left">NOME</th>
+                  <th className="px-2 py-1 border-r border-b border-black text-center w-14">UND.</th>
+                  <th className="px-2 py-1 border-r border-b border-black text-center w-14">QTD.</th>
+                  <th className="px-2 py-1 border-r border-b border-black text-right w-20">VR. UNIT.</th>
+                  <th className="px-2 py-1 border-r border-b border-black text-right w-16">DESC.</th>
+                  <th className="px-2 py-1 border-b border-black text-right w-20">SUBTOTAL</th>
                 </tr>
               </thead>
               <tbody>
-                {services.map((item, idx) => (
+                {items.map((item, idx) => (
                   <tr key={item.id || idx}>
-                    <td className="p-1 border-r border-b border-black text-center">{idx + 1}</td>
-                    <td className="p-1 border-r border-b border-black">{item.name}</td>
-                    <td className="p-1 border-r border-b border-black text-center">{item.quantity}</td>
-                    <td className="p-1 border-r border-b border-black text-right">{formatCurrency(item.unit_price)}</td>
-                    <td className="p-1 border-b border-black text-right">{formatCurrency(item.subtotal)}</td>
+                    <td className="px-2 py-1 border-r border-b border-black text-center">{idx + 1}</td>
+                    <td className="px-2 py-1 border-r border-b border-black">{item.name}</td>
+                    <td className="px-2 py-1 border-r border-b border-black text-center">{item.unit || "UN"}</td>
+                    <td className="px-2 py-1 border-r border-b border-black text-center">{item.quantity}</td>
+                    <td className="px-2 py-1 border-r border-b border-black text-right">{formatCurrency(item.unit_price)}</td>
+                    <td className="px-2 py-1 border-r border-b border-black text-right">{item.discount ? formatCurrency(item.discount) : ""}</td>
+                    <td className="px-2 py-1 border-b border-black text-right">{formatCurrency(item.subtotal)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="text-right p-1 bg-gray-200 font-bold text-[9px] border-t border-black">
-              SERVIÇOS: {formatCurrency(servicesTotal)}
-            </div>
           </div>
         )}
 
-        {/* Technical Report (OS only) */}
-        {type === "os" && data.solution && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
-              LAUDO TÉCNICO / SOLUÇÃO
-            </div>
-            <div className="p-2 text-[8px] whitespace-pre-wrap">{data.solution}</div>
-          </div>
-        )}
-
-        {/* Totals */}
-        <div className="flex justify-end mb-3">
-          <div className="w-52 border border-black">
-            {discountTotal > 0 && (
-              <div className="flex justify-between p-1 border-b border-black text-[8px] bg-gray-50">
-                <span>DESCONTO:</span>
-                <span className="text-red-600">-{formatCurrency(discountTotal)}</span>
-              </div>
-            )}
-            <div className="flex justify-between p-2 bg-gray-200 font-bold text-[11px]">
-              <span>TOTAL: </span>
-              <span>R$ {formatCurrency(totalAmount)}</span>
-            </div>
+        {/* Total */}
+        <div className="flex justify-end mb-4">
+          <div className="text-right font-bold text-sm">
+            TOTAL: R$ {formatCurrency(totalAmount)}
           </div>
         </div>
 
+        {/* Technical Report (OS only) */}
+        {type === "os" && data.solution && (
+          <div className="mb-4">
+            <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
+              LAUDO TÉCNICO / SOLUÇÃO
+            </div>
+            <div className="border border-black px-2 py-2 text-[10px] whitespace-pre-wrap">
+              {data.solution}
+            </div>
+          </div>
+        )}
+
         {/* Payment Data */}
-        <div className="border border-black mb-3">
-          <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
+        <div className="mb-4">
+          <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
             DADOS DO PAGAMENTO
           </div>
-          <table className="w-full text-[8px]">
+          <table className="w-full border border-black text-[10px]">
             <thead>
               <tr className="bg-gray-100">
-                <th className="p-1 border-r border-b border-black text-left w-24">VENCIMENTO</th>
-                <th className="p-1 border-r border-b border-black text-left w-20">VALOR</th>
-                <th className="p-1 border-r border-b border-black text-left">FORMA DE PAGAMENTO</th>
-                <th className="p-1 border-b border-black text-left">OBSERVAÇÃO</th>
+                <th className="px-2 py-1 border-r border-b border-black text-left w-28">VENCIMENTO</th>
+                <th className="px-2 py-1 border-r border-b border-black text-left w-24">VALOR</th>
+                <th className="px-2 py-1 border-r border-b border-black text-left">FORMA DE PAGAMENTO</th>
+                <th className="px-2 py-1 border-b border-black text-left">OBSERVAÇÃO</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="p-1 border-r border-black">
+                <td className="px-2 py-1 border-r border-black">
                   {data.delivery_date ? formatDate(data.delivery_date) : docDate}
                 </td>
-                <td className="p-1 border-r border-black">{formatCurrency(totalAmount)}</td>
-                <td className="p-1 border-r border-black">{data.payment_method || "A Combinar"}</td>
-                <td className="p-1">{data.payment_terms || ""}</td>
+                <td className="px-2 py-1 border-r border-black">R$ {formatCurrency(totalAmount)}</td>
+                <td className="px-2 py-1 border-r border-black">{data.payment_method || "A Combinar"}</td>
+                <td className="px-2 py-1">{data.payment_terms || ""}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         {/* Observations */}
-        {data.notes && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
-              OBSERVAÇÕES
-            </div>
-            <div className="p-2 text-[8px] whitespace-pre-wrap">
-              {data.notes}
-              {type === "budget" && data.validity_date && (
-                <div className="mt-1 font-bold">Validade da proposta: {formatDate(data.validity_date)}</div>
-              )}
-              {deliveryDate && (
-                <div className="font-bold">Previsão de entrega: {deliveryDate}</div>
-              )}
-            </div>
+        <div className="mb-6">
+          <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
+            OBSERVAÇÕES
           </div>
-        )}
+          <div className="border border-black px-2 py-2 text-[10px] min-h-[40px]">
+            {data.notes || ""}
+            {deliveryDate && (
+              <div>Previsão de entrega: {deliveryDate}</div>
+            )}
+            {type === "budget" && data.validity_date && (
+              <div>Validade da proposta: {formatDate(data.validity_date)}</div>
+            )}
+          </div>
+        </div>
 
         {/* Warranty (OS only) */}
         {type === "os" && data.warranty_terms && (
-          <div className="border border-black mb-3">
-            <div className="bg-gray-200 p-1 font-bold text-[9px] border-b border-black">
+          <div className="mb-6">
+            <div className="bg-gray-200 px-2 py-1 font-bold text-[10px] border-t border-l border-r border-black">
               TERMOS DE GARANTIA
             </div>
-            <div className="p-2 text-[8px] whitespace-pre-wrap">{data.warranty_terms}</div>
+            <div className="border border-black px-2 py-2 text-[10px] whitespace-pre-wrap">
+              {data.warranty_terms}
+            </div>
           </div>
         )}
 
-        {/* Signature */}
-        <div className="border border-black mb-4 p-6 mt-4">
-          <div className="flex justify-center">
-            <div className="w-72 text-center">
-              <div className="border-t border-black mt-10 pt-1 text-[8px]">
-                Assinatura do cliente
-              </div>
+        {/* Signatures */}
+        <div className="flex justify-between mt-10 mb-6">
+          <div className="w-64 text-center">
+            <div className="border-t border-black pt-1 text-[10px]">
+              Assinatura do cliente
+            </div>
+          </div>
+          <div className="w-64 text-center">
+            <div className="border-t border-black pt-1 text-[10px]">
+              Assinatura do vendedor
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-right text-[7px] text-gray-500">
-          {titleMap[type]} emitido no Esc Solutions - {company.website || "www.escsistemas.com"}
+        <div className="text-right text-[8px] text-gray-500 mt-4">
+          {titleMap[type]} emitido no Esc Solutions – {company.website || "www.escsistemas.com.br"}
         </div>
       </div>
     );
