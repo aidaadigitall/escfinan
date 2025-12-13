@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
+import { useUsers } from "@/hooks/useUsers";
 import { formatCurrency } from "@/lib/utils";
 import {
   Users,
@@ -10,7 +11,11 @@ import {
   Clock,
   Award,
   Activity,
-  Zap
+  Zap,
+  Timer,
+  BarChart2,
+  CircleX,
+  AlarmClock,
 } from "lucide-react";
 import {
   BarChart,
@@ -29,9 +34,11 @@ import {
 } from "recharts";
 import type { PieLabelRenderProps } from "recharts";
 import { useMemo } from "react";
-import { differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { differenceInDays, differenceInHours, format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+const SLA_THRESHOLD_HOURS = 48;
+const UNASSIGNED_OWNER = "__unassigned__";
 const chartTextColor = "hsl(var(--muted-foreground))";
 const chartForegroundColor = "hsl(var(--foreground))";
 const chartBorderColor = "hsl(var(--border))";
@@ -78,6 +85,7 @@ const renderScoreLabel = ({
 export const CRMAnalytics = () => {
   const { leads = [] } = useLeads();
   const { stages = [] } = usePipelineStages();
+  const { users } = useUsers();
 
   // Métricas principais
   const metrics = useMemo(() => {
@@ -220,6 +228,81 @@ export const CRMAnalytics = () => {
     return ranges;
   }, [leads]);
 
+  const usersById = useMemo(() => {
+    const map = new Map<string, string>();
+    users.forEach((user) => {
+      if (user.user_id) {
+        map.set(user.user_id, user.name || user.email);
+      }
+    });
+    return map;
+  }, [users]);
+
+  const averageTimePerStage = useMemo(() => {
+    const now = new Date();
+    return stages.map((stage) => {
+      const { totalHours, counted } = leads
+        .filter((lead) => lead.pipeline_stage_id === stage.id)
+        .reduce(
+          (acc, lead) => {
+            if (!lead.created_at) return acc;
+            const hours = Math.max(differenceInHours(now, new Date(lead.created_at)), 0);
+            return { totalHours: acc.totalHours + hours, counted: acc.counted + 1 };
+          },
+          { totalHours: 0, counted: 0 }
+        );
+      const avgDays = counted > 0 ? Number(((totalHours / counted) / 24).toFixed(1)) : null;
+      return {
+        stage: stage.name,
+        avgDays,
+        sampleSize: counted,
+      };
+    });
+  }, [leads, stages]);
+
+  const lossReasonStats = useMemo(() => {
+    const lostLeads = leads.filter((lead) => lead.status === "lost");
+    if (!lostLeads.length) return [];
+
+    const counts = lostLeads.reduce<Record<string, number>>((acc, lead) => {
+      const reason = lead.lost_reason?.trim() || "Não informado";
+      acc[reason] = (acc[reason] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts)
+      .map(([reason, count]) => ({
+        reason,
+        count,
+        percent: Math.round((count / lostLeads.length) * 100),
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [leads]);
+
+  const slaBreaches = useMemo(() => {
+    const now = new Date();
+    const breaches = leads.reduce<Record<string, number>>((acc, lead) => {
+      const referenceDate = lead.last_activity_date || lead.last_contact_date || lead.created_at;
+      if (!referenceDate) return acc;
+      const hoursSince = differenceInHours(now, new Date(referenceDate));
+      if (hoursSince <= SLA_THRESHOLD_HOURS) return acc;
+      const ownerId = lead.assigned_to || UNASSIGNED_OWNER;
+      acc[ownerId] = (acc[ownerId] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(breaches)
+      .map(([ownerId, count]) => ({
+        ownerId,
+        label:
+          ownerId === UNASSIGNED_OWNER
+            ? "Não atribuído"
+            : usersById.get(ownerId) || `Usuário ${ownerId.slice(0, 6)}...`,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [leads, usersById]);
+
   const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6'];
 
   return (
@@ -277,6 +360,123 @@ export const CRMAnalytics = () => {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Indicadores Recomendados */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold">Indicadores recomendados (KPIs)</h3>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Timer className="h-4 w-4 text-muted-foreground" />
+                Tempo médio por estágio
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {averageTimePerStage.length ? (
+                <div className="space-y-3">
+                  {averageTimePerStage.map((item) => (
+                    <div key={item.stage} className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{item.stage}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.sampleSize} lead{item.sampleSize === 1 ? "" : "s"}
+                        </p>
+                      </div>
+                      <span className="font-semibold">
+                        {item.avgDays !== null ? `${item.avgDays} dia(s)` : "Sem dados"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Sem dados suficientes.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                Taxa de conversão por etapa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {conversionByStage.length ? (
+                <div className="space-y-3">
+                  {conversionByStage.map((stage) => (
+                    <div key={stage.stage} className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{stage.stage}</p>
+                        <p className="text-xs text-muted-foreground">{stage.leads} leads</p>
+                      </div>
+                      <span className="font-semibold">{stage.conversion}%</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Configure seus estágios para visualizar este indicador.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CircleX className="h-4 w-4 text-muted-foreground" />
+                Motivos de perda
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {lossReasonStats.length ? (
+                <div className="space-y-3">
+                  {lossReasonStats.map((reason) => (
+                    <div key={reason.reason} className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{reason.reason}</p>
+                        <p className="text-xs text-muted-foreground">{reason.count} lead{reason.count === 1 ? "" : "s"}</p>
+                      </div>
+                      <span className="font-semibold">{reason.percent}%</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum lead perdido no período.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <AlarmClock className="h-4 w-4 text-muted-foreground" />
+                SLA estourado por vendedor
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground mb-3">
+                Consideramos SLA de {SLA_THRESHOLD_HOURS}h sem interação registrada.
+              </p>
+              {slaBreaches.length ? (
+                <div className="space-y-3">
+                  {slaBreaches.map((item) => (
+                    <div key={item.ownerId} className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="font-semibold text-red-500">{item.count} lead{item.count === 1 ? "" : "s"}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum vendedor com SLA estourado.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Gráficos Principais */}
