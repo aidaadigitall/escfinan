@@ -630,6 +630,176 @@ export type Database = {
           },
         ]
       }
+      lead_capture_forms: {
+        Row: {
+          assign_to_user_id: string | null
+          automation_rule_id: string | null
+          background_image_url: string | null
+          button_text: string
+          conversion_rate: number
+          created_at: string
+          custom_css: string | null
+          default_pipeline_stage_id: string | null
+          default_source: string | null
+          description: string | null
+          fields: Json
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          owner_user_id: string | null
+          redirect_url: string | null
+          require_double_optin: boolean
+          slug: string
+          submission_count: number
+          subtitle: string | null
+          success_message: string | null
+          theme_color: string
+          title: string | null
+          updated_at: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          assign_to_user_id?: string | null
+          automation_rule_id?: string | null
+          background_image_url?: string | null
+          button_text?: string
+          conversion_rate?: number
+          created_at?: string
+          custom_css?: string | null
+          default_pipeline_stage_id?: string | null
+          default_source?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          owner_user_id?: string | null
+          redirect_url?: string | null
+          require_double_optin?: boolean
+          slug: string
+          submission_count?: number
+          subtitle?: string | null
+          success_message?: string | null
+          theme_color?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          assign_to_user_id?: string | null
+          automation_rule_id?: string | null
+          background_image_url?: string | null
+          button_text?: string
+          conversion_rate?: number
+          created_at?: string
+          custom_css?: string | null
+          default_pipeline_stage_id?: string | null
+          default_source?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          owner_user_id?: string | null
+          redirect_url?: string | null
+          require_double_optin?: boolean
+          slug?: string
+          submission_count?: number
+          subtitle?: string | null
+          success_message?: string | null
+          theme_color?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_capture_forms_default_pipeline_stage_id_fkey"
+            columns: ["default_pipeline_stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_capture_submissions: {
+        Row: {
+          error_message: string | null
+          form_data: Json
+          form_id: string
+          id: string
+          ip_address: string | null
+          lead_id: string | null
+          processed_at: string | null
+          referrer: string | null
+          status: string
+          submitted_at: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          form_data?: Json
+          form_id: string
+          id?: string
+          ip_address?: string | null
+          lead_id?: string | null
+          processed_at?: string | null
+          referrer?: string | null
+          status?: string
+          submitted_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          form_data?: Json
+          form_id?: string
+          id?: string
+          ip_address?: string | null
+          lead_id?: string | null
+          processed_at?: string | null
+          referrer?: string | null
+          status?: string
+          submitted_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_capture_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "lead_capture_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_capture_submissions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_sources: {
         Row: {
           active: boolean
@@ -2326,6 +2496,11 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_form_view: { Args: { form_id: string }; Returns: undefined }
+      process_lead_capture_submission: {
+        Args: { submission_id_param: string }
+        Returns: string
       }
       reorder_pipeline_stages: { Args: { p_ids: string[] }; Returns: undefined }
       update_pipeline_stage: {
