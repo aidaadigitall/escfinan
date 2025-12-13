@@ -34,7 +34,7 @@ export const usePipelineStages = () => {
     queryFn: async () => {
       console.log("🔍 Buscando estágios via RPC para usuário:", user?.id);
 
-      const { data, error } = await (supabase.rpc as any)("get_pipeline_stages");
+      const { data, error } = await supabase.rpc("get_pipeline_stages");
 
       console.log("📦 Resposta RPC get_pipeline_stages:", { data, error });
 
@@ -65,7 +65,7 @@ export const usePipelineStages = () => {
 
   const createStage = useMutation({
     mutationFn: async (stageData: PipelineStageFormData) => {
-      const { data, error } = await (supabase.rpc as any)("create_pipeline_stage", {
+      const { data, error } = await supabase.rpc("create_pipeline_stage", {
         p_name: stageData.name,
         p_description: stageData.description ?? null,
         p_color: stageData.color || "#6366f1",
@@ -94,7 +94,7 @@ export const usePipelineStages = () => {
       if (data.order_index !== undefined) updateData.order_index = data.order_index;
       if (data.probability_default !== undefined) updateData.probability_default = data.probability_default;
 
-      const { data: updated, error } = await (supabase.rpc as any)("update_pipeline_stage", {
+      const { data: updated, error } = await supabase.rpc("update_pipeline_stage", {
         p_id: id,
         p_name: updateData.name ?? null,
         p_description: updateData.description ?? null,
@@ -118,7 +118,7 @@ export const usePipelineStages = () => {
 
   const deleteStage = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase.rpc as any)("delete_pipeline_stage", { p_id: id });
+      const { error } = await supabase.rpc("delete_pipeline_stage", { p_id: id });
 
       if (error) throw error;
     },
@@ -133,7 +133,7 @@ export const usePipelineStages = () => {
 
   const reorderStages = useMutation({
     mutationFn: async (orderedIds: string[]) => {
-      const { error } = await (supabase.rpc as any)("reorder_pipeline_stages", { p_ids: orderedIds });
+      const { error } = await supabase.rpc("reorder_pipeline_stages", { p_ids: orderedIds });
       if (error) throw error;
     },
     onSuccess: () => {
