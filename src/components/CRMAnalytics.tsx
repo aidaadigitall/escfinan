@@ -27,9 +27,53 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import type { PieLabelRenderProps } from "recharts";
 import { useMemo } from "react";
 import { differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const chartTextColor = "hsl(var(--muted-foreground))";
+const chartForegroundColor = "hsl(var(--foreground))";
+const chartBorderColor = "hsl(var(--border))";
+const tooltipContentStyle = {
+  backgroundColor: "hsl(var(--popover))",
+  borderColor: chartBorderColor,
+  color: chartForegroundColor,
+};
+const tooltipLabelStyle = { color: chartForegroundColor };
+const tooltipItemStyle = { color: chartForegroundColor };
+const axisTickProps = { fill: chartTextColor };
+const axisLineProps = { stroke: chartBorderColor };
+const gridStrokeColor = "rgba(148, 163, 184, 0.3)";
+const legendStyle = { color: chartTextColor };
+const RADIAN = Math.PI / 180;
+
+const renderScoreLabel = ({
+  cx = 0,
+  cy = 0,
+  midAngle = 0,
+  innerRadius = 0,
+  outerRadius = 0,
+  name,
+  value,
+}: PieLabelRenderProps) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill={chartForegroundColor}
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      fontSize={12}
+    >
+      {`${name}: ${value}`}
+    </text>
+  );
+};
 
 export const CRMAnalytics = () => {
   const { leads = [] } = useLeads();
@@ -248,10 +292,26 @@ export const CRMAnalytics = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={funnelData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStrokeColor} />
+                <XAxis
+                  type="number"
+                  tick={axisTickProps}
+                  axisLine={axisLineProps}
+                  tickLine={axisLineProps}
+                />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  width={120}
+                  tick={axisTickProps}
+                  axisLine={axisLineProps}
+                  tickLine={axisLineProps}
+                />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
                 <Bar dataKey="value" fill="#6366f1" />
               </BarChart>
             </ResponsiveContainer>
@@ -269,11 +329,27 @@ export const CRMAnalytics = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={conversionByStage}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="stage" angle={-45} textAnchor="end" height={80} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStrokeColor} />
+                <XAxis
+                  dataKey="stage"
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  tick={axisTickProps}
+                  axisLine={axisLineProps}
+                  tickLine={axisLineProps}
+                />
+                <YAxis
+                  tick={axisTickProps}
+                  axisLine={axisLineProps}
+                  tickLine={axisLineProps}
+                />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
+                <Legend wrapperStyle={legendStyle} />
                 <Bar dataKey="leads" fill="#6366f1" name="Leads" />
                 <Bar dataKey="conversion" fill="#10b981" name="Conversão %" />
               </BarChart>
@@ -292,10 +368,23 @@ export const CRMAnalytics = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={leadsBySource}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="source" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStrokeColor} />
+                <XAxis
+                  dataKey="source"
+                  tick={axisTickProps}
+                  axisLine={axisLineProps}
+                  tickLine={axisLineProps}
+                />
+                <YAxis
+                  tick={axisTickProps}
+                  axisLine={axisLineProps}
+                  tickLine={axisLineProps}
+                />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
                 <Bar dataKey="count" fill="#f59e0b" name="Quantidade" />
               </BarChart>
             </ResponsiveContainer>
@@ -318,7 +407,7 @@ export const CRMAnalytics = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, count }) => `${name}: ${count}`}
+                  label={renderScoreLabel}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="count"
@@ -327,7 +416,12 @@ export const CRMAnalytics = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
+                <Legend wrapperStyle={legendStyle} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -345,12 +439,32 @@ export const CRMAnalytics = () => {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={leadsOverTime}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip />
-              <Legend />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStrokeColor} />
+              <XAxis
+                dataKey="date"
+                tick={axisTickProps}
+                axisLine={axisLineProps}
+                tickLine={axisLineProps}
+              />
+              <YAxis
+                yAxisId="left"
+                tick={axisTickProps}
+                axisLine={axisLineProps}
+                tickLine={axisLineProps}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={axisTickProps}
+                axisLine={axisLineProps}
+                tickLine={axisLineProps}
+              />
+              <Tooltip
+                contentStyle={tooltipContentStyle}
+                labelStyle={tooltipLabelStyle}
+                itemStyle={tooltipItemStyle}
+              />
+              <Legend wrapperStyle={legendStyle} />
               <Line
                 yAxisId="left"
                 type="monotone"
