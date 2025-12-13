@@ -50,6 +50,7 @@ import PontoApprovalsPage from "./pages/PontoApprovalsPage";
 import CRM from "./pages/CRM";
 import Projects from "./pages/Projects";
 import PrintDocument from "./pages/PrintDocument";
+import LeadCapturePublic from "./pages/LeadCapturePublic";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +75,9 @@ const App = () => (
             
             {/* Public billing page - no auth required */}
             <Route path="/cobranca/:type/:id" element={<PublicBilling />} />
+
+            {/* Public lead capture form */}
+            <Route path="/capture/:formId" element={<LeadCapturePublic />} />
             
             {/* Print document route */}
             <Route path="/print/document/:type/:id" element={
