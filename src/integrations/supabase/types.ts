@@ -1572,6 +1572,7 @@ export type Database = {
           id: string
           notes: string | null
           order_number: number
+          payment_method: string | null
           priority: string | null
           products_total: number | null
           responsible_id: string | null
@@ -1601,6 +1602,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: number
+          payment_method?: string | null
           priority?: string | null
           products_total?: number | null
           responsible_id?: string | null
@@ -1630,6 +1632,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: number
+          payment_method?: string | null
           priority?: string | null
           products_total?: number | null
           responsible_id?: string | null

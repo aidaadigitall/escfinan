@@ -48,11 +48,15 @@ interface DocumentData {
   client?: {
     name: string;
     fantasy_name?: string;
-    document?: string; // CPF/CNPJ
+    company_name?: string;
+    document?: string;
+    cnpj?: string;
+    cpf?: string;
     address?: string;
     city?: string;
     state?: string;
     zip_code?: string;
+    zipcode?: string;
     phone?: string;
     email?: string;
   };
@@ -110,7 +114,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
       .reduce((acc, item) => acc + item.subtotal, 0);
 
     return (
-      <div ref={ref} className="bg-white text-black p-8 max-w-[210mm] mx-auto min-h-[297mm] text-[10px] leading-tight font-sans print:p-0 print:max-w-none">
+      <div ref={ref} className="bg-white text-black p-8 max-w-[210mm] mx-auto text-[10px] leading-tight font-sans print:p-6 print:max-w-none">
         {/* Header */}
         <div className="flex border border-gray-300 mb-2">
           <div className="w-32 p-2 flex items-center justify-center border-r border-gray-300 bg-black text-white">
@@ -182,15 +186,15 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
           <div className="grid grid-cols-2 gap-0">
             <div className="flex border-b border-gray-300 border-r">
               <span className="w-24 bg-gray-50 p-1 font-bold">Razão social:</span>
-              <span className="flex-1 p-1 truncate">{data.client?.name}</span>
+              <span className="flex-1 p-1 truncate">{data.client?.company_name || data.client?.name}</span>
             </div>
             <div className="flex border-b border-gray-300">
               <span className="w-24 bg-gray-50 p-1 font-bold">Nome fantasia:</span>
-              <span className="flex-1 p-1 truncate">{data.client?.fantasy_name || data.client?.name}</span>
+              <span className="flex-1 p-1 truncate">{data.client?.name}</span>
             </div>
             <div className="flex border-b border-gray-300 border-r">
               <span className="w-24 bg-gray-50 p-1 font-bold">CNPJ/CPF:</span>
-              <span className="flex-1 p-1">{data.client?.document}</span>
+              <span className="flex-1 p-1">{data.client?.cnpj || data.client?.cpf || data.client?.document}</span>
             </div>
             <div className="flex border-b border-gray-300">
               <span className="w-24 bg-gray-50 p-1 font-bold">Endereço:</span>
@@ -198,7 +202,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
             </div>
             <div className="flex border-b border-gray-300 border-r">
               <span className="w-24 bg-gray-50 p-1 font-bold">CEP:</span>
-              <span className="flex-1 p-1">{data.client?.zip_code}</span>
+              <span className="flex-1 p-1">{data.client?.zipcode || data.client?.zip_code}</span>
             </div>
             <div className="flex border-b border-gray-300">
               <span className="w-24 bg-gray-50 p-1 font-bold">Cidade/UF:</span>

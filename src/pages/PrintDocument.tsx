@@ -110,20 +110,35 @@ const PrintDocument = () => {
     client: data.clients || data.client, // clients is the relation name from Supabase
   };
 
-  // Fallback for company settings if not loaded yet
-  const company = companySettings || {
-    company_name: "Minha Empresa",
+  // Map items with proper item_type
+  const mappedItems = items.map((item: any) => ({
+    ...item,
+    item_type: item.item_type || (item.product_id ? "product" : "service"),
+    subtotal: item.subtotal ?? (item.quantity * item.unit_price - (item.discount || 0)),
+  }));
+
+  // Fallback for company settings if not loaded yet - use logo_header_url for PDF
+  const company = companySettings ? {
+    name: companySettings.company_name || companySettings.trading_name || "Minha Empresa",
+    cnpj: companySettings.cnpj,
+    address: `${companySettings.address || ""} ${companySettings.city || ""}/${companySettings.state || ""}`,
+    phone: companySettings.phone,
+    email: companySettings.email,
+    website: companySettings.website,
+    logo_url: companySettings.logo_header_url, // Use logo from settings
+  } : {
+    name: "Minha Empresa",
     address: "Endereço da Empresa",
     phone: "(00) 0000-0000",
     email: "contato@empresa.com",
   } as any;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center py-8 print:bg-white print:py-0">
+    <div className="min-h-screen bg-gray-100 flex justify-center print:bg-white print:p-0 print:min-h-0">
       <DocumentTemplate
         type={type as "os" | "budget" | "sale"}
         data={templateData}
-        items={items}
+        items={mappedItems}
         company={company}
       />
     </div>
