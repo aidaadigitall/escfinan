@@ -75,6 +75,22 @@ const CRM = () => {
   // Usar leads filtrados para o pipeline
   const leadsToDisplay = filteredLeads;
 
+  // Métricas calculadas
+  const totalLeads = leadsToDisplay.length;
+  const totalValue = leadsToDisplay.reduce((sum, lead) => sum + (lead.expected_value || 0), 0);
+  const wonLeads = leadsToDisplay.filter(lead => lead.status === 'ganho').length;
+  const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
+  
+  // Agrupar leads por estágio
+  const leadsByStage = leadsToDisplay.reduce((acc, lead) => {
+    const stageId = lead.pipeline_stage_id || 'no-stage';
+    if (!acc[stageId]) acc[stageId] = [];
+    acc[stageId].push(lead);
+    return acc;
+  }, {} as Record<string, typeof leads>);
+  
+  const leadsWithoutStage = leadsByStage['no-stage'] || [];
+
   const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
     if (!destination) {
       return;
