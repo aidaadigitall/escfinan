@@ -119,7 +119,7 @@ export const PipelineStageManager = ({ open, onOpenChange }: PipelineStageManage
           description: formData.description,
           color: formData.color,
           probability_default: formData.probability_default,
-          order: stages.length,
+          order_index: stages.length,
         });
       }
       setIsEditDialogOpen(false);
