@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,21 @@ interface CaptureFormConfig {
   created_at: string;
 }
 
+const generateId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `field-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+};
+
+const FIELD_TYPE_LABELS: Record<CaptureField['type'], string> = {
+  text: 'Campo de texto',
+  email: 'Campo de email',
+  tel: 'Campo de telefone',
+  textarea: 'Área de texto',
+  select: 'Lista de opções',
+};
+
 export const LeadCaptureForm = () => {
   const { sources = [] } = useLeadSources();
   const { stages = [] } = usePipelineStages();
@@ -67,21 +82,42 @@ export const LeadCaptureForm = () => {
   const [selectedForm, setSelectedForm] = useState<CaptureFormConfig | null>(null);
   const [showEmbedCode, setShowEmbedCode] = useState<string | null>(null);
 
-  // Formulário padrão para criar novo
-  const getDefaultForm = (): Omit<CaptureFormConfig, 'id' | 'created_at'> => ({
+  const buildDefaultForm = useCallback((): Omit<CaptureFormConfig, 'id' | 'created_at'> => ({
     name: 'Novo Formulário',
     description: '',
     fields: [
-      { id: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Seu nome completo' },
-      { id: 'email', label: 'Email', type: 'email', required: true, placeholder: 'seu@email.com' },
-      { id: 'phone', label: 'Telefone', type: 'tel', required: false, placeholder: '(00) 00000-0000' },
+      { id: generateId(), label: 'Nome', type: 'text', required: true, placeholder: 'Seu nome completo' },
+      { id: generateId(), label: 'Email', type: 'email', required: true, placeholder: 'seu@email.com' },
+      { id: generateId(), label: 'Telefone', type: 'tel', required: false, placeholder: '(00) 00000-0000' },
     ],
     source_id: sources[0]?.id,
     stage_id: stages[0]?.id,
     redirect_url: '',
     success_message: 'Obrigado! Entraremos em contato em breve.',
     is_active: true,
-  });
+  }), [sources, stages]);
+
+  const [formData, setFormData] = useState<Omit<CaptureFormConfig, 'id' | 'created_at'>>(() => buildDefaultForm());
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      return;
+    }
+
+    if (selectedForm) {
+      const { id, created_at, ...rest } = selectedForm;
+      setFormData({
+        ...rest,
+        fields: rest.fields.map((field) => ({
+          ...field,
+          options: field.options ? [...field.options] : [],
+        })),
+      });
+      return;
+    }
+
+    setFormData(buildDefaultForm());
+  }, [isDialogOpen, selectedForm, buildDefaultForm]);
 
   const handleCreateForm = () => {
     setSelectedForm(null);
@@ -93,16 +129,73 @@ export const LeadCaptureForm = () => {
     setIsDialogOpen(true);
   };
 
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedForm(null);
+    }
+  };
+
   const handleSaveForm = () => {
-    // TODO: Implementar salvamento no Supabase
-    toast.success("Formulário salvo com sucesso!");
+    if (!formData) {
+      return;
+    }
+
+    if (selectedForm) {
+      setForms((prev) => prev.map((form) => (
+        form.id === selectedForm.id ? { ...form, ...formData } : form
+      )));
+      toast.success("Formulário atualizado com sucesso!");
+    } else {
+      const newForm: CaptureFormConfig = {
+        ...formData,
+        id: generateId(),
+        created_at: new Date().toISOString(),
+      };
+      setForms((prev) => [...prev, newForm]);
+      toast.success("Formulário criado com sucesso!");
+    }
+
     setIsDialogOpen(false);
+    setSelectedForm(null);
   };
 
   const handleDeleteForm = (formId: string) => {
-    // TODO: Implementar exclusão
-    setForms(forms.filter(f => f.id !== formId));
+    setForms((prev) => prev.filter((f) => f.id !== formId));
     toast.success("Formulário excluído");
+  };
+
+  const handleFieldChange = (fieldId: string, updates: Partial<CaptureField>) => {
+    setFormData((prev) => ({
+      ...prev,
+      fields: prev.fields.map((field) =>
+        field.id === fieldId ? { ...field, ...updates } : field
+      ),
+    }));
+  };
+
+  const handleAddField = () => {
+    setFormData((prev) => {
+      const newField: CaptureField = {
+        id: generateId(),
+        label: `Campo ${prev.fields.length + 1}`,
+        type: 'text',
+        required: false,
+        placeholder: 'Digite aqui',
+        options: [],
+      };
+      return {
+        ...prev,
+        fields: [...prev.fields, newField],
+      };
+    });
+  };
+
+  const handleRemoveField = (fieldId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      fields: prev.fields.filter((field) => field.id !== fieldId),
+    }));
   };
 
   const generateEmbedCode = (form: CaptureFormConfig) => {
@@ -333,7 +426,7 @@ export const LeadCaptureForm = () => {
       )}
 
       {/* Dialog de criar/editar formulário */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -349,13 +442,23 @@ export const LeadCaptureForm = () => {
             <div className="space-y-4">
               <div>
                 <Label>Nome do Formulário</Label>
-                <Input placeholder="Ex: Formulário de Contato - Site Principal" />
+                <Input
+                  placeholder="Ex: Formulário de Contato - Site Principal"
+                  value={formData?.name || ""}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, name: event.target.value }))
+                  }
+                />
               </div>
               <div>
                 <Label>Descrição (opcional)</Label>
-                <Textarea 
+                <Textarea
                   placeholder="Descrição interna para identificar este formulário"
                   rows={2}
+                  value={formData?.description || ""}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, description: event.target.value }))
+                  }
                 />
               </div>
             </div>
@@ -366,7 +469,12 @@ export const LeadCaptureForm = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Origem do Lead</Label>
-                  <Select>
+                  <Select
+                    value={formData?.source_id || undefined}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, source_id: value }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a origem" />
                     </SelectTrigger>
@@ -381,7 +489,12 @@ export const LeadCaptureForm = () => {
                 </div>
                 <div>
                   <Label>Estágio Inicial</Label>
-                  <Select>
+                  <Select
+                    value={formData?.stage_id || undefined}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, stage_id: value }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o estágio" />
                     </SelectTrigger>
@@ -401,32 +514,121 @@ export const LeadCaptureForm = () => {
             <div className="space-y-4 pt-4 border-t">
               <div className="flex items-center justify-between">
                 <h4 className="font-semibold">Campos do Formulário</h4>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={handleAddField}>
                   <Plus className="mr-2 h-3 w-3" />
                   Adicionar Campo
                 </Button>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-4 p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">Nome</p>
-                    <p className="text-xs text-muted-foreground">Campo de texto obrigatório</p>
+              <div className="space-y-4">
+                {formData?.fields.map((field) => (
+                  <div key={field.id} className="space-y-4 p-4 border rounded-lg">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-sm">{field.label || 'Novo Campo'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {FIELD_TYPE_LABELS[field.type]} · {field.required ? 'Obrigatório' : 'Opcional'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={field.required ? 'default' : 'secondary'}>
+                          {field.required ? 'Obrigatório' : 'Opcional'}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveField(field.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Nome do Campo</Label>
+                        <Input
+                          value={field.label}
+                          onChange={(event) =>
+                            handleFieldChange(field.id, { label: event.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Tipo</Label>
+                        <Select
+                          value={field.type}
+                          onValueChange={(value) => {
+                            const typedValue = value as CaptureField['type'];
+                            handleFieldChange(field.id, {
+                              type: typedValue,
+                              options: typedValue === 'select'
+                                ? field.options?.length
+                                  ? field.options
+                                  : ['Opção 1']
+                                : [],
+                            });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tipo do campo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Texto</SelectItem>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="tel">Telefone</SelectItem>
+                            <SelectItem value="textarea">Parágrafo</SelectItem>
+                            <SelectItem value="select">Lista de Opções</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Placeholder</Label>
+                        <Input
+                          value={field.placeholder || ''}
+                          onChange={(event) =>
+                            handleFieldChange(field.id, { placeholder: event.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          checked={field.required}
+                          onCheckedChange={(checked) =>
+                            handleFieldChange(field.id, { required: checked })
+                          }
+                        />
+                        <span className="text-sm text-muted-foreground">Obrigatório</span>
+                      </div>
+                    </div>
+
+                    {field.type === 'select' && (
+                      <div>
+                        <Label>Opções (uma por linha)</Label>
+                        <Textarea
+                          rows={3}
+                          value={(field.options || []).join('\n')}
+                          onChange={(event) =>
+                            handleFieldChange(field.id, {
+                              options: event.target.value
+                                .split('\n')
+                                .map((option) => option.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
-                  <Badge>Obrigatório</Badge>
-                  <Button size="sm" variant="ghost">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-4 p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">Email</p>
-                    <p className="text-xs text-muted-foreground">Campo de email obrigatório</p>
-                  </div>
-                  <Badge>Obrigatório</Badge>
-                  <Button size="sm" variant="ghost">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                ))}
+
+                {(formData?.fields.length ?? 0) === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum campo adicionado ao formulário.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -435,20 +637,35 @@ export const LeadCaptureForm = () => {
               <h4 className="font-semibold">Após Submissão</h4>
               <div>
                 <Label>Mensagem de Sucesso</Label>
-                <Textarea 
+                <Textarea
                   placeholder="Obrigado! Entraremos em contato em breve."
                   rows={2}
+                  value={formData?.success_message || ''}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, success_message: event.target.value }))
+                  }
                 />
               </div>
               <div>
                 <Label>URL de Redirecionamento (opcional)</Label>
-                <Input placeholder="https://seusite.com/obrigado" />
+                <Input
+                  placeholder="https://seusite.com/obrigado"
+                  value={formData?.redirect_url || ''}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, redirect_url: event.target.value }))
+                  }
+                />
               </div>
             </div>
 
             {/* Status */}
             <div className="flex items-center gap-2 pt-4 border-t">
-              <Switch />
+              <Switch
+                checked={!!formData?.is_active}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({ ...prev, is_active: checked }))
+                }
+              />
               <div>
                 <Label>Formulário Ativo</Label>
                 <p className="text-xs text-muted-foreground">
@@ -459,7 +676,7 @@ export const LeadCaptureForm = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => handleDialogOpenChange(false)}>
               Cancelar
             </Button>
             <Button onClick={handleSaveForm}>
