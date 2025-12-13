@@ -43,8 +43,18 @@ const leadSchema = z.object({
   source: z.string().optional(),
   source_details: z.string().max(200, "Detalhes muito longos").optional(),
   pipeline_stage_id: z.string().optional(),
-  expected_value: z.number().min(0, "Valor não pode ser negativo").optional(),
-  probability: z.number().min(0, "Mínimo 0%").max(100, "Máximo 100%").optional(),
+  expected_value: z.preprocess((val) => {
+    if (val === "" || val === null || typeof val === "undefined") return undefined;
+    if (typeof val === "number" && isNaN(val)) return undefined;
+    const num = typeof val === "number" ? val : Number(val);
+    return isNaN(num) ? undefined : num;
+  }, z.number().min(0, "Valor não pode ser negativo")).optional(),
+  probability: z.preprocess((val) => {
+    if (val === "" || val === null || typeof val === "undefined") return undefined;
+    if (typeof val === "number" && isNaN(val)) return undefined;
+    const num = typeof val === "number" ? val : Number(val);
+    return isNaN(num) ? undefined : num;
+  }, z.number().min(0, "Mínimo 0%").max(100, "Máximo 100%")).optional(),
   expected_close_date: z.string().optional(),
   assigned_to: z.string().optional(),
   notes: z.string().max(1000, "Observações muito longas").optional(),
@@ -209,12 +219,13 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
                             setValue("email", client.email || "");
                             setValue("phone", client.phone || "");
                             setValue("company", client.company_name || "");
+                            setShowClientSearch(false);
                           }}
                         >
                           <div className="flex flex-col">
                             <span className="font-medium">{client.name}</span>
                             {(client.email || client.phone) && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground dark:text-foreground">
                                 {[client.email, client.phone].filter(Boolean).join(" • ")}
                               </span>
                             )}
