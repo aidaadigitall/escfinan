@@ -1,4 +1,6 @@
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
 import { useUsers } from "@/hooks/useUsers";
@@ -16,8 +18,6 @@ import {
   BarChart2,
   CircleX,
   AlarmClock,
-  Filter,
-  Calendar,
 } from "lucide-react";
 import {
   BarChart,
@@ -36,11 +36,8 @@ import {
 } from "recharts";
 import type { PieLabelRenderProps } from "recharts";
 import { useMemo, useState } from "react";
-import { differenceInDays, differenceInHours, format, startOfMonth, endOfMonth, eachDayOfInterval, subDays, subMonths, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { differenceInDays, differenceInHours, format, eachDayOfInterval, subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 
 const SLA_THRESHOLD_HOURS = 48;
 const UNASSIGNED_OWNER = "__unassigned__";
@@ -72,21 +69,16 @@ const renderScoreLabel = ({
   if (!value) {
     return null;
   }
-  const numCx = Number(cx) || 0;
-  const numCy = Number(cy) || 0;
-  const numInnerRadius = Number(innerRadius) || 0;
-  const numOuterRadius = Number(outerRadius) || 0;
-  const numMidAngle = Number(midAngle) || 0;
-  const radius = numInnerRadius + (numOuterRadius - numInnerRadius) * 0.5;
-  const x = numCx + radius * Math.cos(-numMidAngle * RADIAN);
-  const y = numCy + radius * Math.sin(-numMidAngle * RADIAN);
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
   return (
     <text
       x={x}
       y={y}
       fill={chartForegroundColor}
-      textAnchor={x > numCx ? "start" : "end"}
+      textAnchor={x > cx ? "start" : "end"}
       dominantBaseline="central"
       fontSize={12}
     >
@@ -99,20 +91,39 @@ export const CRMAnalytics = () => {
   const { leads = [] } = useLeads();
   const { stages = [] } = usePipelineStages();
   const { users } = useUsers();
-  
+  const [customRange, setCustomRange] = useState({ start: "", end: "" });
+
+  const hasCustomRange = Boolean(customRange.start || customRange.end);
+  const isRangeInvalid = customRange.start && customRange.end
+    ? new Date(customRange.start) > new Date(customRange.end)
+    : false;
+
+  const clearCustomRange = () => setCustomRange({ start: "", end: "" });
+  const formatRangeDate = (value: string) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (isNaN(parsed.getTime())) {
+      return null;
+    }
+    return format(parsed, "dd/MM/yy", { locale: ptBR });
+  };
+
+  const rangeDescription = hasCustomRange
+    ? `Exibindo ${formatRangeDate(customRange.start) ?? "início aberto"} até ${formatRangeDate(customRange.end) ?? "hoje"}`
+    : "Período padrão dos últimos 30 dias";
+
   // Estados dos filtros de KPIs
   const [kpiPeriod, setKpiPeriod] = useState<string>("30d");
   const [kpiStage, setKpiStage] = useState<string>("all");
 
-  // Filtrar leads por período
+  // Filtrar leads por período e estágio
   const filteredLeadsForKpi = useMemo(() => {
     let filtered = [...leads];
-    
-    // Filtro por período
+
     if (kpiPeriod !== "all") {
       const now = new Date();
       let startDate: Date;
-      
+
       switch (kpiPeriod) {
         case "7d":
           startDate = subDays(now, 7);
@@ -126,68 +137,68 @@ export const CRMAnalytics = () => {
         default:
           startDate = subDays(now, 30);
       }
-      
-      filtered = filtered.filter(lead => {
+
+      filtered = filtered.filter((lead) => {
         const leadDate = new Date(lead.created_at);
         return isWithinInterval(leadDate, { start: startOfDay(startDate), end: endOfDay(now) });
       });
     }
-    
-    // Filtro por estágio
+
     if (kpiStage !== "all") {
-      filtered = filtered.filter(lead => lead.pipeline_stage_id === kpiStage);
+      filtered = filtered.filter((lead) => lead.pipeline_stage_id === kpiStage);
     }
-    
+
     return filtered;
   }, [leads, kpiPeriod, kpiStage]);
 
-  // Dados filtrados para tempo médio por estágio
   const filteredAverageTimePerStage = useMemo(() => {
     const now = new Date();
-    return stages.map((stage) => {
-      const stageLeads = kpiStage === "all" 
-        ? filteredLeadsForKpi.filter(lead => lead.pipeline_stage_id === stage.id)
-        : filteredLeadsForKpi;
-        
-      const { totalHours, counted } = stageLeads.reduce(
-        (acc, lead) => {
-          if (!lead.created_at) return acc;
-          const hours = Math.max(differenceInHours(now, new Date(lead.created_at)), 0);
-          return { totalHours: acc.totalHours + hours, counted: acc.counted + 1 };
-        },
-        { totalHours: 0, counted: 0 }
-      );
-      const avgDays = counted > 0 ? Number(((totalHours / counted) / 24).toFixed(1)) : null;
-      return {
-        stage: stage.name,
-        avgDays,
-        sampleSize: counted,
-      };
-    }).filter(item => kpiStage === "all" || item.sampleSize > 0);
+    return stages
+      .map((stage) => {
+        const stageLeads = kpiStage === "all"
+          ? filteredLeadsForKpi.filter((lead) => lead.pipeline_stage_id === stage.id)
+          : filteredLeadsForKpi;
+
+        const { totalHours, counted } = stageLeads.reduce(
+          (acc, lead) => {
+            if (!lead.created_at) return acc;
+            const hours = Math.max(differenceInHours(now, new Date(lead.created_at)), 0);
+            return { totalHours: acc.totalHours + hours, counted: acc.counted + 1 };
+          },
+          { totalHours: 0, counted: 0 },
+        );
+        const avgDays = counted > 0 ? Number(((totalHours / counted) / 24).toFixed(1)) : null;
+        return {
+          stage: stage.name,
+          avgDays,
+          sampleSize: counted,
+        };
+      })
+      .filter((item) => kpiStage === "all" || item.sampleSize > 0);
   }, [filteredLeadsForKpi, stages, kpiStage]);
 
-  // Dados filtrados para conversão por etapa
   const filteredConversionByStage = useMemo(() => {
-    return stages.map((stage, index) => {
-      const currentStageLeads = filteredLeadsForKpi.filter(l => l.pipeline_stage_id === stage.id).length;
-      const nextStage = stages[index + 1];
-      const nextStageLeads = nextStage
-        ? filteredLeadsForKpi.filter(l => l.pipeline_stage_id === nextStage.id).length
-        : filteredLeadsForKpi.filter(l => l.status === 'won').length;
-      
-      const conversionRate = currentStageLeads > 0
-        ? (nextStageLeads / currentStageLeads) * 100
-        : 0;
+    return stages
+      .map((stage, index) => {
+        const currentStageLeads = filteredLeadsForKpi.filter((l) => l.pipeline_stage_id === stage.id).length;
+        const nextStage = stages[index + 1];
+        const nextStageLeads = nextStage
+          ? filteredLeadsForKpi.filter((l) => l.pipeline_stage_id === nextStage.id).length
+          : filteredLeadsForKpi.filter((l) => l.status === "won").length;
 
-      return {
-        stage: stage.name,
-        leads: currentStageLeads,
-        conversion: Math.round(conversionRate),
-      };
-    }).filter(item => kpiStage === "all" || item.leads > 0);
+        const conversionRate = currentStageLeads > 0
+          ? (nextStageLeads / currentStageLeads) * 100
+          : 0;
+
+        return {
+          stage: stage.name,
+          leads: currentStageLeads,
+          conversion: Math.round(conversionRate),
+        };
+      })
+      .filter((item) => kpiStage === "all" || item.leads > 0);
   }, [filteredLeadsForKpi, stages, kpiStage]);
 
-  // Dados filtrados para motivos de perda
   const filteredLossReasonStats = useMemo(() => {
     const lostLeads = filteredLeadsForKpi.filter((lead) => lead.status === "lost");
     if (!lostLeads.length) return [];
@@ -309,11 +320,18 @@ export const CRMAnalytics = () => {
 
   // Dados para gráfico de leads por dia (últimos 30 dias)
   const leadsOverTime = useMemo(() => {
-    const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
+    const rawEnd = customRange.end ? new Date(customRange.end) : new Date();
+    const endDate = isNaN(rawEnd.getTime()) ? new Date() : rawEnd;
+    const defaultStart = new Date(endDate);
+    defaultStart.setDate(defaultStart.getDate() - 30);
+    const rawStart = customRange.start ? new Date(customRange.start) : defaultStart;
+    const startDate = isNaN(rawStart.getTime()) ? defaultStart : rawStart;
 
-    const days = eachDayOfInterval({ start: thirtyDaysAgo, end: today });
+    if (startDate > endDate) {
+      return [];
+    }
+
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
     
     return days.map(day => {
       const dayStr = format(day, 'yyyy-MM-dd');
@@ -328,7 +346,7 @@ export const CRMAnalytics = () => {
         value: dayLeads.reduce((sum, l) => sum + (l.expected_value || 0), 0),
       };
     });
-  }, [leads]);
+  }, [leads, customRange]);
 
   // Distribuição de score dos leads
   const scoreDistribution = useMemo(() => {
@@ -482,251 +500,122 @@ export const CRMAnalytics = () => {
         </Card>
       </div>
 
-      {/* Dashboard de KPIs Visual */}
-      <Card className="overflow-hidden">
-        <CardHeader className="border-b bg-muted/30">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Dashboard de KPIs</CardTitle>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={kpiPeriod} onValueChange={setKpiPeriod}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
-                    <SelectItem value="all">Todo o período</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Select value={kpiStage} onValueChange={setKpiStage}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Estágio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os estágios</SelectItem>
-                    {stages.map(stage => (
-                      <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Tempo médio por estágio - Visual */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <Timer className="h-5 w-5 text-primary" />
-                <h4 className="font-semibold">Tempo médio por estágio</h4>
-              </div>
-              {filteredAverageTimePerStage.length ? (
-                <div className="space-y-4">
-                  {filteredAverageTimePerStage.map((item, index) => {
-                    const maxDays = Math.max(...filteredAverageTimePerStage.map(i => i.avgDays || 0), 1);
-                    const progressValue = item.avgDays !== null ? (item.avgDays / maxDays) * 100 : 0;
-                    const stageColor = stages.find(s => s.name === item.stage)?.color || '#6366f1';
-                    
-                    return (
-                      <div key={item.stage} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: stageColor }}
-                            />
-                            <span className="font-medium text-sm">{item.stage}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {item.sampleSize} lead{item.sampleSize === 1 ? "" : "s"}
-                            </Badge>
-                          </div>
-                          <span className="font-bold text-sm">
-                            {item.avgDays !== null ? `${item.avgDays} dia(s)` : "—"}
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <Progress 
-                            value={progressValue} 
-                            className="h-3"
-                            style={{ 
-                              ['--progress-background' as string]: stageColor + '40',
-                              ['--progress-foreground' as string]: stageColor
-                            }}
-                          />
-                        </div>
+      {/* Indicadores Recomendados */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold">Indicadores recomendados (KPIs)</h3>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Timer className="h-4 w-4 text-muted-foreground" />
+                Tempo médio por estágio
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {averageTimePerStage.length ? (
+                <div className="space-y-3">
+                  {averageTimePerStage.map((item) => (
+                    <div key={item.stage} className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{item.stage}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.sampleSize} lead{item.sampleSize === 1 ? "" : "s"}
+                        </p>
                       </div>
-                    );
-                  })}
+                      <span className="font-semibold">
+                        {item.avgDays !== null ? `${item.avgDays} dia(s)` : "Sem dados"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-32 text-muted-foreground">
-                  <p>Sem dados suficientes para o período selecionado.</p>
-                </div>
+                <p className="text-sm text-muted-foreground">Sem dados suficientes.</p>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Taxa de conversão por etapa - Visual */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <BarChart2 className="h-5 w-5 text-primary" />
-                <h4 className="font-semibold">Taxa de conversão por etapa</h4>
-              </div>
-              {filteredConversionByStage.length ? (
-                <div className="space-y-4">
-                  {filteredConversionByStage.map((stage) => {
-                    const stageColor = stages.find(s => s.name === stage.stage)?.color || '#6366f1';
-                    const conversionColor = stage.conversion >= 50 ? '#10b981' : stage.conversion >= 25 ? '#f59e0b' : '#ef4444';
-                    
-                    return (
-                      <div key={stage.stage} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: stageColor }}
-                            />
-                            <span className="font-medium text-sm">{stage.stage}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {stage.leads} leads
-                            </Badge>
-                          </div>
-                          <span 
-                            className="font-bold text-sm"
-                            style={{ color: conversionColor }}
-                          >
-                            {stage.conversion}%
-                          </span>
-                        </div>
-                        <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-                            style={{ 
-                              width: `${Math.min(stage.conversion, 100)}%`,
-                              backgroundColor: conversionColor
-                            }}
-                          />
-                        </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                Taxa de conversão por etapa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {conversionByStage.length ? (
+                <div className="space-y-3">
+                  {conversionByStage.map((stage) => (
+                    <div key={stage.stage} className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{stage.stage}</p>
+                        <p className="text-xs text-muted-foreground">{stage.leads} leads</p>
                       </div>
-                    );
-                  })}
+                      <span className="font-semibold">{stage.conversion}%</span>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-32 text-muted-foreground">
-                  <p>Configure seus estágios para visualizar este indicador.</p>
-                </div>
+                <p className="text-sm text-muted-foreground">Configure seus estágios para visualizar este indicador.</p>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Motivos de perda - Gráfico de barras horizontal */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <CircleX className="h-5 w-5 text-destructive" />
-                <h4 className="font-semibold">Motivos de perda</h4>
-              </div>
-              {filteredLossReasonStats.length ? (
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={filteredLossReasonStats}
-                      layout="vertical"
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke={gridStrokeColor} />
-                      <XAxis type="number" tick={axisTickProps} axisLine={axisLineProps} />
-                      <YAxis 
-                        type="category" 
-                        dataKey="reason" 
-                        tick={axisTickProps} 
-                        axisLine={axisLineProps}
-                        width={100}
-                      />
-                      <Tooltip 
-                        contentStyle={tooltipContentStyle}
-                        labelStyle={tooltipLabelStyle}
-                        itemStyle={tooltipItemStyle}
-                        formatter={(value: number) => [`${value} leads`, 'Quantidade']}
-                      />
-                      <Bar 
-                        dataKey="count" 
-                        fill="hsl(var(--destructive))" 
-                        radius={[0, 4, 4, 0]}
-                        label={{ position: 'right', fill: chartTextColor, fontSize: 12 }}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CircleX className="h-4 w-4 text-muted-foreground" />
+                Motivos de perda
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {lossReasonStats.length ? (
+                <div className="space-y-3">
+                  {lossReasonStats.map((reason) => (
+                    <div key={reason.reason} className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{reason.reason}</p>
+                        <p className="text-xs text-muted-foreground">{reason.count} lead{reason.count === 1 ? "" : "s"}</p>
+                      </div>
+                      <span className="font-semibold">{reason.percent}%</span>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-32 text-muted-foreground">
-                  <p>Nenhum lead perdido no período selecionado.</p>
-                </div>
+                <p className="text-sm text-muted-foreground">Nenhum lead perdido no período.</p>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* SLA estourado por vendedor - Visual com badges */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <AlarmClock className="h-5 w-5 text-orange-500" />
-                <h4 className="font-semibold">SLA estourado por vendedor</h4>
-                <Badge variant="outline" className="text-xs">
-                  Limite: {SLA_THRESHOLD_HOURS}h
-                </Badge>
-              </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <AlarmClock className="h-4 w-4 text-muted-foreground" />
+                SLA estourado por vendedor
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground mb-3">
+                Consideramos SLA de {SLA_THRESHOLD_HOURS}h sem interação registrada.
+              </p>
               {slaBreaches.length ? (
                 <div className="space-y-3">
-                  {slaBreaches.map((item, index) => {
-                    const maxBreaches = Math.max(...slaBreaches.map(i => i.count), 1);
-                    const severity = item.count / maxBreaches;
-                    const severityColor = severity >= 0.7 ? '#ef4444' : severity >= 0.4 ? '#f59e0b' : '#eab308';
-                    
-                    return (
-                      <div key={item.ownerId} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                        <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                          style={{ backgroundColor: severityColor }}
-                        >
-                          {item.count}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.label}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.count} lead{item.count === 1 ? "" : "s"} sem interação há mais de {SLA_THRESHOLD_HOURS}h
-                          </p>
-                        </div>
-                        <Badge 
-                          variant="destructive" 
-                          className="text-xs"
-                          style={{ 
-                            backgroundColor: severityColor + '20',
-                            color: severityColor,
-                            borderColor: severityColor
-                          }}
-                        >
-                          {severity >= 0.7 ? 'Crítico' : severity >= 0.4 ? 'Alto' : 'Médio'}
-                        </Badge>
-                      </div>
-                    );
-                  })}
+                  {slaBreaches.map((item) => (
+                    <div key={item.ownerId} className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="font-semibold text-red-500">{item.count} lead{item.count === 1 ? "" : "s"}</span>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground gap-2">
-                  <Award className="h-8 w-8 text-green-500" />
-                  <p>Nenhum vendedor com SLA estourado!</p>
-                </div>
+                <p className="text-sm text-muted-foreground">Nenhum vendedor com SLA estourado.</p>
               )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Gráficos Principais */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -880,12 +769,51 @@ export const CRMAnalytics = () => {
       {/* Gráfico de Leads ao Longo do Tempo */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Leads nos Últimos 30 Dias
-          </CardTitle>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <CardTitle className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Leads nos Últimos 30 Dias
+              </div>
+              <span className="text-xs font-normal text-muted-foreground">
+                {rangeDescription}
+              </span>
+            </CardTitle>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  type="date"
+                  value={customRange.start}
+                  onChange={(event) =>
+                    setCustomRange((prev) => ({ ...prev, start: event.target.value }))
+                  }
+                  className="h-9 w-full sm:w-40"
+                  aria-label="Data inicial"
+                />
+                <Input
+                  type="date"
+                  value={customRange.end}
+                  onChange={(event) =>
+                    setCustomRange((prev) => ({ ...prev, end: event.target.value }))
+                  }
+                  className="h-9 w-full sm:w-40"
+                  aria-label="Data final"
+                />
+              </div>
+              {hasCustomRange && (
+                <Button variant="ghost" size="sm" onClick={clearCustomRange}>
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
+          {isRangeInvalid && (
+            <p className="mb-2 text-sm text-red-500">
+              Período inválido. Ajuste as datas para que a inicial seja anterior à final.
+            </p>
+          )}
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={leadsOverTime}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridStrokeColor} />

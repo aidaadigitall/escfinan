@@ -48,13 +48,13 @@ const leadSchema = z.object({
     if (typeof val === "number" && isNaN(val)) return undefined;
     const num = typeof val === "number" ? val : Number(val);
     return isNaN(num) ? undefined : num;
-  }, z.number().min(0, "Valor não pode ser negativo")).optional(),
+  }, z.number().min(0, "Valor não pode ser negativo")).optional().or(z.literal(undefined)),
   probability: z.preprocess((val) => {
     if (val === "" || val === null || typeof val === "undefined") return undefined;
     if (typeof val === "number" && isNaN(val)) return undefined;
     const num = typeof val === "number" ? val : Number(val);
     return isNaN(num) ? undefined : num;
-  }, z.number().min(0, "Mínimo 0%").max(100, "Máximo 100%")).optional(),
+  }, z.number().min(0, "Mínimo 0%").max(100, "Máximo 100%")).optional().or(z.literal(undefined)),
   expected_close_date: z.string().optional(),
   assigned_to: z.string().optional(),
   notes: z.string().max(1000, "Observações muito longas").optional(),
@@ -387,7 +387,7 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
             </Select>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="expected_value">Valor Esperado (R$)</Label>
               <Input

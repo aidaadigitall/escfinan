@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -75,28 +75,7 @@ const CRM = () => {
   // Usar leads filtrados para o pipeline
   const leadsToDisplay = filteredLeads;
 
-  // Agrupar leads por estágio
-  const leadsByStage = useMemo(() => {
-    return stages.reduce((acc, stage) => {
-      acc[stage.id] = leadsToDisplay.filter(lead => lead.pipeline_stage_id === stage.id);
-      return acc;
-    }, {} as Record<string, typeof leadsToDisplay>);
-  }, [stages, leadsToDisplay]);
-
-  // Leads sem estágio
-  const leadsWithoutStage = useMemo(() => {
-    return leadsToDisplay.filter(lead => !lead.pipeline_stage_id);
-  }, [leadsToDisplay]);
-
-  // Métricas (dos leads filtrados)
-  const totalLeads = leadsToDisplay.length;
-  const totalValue = leadsToDisplay.reduce((sum, lead) => sum + (lead.expected_value || 0), 0);
-  const wonLeads = leadsToDisplay.filter(lead => lead.status === 'won').length;
-  const conversionRate = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) : 0;
-
-  const onDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
-
+  const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
     if (!destination) {
       return;
     }
