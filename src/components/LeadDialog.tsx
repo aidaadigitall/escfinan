@@ -208,7 +208,7 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
                             setValue("name", client.name);
                             setValue("email", client.email || "");
                             setValue("phone", client.phone || "");
-                            setValue("company", client.company_name || client.company || "");
+                            setValue("company", client.company_name || "");
                           }}
                         >
                           <div className="flex flex-col">
@@ -441,7 +441,7 @@ export const LeadDialog = ({ open, onOpenChange, lead }: LeadDialogProps) => {
         <QuickClientDialog
           open={quickClientDialogOpen}
           onOpenChange={setQuickClientDialogOpen}
-          onClientCreated={(clientId) => {
+          onSuccess={(clientId) => {
             setSelectedClientId(clientId);
             setQuickClientDialogOpen(false);
           }}
