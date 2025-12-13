@@ -62,15 +62,29 @@ const LeadCapturePublic = () => {
       try {
         setLoading(true);
         setError(null);
-        const { data, error: fetchError } = await (supabase as any)
+        
+        // Check if formId is a UUID or a slug
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formId);
+        
+        let query = (supabase as any)
           .from("lead_capture_forms")
           .select("*")
-          .eq("id", formId)
-          .eq("is_active", true)
-          .single();
+          .eq("is_active", true);
+        
+        if (isUUID) {
+          query = query.eq("id", formId);
+        } else {
+          query = query.eq("slug", formId);
+        }
+        
+        const { data, error: fetchError } = await query.maybeSingle();
 
         if (fetchError) {
           throw fetchError;
+        }
+        
+        if (!data) {
+          throw new Error("Formulário não encontrado ou inativo");
         }
 
         setForm(data as LeadCaptureFormType);
