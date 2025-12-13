@@ -40,19 +40,28 @@ const PrintDocument = () => {
             return;
         }
 
-        // Fetch main document data with relations
+        // Fetch main document data with relations - use simpler query
+        let selectQuery = "*, clients(*)";
+        if (type === "os") {
+          selectQuery = "*, clients(*)";
+        }
+        
         const { data: docData, error: docError } = await (supabase as any)
           .from(tableName)
-          .select(`
-            *,
-            client:clients(name, fantasy_name, document, address, city, state, zip_code, phone, email),
-            technician:employees!technician_id(name),
-            seller:employees!seller_id(name)
-          `)
+          .select(selectQuery)
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
-        if (docError) throw docError;
+        if (docError) {
+          console.error("Error fetching document:", docError);
+          throw docError;
+        }
+        
+        if (!docData) {
+          console.log("Document not found for id:", id);
+          setLoading(false);
+          return;
+        }
 
         // Fetch items
         const { data: itemsData, error: itemsError } = await (supabase as any)
@@ -95,10 +104,10 @@ const PrintDocument = () => {
   const templateData = {
     ...data,
     number: data.order_number || data.quote_number || data.sale_number || data.number,
-    solution: data.technical_report, // Map technical_report to solution
-    technician: data.technician, // Supabase returns object or array depending on relation, assuming object here
+    solution: data.technical_report,
+    technician: data.technician,
     seller: data.seller,
-    client: data.client,
+    client: data.clients || data.client, // clients is the relation name from Supabase
   };
 
   // Fallback for company settings if not loaded yet

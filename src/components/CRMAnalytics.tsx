@@ -67,16 +67,21 @@ const renderScoreLabel = ({
   if (!value) {
     return null;
   }
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const numCx = Number(cx) || 0;
+  const numCy = Number(cy) || 0;
+  const numInnerRadius = Number(innerRadius) || 0;
+  const numOuterRadius = Number(outerRadius) || 0;
+  const numMidAngle = Number(midAngle) || 0;
+  const radius = numInnerRadius + (numOuterRadius - numInnerRadius) * 0.5;
+  const x = numCx + radius * Math.cos(-numMidAngle * RADIAN);
+  const y = numCy + radius * Math.sin(-numMidAngle * RADIAN);
 
   return (
     <text
       x={x}
       y={y}
       fill={chartForegroundColor}
-      textAnchor={x > cx ? "start" : "end"}
+      textAnchor={x > numCx ? "start" : "end"}
       dominantBaseline="central"
       fontSize={12}
     >

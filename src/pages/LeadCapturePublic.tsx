@@ -232,7 +232,7 @@ const LeadCapturePublic = () => {
             </div>
           )}
           <div className="space-y-2 text-center mb-10">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">{form.source || "Formulário"}</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">{(form as any).source || "Formulário"}</p>
             <h1 className="text-3xl font-semibold text-white">{form.title || form.name}</h1>
             {form.subtitle && <p className="text-white/70">{form.subtitle}</p>}
           </div>

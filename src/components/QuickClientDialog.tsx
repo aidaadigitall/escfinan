@@ -6,27 +6,77 @@ import { Label } from "@/components/ui/label";
 import { useClients } from "@/hooks/useClients";
 import { MaskedInput } from "@/components/ui/masked-input";
 import { Users } from "lucide-react";
+import { toast } from "sonner";
 
 interface QuickClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (clientId: string) => void;
+  initialData?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
 }
 
-export function QuickClientDialog({ open, onOpenChange, onSuccess }: QuickClientDialogProps) {
+export function QuickClientDialog({ open, onOpenChange, onSuccess, initialData }: QuickClientDialogProps) {
   const [formData, setFormData] = useState({
-    name: "",
+    name: initialData?.name || "",
     cpf: "",
     cnpj: "",
-    email: "",
-    phone: "",
+    email: initialData?.email || "",
+    phone: initialData?.phone || "",
   });
-  const { createClient } = useClients();
+  const { clients, createClient } = useClients();
+
+  // Reset form when dialog opens with initial data
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && initialData) {
+      setFormData({
+        name: initialData.name || "",
+        cpf: "",
+        cnpj: "",
+        email: initialData.email || "",
+        phone: initialData.phone || "",
+      });
+    }
+    onOpenChange(isOpen);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) return;
+
+    // Check for duplicate clients
+    const cleanCpf = formData.cpf?.replace(/\D/g, "");
+    const cleanCnpj = formData.cnpj?.replace(/\D/g, "");
+    
+    const isDuplicate = clients.some((client) => {
+      // Check for duplicate name
+      if (client.name.toLowerCase().trim() === formData.name.toLowerCase().trim()) {
+        return true;
+      }
+      
+      // Check for duplicate CPF
+      if (cleanCpf && cleanCpf.length === 11) {
+        const existingCpf = client.cpf?.replace(/\D/g, "");
+        if (existingCpf === cleanCpf) return true;
+      }
+      
+      // Check for duplicate CNPJ
+      if (cleanCnpj && cleanCnpj.length === 14) {
+        const existingCnpj = client.cnpj?.replace(/\D/g, "");
+        if (existingCnpj === cleanCnpj) return true;
+      }
+      
+      return false;
+    });
+
+    if (isDuplicate) {
+      toast.error("Já existe um cliente com este nome, CPF ou CNPJ!");
+      return;
+    }
 
     createClient(
       {
@@ -49,7 +99,7 @@ export function QuickClientDialog({ open, onOpenChange, onSuccess }: QuickClient
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px] rounded-2xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
