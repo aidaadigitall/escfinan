@@ -138,7 +138,13 @@ const LeadCapturePublic = () => {
         submissionPayload.referrer = trackingData.referrer;
       }
 
-      await (supabase as any).rpc('increment_form_view', { form_id: form.id }).catch(() => {});
+      // Incrementar view count (ignorar erros)
+      try {
+        await (supabase as any).rpc('increment_form_view', { form_id: form.id });
+      } catch (e) {
+        console.log('View count increment skipped');
+      }
+
       const { data, error: submissionError } = await (supabase as any)
         .from("lead_capture_submissions")
         .insert([submissionPayload])
@@ -149,11 +155,12 @@ const LeadCapturePublic = () => {
         throw submissionError;
       }
 
-      await (supabase as any)
-        .rpc('process_lead_capture_submission', { submission_id_param: data.id })
-        .catch((processError: any) => {
-          console.error("Erro ao processar submissão:", processError);
-        });
+      // Processar submissão (ignorar erros)
+      try {
+        await (supabase as any).rpc('process_lead_capture_submission', { submission_id_param: data.id });
+      } catch (processError) {
+        console.error("Erro ao processar submissão:", processError);
+      }
 
       setSuccessMessage(form.success_message || "Obrigado! Recebemos suas informações.");
       setValues((prev) => {
