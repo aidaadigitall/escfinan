@@ -47,6 +47,8 @@ const Clientes = () => {
   const [formData, setFormData] = useState<Partial<Client> & { document_type?: string }>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const currentPage = page;
@@ -149,9 +151,42 @@ const Clientes = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name) {
       toast.error("Preencha o nome do cliente");
+      return;
+    }
+
+    // Validation for duplicates - check name, CPF, and CNPJ
+    const cleanCpf = formData.cpf?.replace(/\D/g, "");
+    const cleanCnpj = formData.cnpj?.replace(/\D/g, "");
+    
+    const isDuplicate = paginatedClients.some((client) => {
+      // Skip checking against self when editing
+      if (editingClient && client.id === editingClient.id) return false;
+      
+      // Check for duplicate name
+      if (client.name.toLowerCase().trim() === formData.name?.toLowerCase().trim()) {
+        return true;
+      }
+      
+      // Check for duplicate CPF
+      if (cleanCpf && cleanCpf.length === 11) {
+        const existingCpf = client.cpf?.replace(/\D/g, "");
+        if (existingCpf === cleanCpf) return true;
+      }
+      
+      // Check for duplicate CNPJ
+      if (cleanCnpj && cleanCnpj.length === 14) {
+        const existingCnpj = client.cnpj?.replace(/\D/g, "");
+        if (existingCnpj === cleanCnpj) return true;
+      }
+      
+      return false;
+    });
+
+    if (isDuplicate) {
+      toast.error("Já existe um cliente com este nome, CPF ou CNPJ!");
       return;
     }
 
@@ -191,14 +226,50 @@ const Clientes = () => {
     setClientToDelete(null);
   };
 
+  const handleSelectClient = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedClients((prev) => [...prev, id]);
+    } else {
+      setSelectedClients((prev) => prev.filter((clientId) => clientId !== id));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedClients(paginatedClients.map((c) => c.id));
+    } else {
+      setSelectedClients([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    selectedClients.forEach((id) => {
+      deleteClient(id);
+    });
+    setSelectedClients([]);
+    setBulkDeleteDialogOpen(false);
+    toast.success(`${selectedClients.length} cliente(s) excluído(s) com sucesso!`);
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Clientes</h1>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Cliente
-        </Button>
+        <div className="flex gap-2">
+          {selectedClients.length > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={() => setBulkDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir ({selectedClients.length})
+            </Button>
+          )}
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Cliente
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
@@ -239,6 +310,12 @@ const Clientes = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={selectedClients.length === paginatedClients.length && paginatedClients.length > 0}
+                  onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                />
+              </TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Email</TableHead>
@@ -251,12 +328,18 @@ const Clientes = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
+                <TableCell colSpan={8} className="text-center">
                   <Loader className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
             ) : paginatedClients.map((cliente) => (
               <TableRow key={cliente.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedClients.includes(cliente.id)}
+                    onCheckedChange={(checked) => handleSelectClient(cliente.id, !!checked)}
+                  />
+                </TableCell>
                 <TableCell>{cliente.name}</TableCell>
                 <TableCell>{cliente.cpf || cliente.cnpj}</TableCell>
                 <TableCell>{cliente.email}</TableCell>
@@ -502,6 +585,17 @@ const Clientes = () => {
         confirmText="Excluir"
         cancelText="Cancelar"
         onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        title="Excluir Clientes Selecionados"
+        description={`Tem certeza que deseja excluir ${selectedClients.length} cliente(s)? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir Todos"
+        cancelText="Cancelar"
+        onConfirm={handleBulkDelete}
         variant="destructive"
       />
     </div>

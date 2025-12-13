@@ -6,7 +6,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { formatCurrency } from "@/lib/utils";
 import { Lead } from "@/hooks/useLeads";
 import { LeadActivity } from "@/hooks/useLeadActivities";
-import { Plus, Bell, Calendar, Clock, CheckCircle2, AlertCircle, Phone, Mail, MessageSquare } from "lucide-react";
+import { useLeadDocuments, ClientDocument } from "@/hooks/useClientDocuments";
+import { Plus, Bell, Calendar, Clock, CheckCircle2, AlertCircle, Phone, Mail, MessageSquare, FileText, ShoppingCart, Wrench } from "lucide-react";
 import { format, isAfter, isBefore, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -29,6 +30,30 @@ export const LeadCard = ({
   onNewActivity,
   onNavigate,
 }: LeadCardProps) => {
+  // Fetch documents for this lead's client
+  const { documents } = useLeadDocuments(lead.client_id);
+
+  // Calculate total value from documents
+  const documentsMetrics = useMemo(() => {
+    const quotes = documents.filter(d => d.type === 'quote');
+    const sales = documents.filter(d => d.type === 'sale');
+    const serviceOrders = documents.filter(d => d.type === 'service_order');
+    
+    const totalQuotesValue = quotes.reduce((sum, d) => sum + d.total_amount, 0);
+    const totalSalesValue = sales.reduce((sum, d) => sum + d.total_amount, 0);
+    const totalServiceOrdersValue = serviceOrders.reduce((sum, d) => sum + d.total_amount, 0);
+    
+    return {
+      quotes: quotes.length,
+      sales: sales.length,
+      serviceOrders: serviceOrders.length,
+      totalQuotesValue,
+      totalSalesValue,
+      totalServiceOrdersValue,
+      totalValue: totalQuotesValue + totalSalesValue + totalServiceOrdersValue,
+      hasDocuments: documents.length > 0,
+    };
+  }, [documents]);
   // Calcular métricas de atividades
   const activityMetrics = useMemo(() => {
     const now = new Date();
@@ -127,7 +152,54 @@ export const LeadCard = ({
                       <p>{activityMetrics.daysSinceLastActivity} dias sem contato</p>
                     </TooltipContent>
                   </Tooltip>
-                )}
+        )}
+
+        {/* Documentos vinculados */}
+        {documentsMetrics.hasDocuments && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            <TooltipProvider>
+              {documentsMetrics.quotes > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[9px] h-4 px-1.5 gap-0.5 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200">
+                      <FileText className="h-2.5 w-2.5" />
+                      {documentsMetrics.quotes}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{documentsMetrics.quotes} orçamento(s) - {formatCurrency(documentsMetrics.totalQuotesValue)}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {documentsMetrics.sales > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[9px] h-4 px-1.5 gap-0.5 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200">
+                      <ShoppingCart className="h-2.5 w-2.5" />
+                      {documentsMetrics.sales}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{documentsMetrics.sales} venda(s) - {formatCurrency(documentsMetrics.totalSalesValue)}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {documentsMetrics.serviceOrders > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[9px] h-4 px-1.5 gap-0.5 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-200">
+                      <Wrench className="h-2.5 w-2.5" />
+                      {documentsMetrics.serviceOrders}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{documentsMetrics.serviceOrders} OS(s) - {formatCurrency(documentsMetrics.totalServiceOrdersValue)}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </TooltipProvider>
+          </div>
+        )}
               </TooltipProvider>
             </div>
             {lead.company && (
