@@ -132,12 +132,19 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
     };
 
     return (
-      <div ref={ref} className="bg-white text-black w-[210mm] mx-auto font-sans text-[9px] leading-tight p-6">
+      <div ref={ref} className="bg-white text-black max-w-[210mm] mx-auto font-sans text-[9px] leading-tight p-6">
         <style>{`
           @media print {
             @page { size: A4; margin: 10mm; }
-            html, body { height: auto !important; min-height: auto !important; }
+            html, body { 
+              height: auto !important; 
+              min-height: auto !important; 
+              background: white !important;
+            }
             * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          }
+          @media screen {
+            body { background: white !important; }
           }
         `}</style>
 

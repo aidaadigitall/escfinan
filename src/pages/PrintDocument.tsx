@@ -127,7 +127,7 @@ const PrintDocument = () => {
   } as any;
 
   return (
-    <div className="bg-white print:bg-white print:p-0">
+    <div className="min-h-screen bg-white">
       <DocumentTemplate
         type={type as "os" | "budget" | "sale"}
         data={templateData}
