@@ -676,48 +676,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pipeline_stages: {
-        Row: {
-          id: string
-          user_id: string
-          name: string
-          description: string | null
-          order_index: number
-          color: string
-          probability_default: number | null
-          is_active: boolean
-          is_system: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          name: string
-          description?: string | null
-          order_index?: number
-          color?: string
-          probability_default?: number | null
-          is_active?: boolean
-          is_system?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          name?: string
-          description?: string | null
-          order_index?: number
-          color?: string
-          probability_default?: number | null
-          is_active?: boolean
-          is_system?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           created_at: string
