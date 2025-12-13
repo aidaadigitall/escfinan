@@ -511,6 +511,33 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_preferences: {
+        Row: {
+          created_at: string
+          dashboard_type: string
+          id: string
+          preferences: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dashboard_type?: string
+          id?: string
+          preferences?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dashboard_type?: string
+          id?: string
+          preferences?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           cpf: string | null
@@ -552,6 +579,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      lead_activities: {
+        Row: {
+          activity_type: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          lead_id: string
+          scheduled_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lead_id: string
+          scheduled_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lead_id?: string
+          scheduled_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_sources: {
         Row: {
@@ -735,6 +812,48 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pipeline_stages: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          order_index: number
+          probability_default: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name: string
+          order_index?: number
+          probability_default?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name?: string
+          order_index?: number
+          probability_default?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -2149,13 +2268,95 @@ export type Database = {
         Returns: boolean
       }
       check_due_transactions: { Args: never; Returns: undefined }
+      create_pipeline_stage: {
+        Args: {
+          p_color?: string
+          p_description?: string
+          p_name?: string
+          p_order_index?: number
+          p_probability?: number
+        }
+        Returns: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          order_index: number
+          probability_default: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pipeline_stages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      delete_pipeline_stage: { Args: { p_id: string }; Returns: undefined }
       get_effective_owner_id: { Args: { _user_id: string }; Returns: string }
+      get_pipeline_stages: {
+        Args: never
+        Returns: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          order_index: number
+          probability_default: number
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "pipeline_stages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      reorder_pipeline_stages: { Args: { p_ids: string[] }; Returns: undefined }
+      update_pipeline_stage: {
+        Args: {
+          p_color?: string
+          p_description?: string
+          p_id: string
+          p_is_active?: boolean
+          p_name?: string
+          p_order_index?: number
+          p_probability?: number
+        }
+        Returns: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          order_index: number
+          probability_default: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pipeline_stages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
