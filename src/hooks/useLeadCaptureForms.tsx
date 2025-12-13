@@ -195,8 +195,12 @@ export const useLeadCaptureForms = () => {
       utmParams?: any;
       trackingData?: any;
     }) => {
-      // Incrementar view count
-      await (supabase as any).rpc('increment_form_view', { form_id: formId }).catch(() => {});
+      // Incrementar view count (ignorar erros)
+      try {
+        await (supabase as any).rpc('increment_form_view', { form_id: formId });
+      } catch (e) {
+        console.log('View count increment skipped');
+      }
 
       // Criar submissão
       const { data, error } = await (supabase as any)
