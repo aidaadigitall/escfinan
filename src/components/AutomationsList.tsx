@@ -1,11 +1,145 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { useLeadAutomations } from "@/hooks/useLeadAutomations";
+import { useLeadAutomations, type AutomationRuleFormData } from "@/hooks/useLeadAutomations";
 import { AutomationRuleDialog } from "./AutomationRuleDialog";
-import { Plus, Edit, Trash2, Play, Pause, Sparkles, Clock, Zap } from "lucide-react";
+import { Plus, Edit, Trash2, Play, Sparkles, Clock, Zap, Share2, RefreshCw, RotateCcw, ShieldAlert } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+type AutomationBlueprint = {
+  id: string;
+  title: string;
+  description: string;
+  highlights: string[];
+  badge: string;
+  icon: LucideIcon;
+  rule: AutomationRuleFormData;
+};
+
+const automationBlueprints: AutomationBlueprint[] = [
+  {
+    id: "smart-assignment",
+    title: "Distribuição inteligente de leads",
+    description: "Atribui automaticamente cada lead ao vendedor com menor carga, registrando a origem e disparando alertas em tempo real.",
+    highlights: [
+      "Balanceia o funil entre todos os vendedores",
+      "Marca a origem (chat, formulário, API) para analytics",
+      "Notifica o painel imediatamente para não perder atendimento",
+    ],
+    badge: "Lead routing",
+    icon: Share2,
+    rule: {
+      name: "Distribuição inteligente de leads",
+      description: "Usa estratégia de menor carga com fallback em round robin",
+      is_active: true,
+      trigger_type: "new_lead",
+      trigger_config: {
+        blueprint_id: "smart-assignment",
+        strategy: "least_load",
+        origin: "chat_whatsapp",
+        notify_dashboard: true,
+        notify_channel: "dashboard",
+      },
+      actions: [
+        { type: "assign_user", config: { strategy: "least_load", fallback: "round_robin" } },
+        { type: "send_notification", config: { channel: "crm_dashboard", message: "Lead distribuído automaticamente" } },
+        { type: "update_origin", config: { value: "chat_whatsapp" } },
+      ],
+      priority: 90,
+    },
+  },
+  {
+    id: "followup-sequence",
+    title: "Sequências inteligentes de follow-up",
+    description: "Cada mudança de estágio agenda lembretes e dispara e-mail/WhatsApp se o lead ficar sem atividade.",
+    highlights: [
+      "Cria timers diferentes por estágio",
+      "Envia e-mail e WhatsApp automáticos",
+      "Registra atividade no histórico do lead",
+    ],
+    badge: "Follow-up",
+    icon: RefreshCw,
+    rule: {
+      name: "Sequência automática de follow-up",
+      description: "Reforça o contato após mudança de estágio",
+      is_active: true,
+      trigger_type: "stage_change",
+      trigger_config: {
+        blueprint_id: "followup-sequence",
+        idle_hours: 12,
+        include_whatsapp: true,
+      },
+      actions: [
+        { type: "schedule_follow_up", config: { hours: 12 } },
+        { type: "send_email", config: { subject: "Seguimento após avanço", body: "Template follow-up" } },
+        { type: "send_whatsapp", config: { template: "follow_up_stage", message: "Olá! Temos novidades..." } },
+        { type: "log_activity", config: { note: "Sequência automática disparada" } },
+      ],
+      priority: 70,
+    },
+  },
+  {
+    id: "lost-reengagement",
+    title: "Reengajamento de leads perdidos",
+    description: "Quando um lead é marcado como perdido, dispara tarefas e lembretes para reabrir o contato no futuro.",
+    highlights: [
+      "Agenda follow-up futuro",
+      "Abre tarefa no módulo de projetos",
+      "Notifica o gestor sobre o motivo da perda",
+    ],
+    badge: "Reativações",
+    icon: RotateCcw,
+    rule: {
+      name: "Reengajamento de leads perdidos",
+      description: "Garante segunda tentativa automática",
+      is_active: true,
+      trigger_type: "lead_lost",
+      trigger_config: {
+        blueprint_id: "lost-reengagement",
+        delay_days: 3,
+        project_board: "Reengajamento",
+      },
+      actions: [
+        { type: "schedule_follow_up", config: { hours: 72 } },
+        { type: "create_project_task", config: { board: "Reengajamento", description: "Reabrir conversa e revisar motivo" } },
+        { type: "send_notification", config: { channel: "sales_manager", message: "Lead perdido reenfileirado para reengajamento" } },
+      ],
+      max_executions: 1,
+      priority: 60,
+    },
+  },
+  {
+    id: "sla-alerts",
+    title: "SLA e fila de risco",
+    description: "Monitora o último contato e alerta gestores sempre que o SLA de 48h for estourado, movendo o lead para a fila de risco.",
+    highlights: [
+      "Gera alerta pro gerente",
+      "Aplica flag visual no lead",
+      "Move para estágio de risco automaticamente",
+    ],
+    badge: "SLA",
+    icon: ShieldAlert,
+    rule: {
+      name: "SLA e alerta executivo",
+      description: "Notifica e marca leads acima do SLA",
+      is_active: true,
+      trigger_type: "sla_breach",
+      trigger_config: {
+        blueprint_id: "sla-alerts",
+        sla_hours: 48,
+        risk_stage: "fila_risco",
+      },
+      actions: [
+        { type: "send_notification", config: { channel: "management", message: "Lead acima do SLA" } },
+        { type: "flag_lead", config: { flag: "sla_estourado", color: "#f97316" } },
+        { type: "change_stage", config: { stage_id: "fila_risco" } },
+      ],
+      priority: 95,
+    },
+  },
+];
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,11 +152,41 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const AutomationsList = () => {
-  const { rules, isLoading, toggleRuleStatus, deleteRule } = useLeadAutomations();
+  const { rules, isLoading, toggleRuleStatus, deleteRule, createRule } = useLeadAutomations();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
+  const [activatingBlueprint, setActivatingBlueprint] = useState<string | null>(null);
+  const blueprintCards = useMemo(() => (
+    automationBlueprints.map((blueprint) => ({
+      ...blueprint,
+      isActive: rules.some((rule) => rule.trigger_config?.blueprint_id === blueprint.id),
+    }))
+  ), [rules]);
+
+  const handleActivateBlueprint = async (blueprintId: string) => {
+    if (activatingBlueprint) return;
+    const alreadyActive = blueprintCards.find((item) => item.id === blueprintId)?.isActive;
+    if (alreadyActive) return;
+    const blueprint = automationBlueprints.find((item) => item.id === blueprintId);
+    if (!blueprint) return;
+
+    try {
+      setActivatingBlueprint(blueprintId);
+      await createRule.mutateAsync({
+        ...blueprint.rule,
+        trigger_config: {
+          ...(blueprint.rule.trigger_config || {}),
+          blueprint_id: blueprint.id,
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao ativar blueprint", error);
+    } finally {
+      setActivatingBlueprint(null);
+    }
+  };
 
   const handleEdit = (rule: any) => {
     setSelectedRule(rule);
@@ -55,6 +219,8 @@ export const AutomationsList = () => {
       new_lead: 'Novo Lead',
       activity_created: 'Atividade Criada',
       no_activity: 'Sem Atividade',
+      lead_lost: 'Lead Perdido',
+      sla_breach: 'SLA Estourado',
     };
     return labels[type] || type;
   };
@@ -67,6 +233,12 @@ export const AutomationsList = () => {
       create_task: 'Criar Tarefa',
       update_score: 'Atualizar Pontuação',
       send_notification: 'Enviar Notificação',
+      send_whatsapp: 'Enviar WhatsApp',
+      schedule_follow_up: 'Programar Follow-up',
+      create_project_task: 'Criar tarefa de projeto',
+      flag_lead: 'Marcar como risco',
+      update_origin: 'Atualizar origem',
+      log_activity: 'Registrar atividade',
     };
     return labels[type] || type;
   };
@@ -222,6 +394,68 @@ export const AutomationsList = () => {
           ))}
         </div>
       )}
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-semibold flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Blueprints recomendados
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              Ative fluxos prontos para distribuição inteligente, follow-up e SLA
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          {blueprintCards.map((blueprint) => {
+            const Icon = blueprint.icon;
+            const isProcessing = activatingBlueprint === blueprint.id;
+            return (
+              <Card key={blueprint.id} className="border-muted">
+                <CardHeader className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-primary" />
+                        <h5 className="font-semibold">{blueprint.title}</h5>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{blueprint.description}</p>
+                    </div>
+                    <Badge variant="outline">{blueprint.badge}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {blueprint.rule.trigger_type === "new_lead" && "Ideal para integrar com o nó HTTP Request do seu chat"}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    {blueprint.highlights.map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleActivateBlueprint(blueprint.id)}
+                      disabled={blueprint.isActive || isProcessing}
+                    >
+                      {blueprint.isActive ? "Blueprint ativo" : isProcessing ? "Ativando..." : "Ativar blueprint"}
+                    </Button>
+                    {blueprint.isActive && (
+                      <Badge variant="secondary">Já disponível nas suas automações</Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Automações Sugeridas */}
       {rules.length < 3 && (

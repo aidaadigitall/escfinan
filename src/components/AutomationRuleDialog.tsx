@@ -18,7 +18,7 @@ const automationSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional(),
   is_active: z.boolean().default(true),
-  trigger_type: z.enum(['stage_change', 'time_in_stage', 'score_change', 'new_lead', 'activity_created', 'no_activity']),
+  trigger_type: z.enum(['stage_change', 'time_in_stage', 'score_change', 'new_lead', 'activity_created', 'no_activity', 'lead_lost', 'sla_breach']),
   trigger_config: z.any().optional(),
   conditions: z.any().optional(),
   actions: z.array(z.any()).min(1, "Adicione pelo menos uma ação"),
@@ -92,6 +92,19 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
     setActions(newActions);
   };
 
+  const updateActionConfig = (index: number, partialConfig: Record<string, any>) => {
+    const newActions = [...actions];
+    const currentConfig = newActions[index]?.config || {};
+    newActions[index] = {
+      ...newActions[index],
+      config: {
+        ...currentConfig,
+        ...partialConfig,
+      },
+    };
+    setActions(newActions);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -148,7 +161,13 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
                 name="trigger_type"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setTriggerConfig({});
+                    }}
+                    value={field.value}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -159,6 +178,8 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
                       <SelectItem value="new_lead">Novo Lead</SelectItem>
                       <SelectItem value="activity_created">Atividade Criada</SelectItem>
                       <SelectItem value="no_activity">Sem Atividade</SelectItem>
+                      <SelectItem value="lead_lost">Lead marcado como perdido</SelectItem>
+                      <SelectItem value="sla_breach">SLA estourado</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -210,6 +231,99 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
                 />
               </div>
             )}
+
+            {triggerType === 'new_lead' && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Estratégia de distribuição</Label>
+                  <Select
+                    value={triggerConfig.strategy || "least_load"}
+                    onValueChange={(value) => setTriggerConfig({ ...triggerConfig, strategy: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="least_load">Menor carga no funil</SelectItem>
+                      <SelectItem value="round_robin">Round robin</SelectItem>
+                      <SelectItem value="priority_pool">Fila prioritária</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Origem padrão a registrar</Label>
+                  <Input
+                    placeholder="Ex: chat_whatsapp"
+                    value={triggerConfig.origin || ""}
+                    onChange={(e) => setTriggerConfig({ ...triggerConfig, origin: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Canal de notificação</Label>
+                  <Input
+                    placeholder="dashboard, push, email..."
+                    value={triggerConfig.notify_channel || "dashboard"}
+                    onChange={(e) => setTriggerConfig({ ...triggerConfig, notify_channel: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={triggerConfig.notify_dashboard ?? true}
+                    onCheckedChange={(checked) => setTriggerConfig({ ...triggerConfig, notify_dashboard: checked })}
+                  />
+                  <Label>Notificar painel CRM automaticamente</Label>
+                </div>
+              </div>
+            )}
+
+            {triggerType === 'lead_lost' && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Dias até reengajar</Label>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 3"
+                    value={triggerConfig.delay_days || ""}
+                    onChange={(e) => setTriggerConfig({ ...triggerConfig, delay_days: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-xs text-muted-foreground">Define quando o follow-up deve ser reaberto</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Quadro / projeto alvo</Label>
+                  <Input
+                    placeholder="Ex: Reengajamento"
+                    value={triggerConfig.project_board || ""}
+                    onChange={(e) => setTriggerConfig({ ...triggerConfig, project_board: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {triggerType === 'sla_breach' && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Horas de SLA</Label>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 48"
+                    value={triggerConfig.sla_hours || ""}
+                    onChange={(e) => setTriggerConfig({ ...triggerConfig, sla_hours: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-xs text-muted-foreground">Tempo máximo sem interação antes do alerta</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Estágio de risco</Label>
+                  <Input
+                    placeholder="ID do estágio ou palavra-chave"
+                    value={triggerConfig.risk_stage || ""}
+                    onChange={(e) => setTriggerConfig({ ...triggerConfig, risk_stage: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Ações */}
@@ -242,12 +356,19 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
                             <SelectItem value="create_task">Criar Tarefa</SelectItem>
                             <SelectItem value="update_score">Atualizar Pontuação</SelectItem>
                             <SelectItem value="send_notification">Enviar Notificação</SelectItem>
+                            <SelectItem value="send_whatsapp">Enviar WhatsApp</SelectItem>
+                            <SelectItem value="schedule_follow_up">Programar Follow-up</SelectItem>
+                            <SelectItem value="create_project_task">Criar tarefa de projeto</SelectItem>
+                            <SelectItem value="flag_lead">Marcar como risco</SelectItem>
+                            <SelectItem value="update_origin">Atualizar origem</SelectItem>
+                            <SelectItem value="log_activity">Registrar atividade</SelectItem>
                           </SelectContent>
                         </Select>
 
                         {action.type === 'change_stage' && (
                           <Select
-                            onValueChange={(value) => updateAction(index, 'config', { stage_id: value })}
+                            value={action.config?.stage_id || ""}
+                            onValueChange={(value) => updateActionConfig(index, { stage_id: value })}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o estágio" />
@@ -262,18 +383,157 @@ export const AutomationRuleDialog = ({ open, onOpenChange, rule }: AutomationRul
                           </Select>
                         )}
 
+                        {action.type === 'assign_user' && (
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-1">
+                              <Label>Estratégia</Label>
+                              <Select
+                                value={action.config?.strategy || "least_load"}
+                                onValueChange={(value) => updateActionConfig(index, { strategy: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="least_load">Menor carga</SelectItem>
+                                  <SelectItem value="round_robin">Round robin</SelectItem>
+                                  <SelectItem value="priority_pool">Fila prioritária</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label>Fallback</Label>
+                              <Input
+                                placeholder="usuário ou regra fallback"
+                                value={action.config?.fallback || ""}
+                                onChange={(e) => updateActionConfig(index, { fallback: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        )}
+
                         {action.type === 'update_score' && (
                           <Input
                             type="number"
                             placeholder="Pontos (+/- número)"
-                            onChange={(e) => updateAction(index, 'config', { points: parseInt(e.target.value) })}
+                            value={action.config?.points ?? ""}
+                            onChange={(e) => updateActionConfig(index, { points: parseInt(e.target.value) || 0 })}
                           />
                         )}
 
                         {action.type === 'create_task' && (
+                          <div className="space-y-2">
+                            <Textarea
+                              placeholder="Descrição da tarefa"
+                              value={action.config?.title || ""}
+                              onChange={(e) => updateActionConfig(index, { title: e.target.value })}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Prazo em dias"
+                              value={action.config?.due_in_days ?? ""}
+                              onChange={(e) => updateActionConfig(index, { due_in_days: parseInt(e.target.value) || 0 })}
+                            />
+                          </div>
+                        )}
+
+                        {action.type === 'create_project_task' && (
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Quadro / projeto"
+                              value={action.config?.board || ""}
+                              onChange={(e) => updateActionConfig(index, { board: e.target.value })}
+                            />
+                            <Textarea
+                              placeholder="Descrição da tarefa de projeto"
+                              value={action.config?.description || ""}
+                              onChange={(e) => updateActionConfig(index, { description: e.target.value })}
+                            />
+                          </div>
+                        )}
+
+                        {action.type === 'send_email' && (
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Assunto"
+                              value={action.config?.subject || ""}
+                              onChange={(e) => updateActionConfig(index, { subject: e.target.value })}
+                            />
+                            <Textarea
+                              placeholder="Corpo ou template"
+                              value={action.config?.body || ""}
+                              onChange={(e) => updateActionConfig(index, { body: e.target.value })}
+                            />
+                          </div>
+                        )}
+
+                        {action.type === 'send_whatsapp' && (
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Template / campanha"
+                              value={action.config?.template || ""}
+                              onChange={(e) => updateActionConfig(index, { template: e.target.value })}
+                            />
+                            <Textarea
+                              placeholder="Mensagem personalizada"
+                              value={action.config?.message || ""}
+                              onChange={(e) => updateActionConfig(index, { message: e.target.value })}
+                            />
+                          </div>
+                        )}
+
+                        {action.type === 'send_notification' && (
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Canal/Grupo (ex: gerente_vendas)"
+                              value={action.config?.channel || ""}
+                              onChange={(e) => updateActionConfig(index, { channel: e.target.value })}
+                            />
+                            <Textarea
+                              placeholder="Mensagem"
+                              value={action.config?.message || ""}
+                              onChange={(e) => updateActionConfig(index, { message: e.target.value })}
+                            />
+                          </div>
+                        )}
+
+                        {action.type === 'schedule_follow_up' && (
+                          <Input
+                            type="number"
+                            placeholder="Horas para o follow-up"
+                            value={action.config?.hours ?? ""}
+                            onChange={(e) => updateActionConfig(index, { hours: parseInt(e.target.value) || 0 })}
+                          />
+                        )}
+
+                        {action.type === 'update_origin' && (
+                          <Input
+                            placeholder="Origem a registrar"
+                            value={action.config?.value || ""}
+                            onChange={(e) => updateActionConfig(index, { value: e.target.value })}
+                          />
+                        )}
+
+                        {action.type === 'flag_lead' && (
+                          <div className="grid gap-2 md:grid-cols-2">
+                            <Input
+                              placeholder="Flag / etiqueta"
+                              value={action.config?.flag || ""}
+                              onChange={(e) => updateActionConfig(index, { flag: e.target.value })}
+                            />
+                            <Input
+                              placeholder="Cor (opcional)"
+                              value={action.config?.color || ""}
+                              onChange={(e) => updateActionConfig(index, { color: e.target.value })}
+                            />
+                          </div>
+                        )}
+
+                        {action.type === 'log_activity' && (
                           <Textarea
-                            placeholder="Descrição da tarefa"
-                            onChange={(e) => updateAction(index, 'config', { title: e.target.value })}
+                            placeholder="Descrição da atividade a registrar"
+                            value={action.config?.note || ""}
+                            onChange={(e) => updateActionConfig(index, { note: e.target.value })}
                           />
                         )}
                       </div>

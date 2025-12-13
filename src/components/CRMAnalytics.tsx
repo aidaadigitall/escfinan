@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useLeads } from "@/hooks/useLeads";
 import { usePipelineStages } from "@/hooks/usePipelineStages";
 import { useUsers } from "@/hooks/useUsers";
@@ -376,6 +377,58 @@ export const CRMAnalytics = () => {
     return map;
   }, [users]);
 
+  const performanceByOwner = useMemo(() => {
+    if (!leads.length) {
+      return [];
+    }
+
+    const aggregated = leads.reduce<Record<string, {
+      ownerId: string;
+      label: string;
+      total: number;
+      won: number;
+      pipelineValue: number;
+      wonValue: number;
+    }>>((acc, lead) => {
+      const ownerId = lead.assigned_to || UNASSIGNED_OWNER;
+      if (!acc[ownerId]) {
+        const label = ownerId === UNASSIGNED_OWNER
+          ? "Não atribuído"
+          : usersById.get(ownerId) || `Usuário ${ownerId.slice(0, 6)}...`;
+
+        acc[ownerId] = {
+          ownerId,
+          label,
+          total: 0,
+          won: 0,
+          pipelineValue: 0,
+          wonValue: 0,
+        };
+      }
+
+      const expectedValue = lead.expected_value || 0;
+      acc[ownerId].total += 1;
+      acc[ownerId].pipelineValue += expectedValue;
+
+      if (lead.status === "won") {
+        acc[ownerId].won += 1;
+        acc[ownerId].wonValue += expectedValue;
+      }
+
+      return acc;
+    }, {});
+
+    return Object.values(aggregated)
+      .map((item) => ({
+        ...item,
+        conversionRate: item.total > 0 ? (item.won / item.total) * 100 : 0,
+        avgTicket: item.won > 0 ? item.wonValue / item.won : 0,
+      }))
+        .sort((a, b) => b.wonValue - a.wonValue || b.pipelineValue - a.pipelineValue);
+      }, [leads, usersById]);
+
+      const topPerformer = performanceByOwner[0];
+
   const averageTimePerStage = useMemo(() => {
     const now = new Date();
     return stages.map((stage) => {
@@ -499,6 +552,61 @@ export const CRMAnalytics = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Painel por Vendedor */}
+      <Card>
+        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              Painel por Vendedor
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Acompanhe leads ativos, vitórias e carteira de cada responsável.
+            </p>
+          </div>
+          {topPerformer && (
+            <div className="rounded-md border border-emerald-200/60 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200">
+              Destaque: {topPerformer.label} com {topPerformer.won} ganho{topPerformer.won === 1 ? "" : "s"}
+              {topPerformer.wonValue > 0 && ` · ${formatCurrency(topPerformer.wonValue)}`}
+            </div>
+          )}
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          {performanceByOwner.length ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vendedor</TableHead>
+                  <TableHead className="text-right">Leads</TableHead>
+                  <TableHead className="text-right">Ganhos</TableHead>
+                  <TableHead className="text-right">Conversão</TableHead>
+                  <TableHead className="text-right">Carteira (R$)</TableHead>
+                  <TableHead className="text-right">Ticket Ganho</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {performanceByOwner.map((seller) => (
+                  <TableRow key={seller.ownerId}>
+                    <TableCell className="font-medium">{seller.label}</TableCell>
+                    <TableCell className="text-right">{seller.total}</TableCell>
+                    <TableCell className="text-right text-emerald-600 dark:text-emerald-300">
+                      {seller.won}
+                    </TableCell>
+                    <TableCell className="text-right">{seller.conversionRate.toFixed(1)}%</TableCell>
+                    <TableCell className="text-right">{formatCurrency(seller.pipelineValue)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(seller.avgTicket)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Cadastre leads e atribua responsáveis para visualizar este painel.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Indicadores Recomendados */}
       <div className="space-y-4">

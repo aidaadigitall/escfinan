@@ -10,7 +10,7 @@ export interface LeadAutomationRule {
   name: string;
   description?: string;
   is_active: boolean;
-  trigger_type: 'stage_change' | 'time_in_stage' | 'score_change' | 'new_lead' | 'activity_created' | 'no_activity';
+  trigger_type: 'stage_change' | 'time_in_stage' | 'score_change' | 'new_lead' | 'activity_created' | 'no_activity' | 'lead_lost' | 'sla_breach';
   trigger_config?: any;
   conditions?: any;
   actions: any[];
