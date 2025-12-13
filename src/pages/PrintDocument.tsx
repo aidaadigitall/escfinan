@@ -83,14 +83,7 @@ const PrintDocument = () => {
     fetchData();
   }, [type, id]);
 
-  useEffect(() => {
-    if (!loading && data) {
-      // Auto-print when ready
-      setTimeout(() => {
-        window.print();
-      }, 500);
-    }
-  }, [loading, data]);
+  // Removed auto-print - user will print manually via browser
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando documento...</div>;
@@ -134,7 +127,7 @@ const PrintDocument = () => {
   } as any;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center print:bg-white print:p-0 print:min-h-0">
+    <div className="bg-white print:bg-white print:p-0">
       <DocumentTemplate
         type={type as "os" | "budget" | "sale"}
         data={templateData}

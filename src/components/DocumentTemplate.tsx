@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency } from "@/lib/utils";
@@ -89,6 +89,23 @@ interface DocumentTemplateProps {
 
 export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplateProps>(
   ({ type, data, items, company }, ref) => {
+    // Inject print styles to prevent white space
+    useEffect(() => {
+      const styleId = "print-document-styles";
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement("style");
+        style.id = styleId;
+        style.textContent = `
+          @media print {
+            @page { size: A4; margin: 8mm; }
+            html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
+            body > * { display: none !important; }
+            body > .print-document-container, body > .print-document-container * { display: block !important; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }, []);
     const titleMap = {
       os: "ORDEM DE SERVIÇO",
       budget: "ORÇAMENTO",
@@ -114,7 +131,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
       .reduce((acc, item) => acc + item.subtotal, 0);
 
     return (
-      <div ref={ref} className="bg-white text-black p-8 max-w-[210mm] mx-auto text-[10px] leading-tight font-sans print:p-6 print:max-w-none">
+      <div ref={ref} className="print-document-container bg-white text-black p-6 max-w-[210mm] mx-auto text-[10px] leading-tight font-sans print:p-4 print:max-w-none print:m-0">
         {/* Header */}
         <div className="flex border border-gray-300 mb-2">
           <div className="w-32 p-2 flex items-center justify-center border-r border-gray-300 bg-black text-white">
