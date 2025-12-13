@@ -143,6 +143,6 @@ Cada usuário agora pode:
 4. **Auto-save**: Mudanças são salvas automaticamente
 5. **Fallback**: Se não houver preferências, usa valores padrão
 
----
-
 **Documentação Completa**: Consulte `DASHBOARD_PERSONALIZADO.md`
+
+<!-- force lovable rebuild -->
