@@ -1,15 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { getEffectiveUserId } from "./useEffectiveUserId";
 import { toast } from "sonner";
 
 export interface DashboardPreferences {
   id: string;
   user_id: string;
+  dashboard_type: string;
+  preferences: {
+    layout_config?: any[];
+    active_layout?: string;
+    theme_mode?: 'light' | 'dark' | 'auto';
+    custom_theme?: any;
+    enabled_widgets?: string[];
+    widget_settings?: any;
+    compact_mode?: boolean;
+    show_sidebar?: boolean;
+    show_metrics?: boolean;
+    active_tabs?: string[];
+    default_tab?: string;
+    saved_filters?: any[];
+    default_filter?: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+// Preferências padrão
+const defaultPreferences: {
   layout_config: any[];
   active_layout: string;
   theme_mode: 'light' | 'dark' | 'auto';
-  custom_theme?: any;
+  custom_theme: any;
   enabled_widgets: string[];
   widget_settings: any;
   compact_mode: boolean;
@@ -18,29 +41,8 @@ export interface DashboardPreferences {
   active_tabs: string[];
   default_tab: string;
   saved_filters: any[];
-  default_filter?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface LayoutTemplate {
-  id: string;
-  user_id?: string;
-  name: string;
-  description?: string;
-  layout_config: any;
-  enabled_widgets: any;
-  theme_config?: any;
-  is_public: boolean;
-  is_system: boolean;
-  category?: string;
-  usage_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-// Preferências padrão para retornar quando não houver registro
-const defaultPreferences: Omit<DashboardPreferences, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
+  default_filter: string | undefined;
+} = {
   layout_config: [],
   active_layout: 'default',
   theme_mode: 'light',
@@ -56,129 +58,72 @@ const defaultPreferences: Omit<DashboardPreferences, 'id' | 'user_id' | 'created
   default_filter: undefined,
 };
 
-export const useDashboardPreferences = () => {
+export const useDashboardPreferences = (dashboardType: string = 'crm') => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   // Buscar preferências do usuário
-  const { data: preferences, isLoading } = useQuery({
-    queryKey: ["dashboard_preferences", user?.id],
+  const { data: rawPreferences, isLoading } = useQuery({
+    queryKey: ["dashboard_preferences", user?.id, dashboardType],
     queryFn: async () => {
       if (!user?.id) return null;
 
       try {
-        // Tentar buscar preferências existentes
-        const { data, error } = await supabase
-          .from("dashboard_preferences" as any)
+        const { data, error } = await (supabase as any)
+          .from("dashboard_preferences")
           .select("*")
           .eq("user_id", user.id)
+          .eq("dashboard_type", dashboardType)
           .maybeSingle();
-
-        // Se não encontrou, criar um registro novo
-        if (!data && !error) {
-          const { data: newPref, error: insertError } = await supabase
-            .from("dashboard_preferences" as any)
-            .insert([{
-              user_id: user.id,
-              ...defaultPreferences,
-            }])
-            .select()
-            .single();
-          
-          if (insertError) {
-            console.error('Erro ao criar preferências:', insertError);
-            return {
-              id: '',
-              user_id: user.id,
-              ...defaultPreferences,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            } as DashboardPreferences;
-          }
-          
-          return newPref as unknown as DashboardPreferences;
-        }
 
         if (error) {
           console.error('Erro ao buscar preferências:', error);
-          return {
-            id: '',
-            user_id: user.id,
-            ...defaultPreferences,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          } as DashboardPreferences;
+          return null;
         }
 
-        return data as unknown as DashboardPreferences;
+        return data as DashboardPreferences | null;
       } catch (err) {
         console.error('Erro ao buscar preferências:', err);
-        return {
-          id: '',
-          user_id: user?.id || '',
-          ...defaultPreferences,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as DashboardPreferences;
+        return null;
       }
     },
     enabled: !!user,
   });
 
-  // Buscar templates de layout
-  const { data: templates = [] } = useQuery({
-    queryKey: ["dashboard_templates"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("dashboard_layout_templates" as any)
-          .select("*")
-          .order("is_system", { ascending: false })
-          .order("usage_count", { ascending: false });
+  // Função para criar ou atualizar preferências
+  const upsertPreferences = async (updates: Partial<typeof defaultPreferences>) => {
+    const effectiveUserId = await getEffectiveUserId();
+    if (!effectiveUserId) throw new Error("Usuário não autenticado");
 
-        if (error) {
-          console.error('Erro ao buscar templates:', error);
-          return [];
-        }
-        return (data || []) as unknown as LayoutTemplate[];
-      } catch (err) {
-        console.error('Erro ao buscar templates:', err);
-        return [];
-      }
-    },
-    enabled: !!user,
-  });
+    const currentPrefs = rawPreferences?.preferences || defaultPreferences;
+    const newPreferences = { ...currentPrefs, ...updates };
 
-  // Função auxiliar para criar ou atualizar preferências
-  const upsertPreferences = async (updates: Partial<DashboardPreferences>) => {
-    if (!user?.id) throw new Error("Usuário não autenticado");
-
-    // Verificar se já existe
-    const { data: existing } = await supabase
-      .from("dashboard_preferences" as any)
+    // Check if record exists
+    const { data: existing } = await (supabase as any)
+      .from("dashboard_preferences")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
+      .eq("dashboard_type", dashboardType)
       .maybeSingle();
 
     if (existing) {
-      // Atualizar
-      const { data, error } = await supabase
-        .from("dashboard_preferences" as any)
-        .update(updates)
-        .eq("user_id", user.id)
+      const { data, error } = await (supabase as any)
+        .from("dashboard_preferences")
+        .update({ preferences: newPreferences })
+        .eq("user_id", effectiveUserId)
+        .eq("dashboard_type", dashboardType)
         .select()
         .single();
 
       if (error) throw error;
       return data;
     } else {
-      // Criar
-      const { data, error } = await supabase
-        .from("dashboard_preferences" as any)
+      const { data, error } = await (supabase as any)
+        .from("dashboard_preferences")
         .insert([{
-          user_id: user.id,
-          ...defaultPreferences,
-          ...updates,
+          user_id: effectiveUserId,
+          dashboard_type: dashboardType,
+          preferences: newPreferences,
         }])
         .select()
         .single();
@@ -190,7 +135,7 @@ export const useDashboardPreferences = () => {
 
   // Atualizar preferências
   const updatePreferences = useMutation({
-    mutationFn: async (updates: Partial<DashboardPreferences>) => {
+    mutationFn: async (updates: Partial<typeof defaultPreferences>) => {
       return upsertPreferences(updates);
     },
     onSuccess: () => {
@@ -199,7 +144,73 @@ export const useDashboardPreferences = () => {
     },
     onError: (error: any) => {
       console.error('Erro ao atualizar:', error);
-      toast.error("Erro ao atualizar preferências: " + error.message);
+      toast.error("Erro ao alterar widget: " + error.message);
+    },
+  });
+
+  // Alternar widget
+  const toggleWidget = useMutation({
+    mutationFn: async (widgetId: string) => {
+      const currentWidgets = rawPreferences?.preferences?.enabled_widgets || defaultPreferences.enabled_widgets;
+      const enabled_widgets = currentWidgets.includes(widgetId)
+        ? currentWidgets.filter((id: string) => id !== widgetId)
+        : [...currentWidgets, widgetId];
+
+      return upsertPreferences({ enabled_widgets });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao alterar widget: " + error.message);
+    },
+  });
+
+  // Resetar para padrão
+  const resetToDefault = useMutation({
+    mutationFn: async () => {
+      return upsertPreferences(defaultPreferences);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
+      toast.success("Dashboard resetado para o padrão!");
+    },
+  });
+
+  // Helper: Obter preferências mescladas
+  const preferences = {
+    id: rawPreferences?.id || '',
+    user_id: rawPreferences?.user_id || user?.id || '',
+    dashboard_type: dashboardType,
+    ...defaultPreferences,
+    ...(rawPreferences?.preferences || {}),
+    created_at: rawPreferences?.created_at || new Date().toISOString(),
+    updated_at: rawPreferences?.updated_at || new Date().toISOString(),
+  };
+
+  // Helper: Verificar se widget está habilitado
+  const isWidgetEnabled = (widgetId: string) => {
+    const widgets = rawPreferences?.preferences?.enabled_widgets || defaultPreferences.enabled_widgets;
+    return widgets.includes(widgetId);
+  };
+
+  // Helper: Obter configuração de widget
+  const getWidgetConfig = (widgetId: string) => {
+    return rawPreferences?.preferences?.widget_settings?.[widgetId] || {};
+  };
+
+  // Atualizar configuração de widget específico
+  const updateWidgetConfig = useMutation({
+    mutationFn: async ({ widgetId, config }: { widgetId: string; config: any }) => {
+      const widget_settings = {
+        ...(rawPreferences?.preferences?.widget_settings || {}),
+        [widgetId]: config,
+      };
+
+      return upsertPreferences({ widget_settings });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
     },
   });
 
@@ -221,11 +232,9 @@ export const useDashboardPreferences = () => {
     mutationFn: async (theme_mode: 'light' | 'dark' | 'auto') => {
       return upsertPreferences({ theme_mode });
     },
-    onSuccess: (data: any) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
-      const mode = data?.theme_mode || 'light';
-      const labels: Record<string, string> = { light: 'claro', dark: 'escuro', auto: 'automático' };
-      toast.success(`Tema alterado para ${labels[mode] || mode}`);
+      toast.success("Tema alterado!");
     },
     onError: (error: any) => {
       toast.error("Erro ao alterar tema: " + error.message);
@@ -246,131 +255,25 @@ export const useDashboardPreferences = () => {
     },
   });
 
-  // Alternar widget
-  const toggleWidget = useMutation({
-    mutationFn: async (widgetId: string) => {
-      const currentWidgets = preferences?.enabled_widgets || defaultPreferences.enabled_widgets;
-      const enabled_widgets = currentWidgets.includes(widgetId)
-        ? currentWidgets.filter(id => id !== widgetId)
-        : [...currentWidgets, widgetId];
-
-      return upsertPreferences({ enabled_widgets });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao alterar widget: " + error.message);
-    },
-  });
-
-  // Aplicar template
+  // Placeholder for apply template
   const applyTemplate = useMutation({
-    mutationFn: async (templateId: string) => {
-      // Buscar template
-      const template = templates.find(t => t.id === templateId);
-      if (!template) throw new Error("Template não encontrado");
-
-      return upsertPreferences({
-        layout_config: template.layout_config,
-        enabled_widgets: template.enabled_widgets,
-        custom_theme: template.theme_config,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
-      toast.success("Template aplicado com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao aplicar template: " + error.message);
+    mutationFn: async (_templateId: string) => {
+      // Templates not implemented in simplified version
+      return Promise.resolve();
     },
   });
 
-  // Salvar como template
+  // Placeholder for save as template
   const saveAsTemplate = useMutation({
-    mutationFn: async ({
-      name,
-      description,
-      isPublic = false,
-    }: {
-      name: string;
-      description?: string;
-      isPublic?: boolean;
-    }) => {
-      if (!user?.id || !preferences) throw new Error("Usuário não autenticado");
-
-      const { data, error } = await supabase
-        .from("dashboard_layout_templates" as any)
-        .insert([{
-          user_id: user.id,
-          name,
-          description,
-          layout_config: preferences.layout_config || [],
-          enabled_widgets: preferences.enabled_widgets || defaultPreferences.enabled_widgets,
-          theme_config: preferences.custom_theme,
-          is_public: isPublic,
-          category: 'custom',
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard_templates"] });
-      toast.success("Template salvo com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error("Erro ao salvar template: " + error.message);
-    },
-  });
-
-  // Resetar para padrão
-  const resetToDefault = useMutation({
-    mutationFn: async () => {
-      return upsertPreferences(defaultPreferences);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
-      toast.success("Dashboard resetado para o padrão!");
-    },
-  });
-
-  // Helper: Verificar se widget está habilitado
-  const isWidgetEnabled = (widgetId: string) => {
-    return preferences?.enabled_widgets?.includes(widgetId) ?? defaultPreferences.enabled_widgets.includes(widgetId);
-  };
-
-  // Helper: Obter configuração de widget
-  const getWidgetConfig = (widgetId: string) => {
-    return preferences?.widget_settings?.[widgetId] || {};
-  };
-
-  // Atualizar configuração de widget específico
-  const updateWidgetConfig = useMutation({
-    mutationFn: async ({ widgetId, config }: { widgetId: string; config: any }) => {
-      const widget_settings = {
-        ...preferences?.widget_settings,
-        [widgetId]: config,
-      };
-
-      return upsertPreferences({ widget_settings });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard_preferences"] });
+    mutationFn: async (_params: { name: string; description?: string; isPublic?: boolean }) => {
+      // Templates not implemented in simplified version
+      return Promise.resolve();
     },
   });
 
   return {
-    preferences: preferences || {
-      id: '',
-      user_id: user?.id || '',
-      ...defaultPreferences,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    templates,
+    preferences,
+    templates: [] as any[],
     isLoading,
     updatePreferences,
     updateLayout,

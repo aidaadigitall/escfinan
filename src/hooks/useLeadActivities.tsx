@@ -1,24 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { getEffectiveUserId } from "./useEffectiveUserId";
 import { toast } from "sonner";
 
 export interface LeadActivity {
   id: string;
   lead_id: string;
   user_id: string;
-  type: string;
+  activity_type: string;
   title: string;
   description?: string;
-  outcome?: string;
-  outcome_notes?: string;
-  scheduled_for?: string;
+  scheduled_at?: string;
   completed_at?: string;
-  is_completed: boolean;
   duration_minutes?: number;
-  attachments?: any;
   created_at: string;
   updated_at: string;
+  // Alias fields for backwards compatibility
+  type?: string;
+  scheduled_for?: string;
+  is_completed?: boolean;
 }
 
 export interface LeadActivityFormData {
@@ -26,8 +27,6 @@ export interface LeadActivityFormData {
   type: string;
   title: string;
   description?: string;
-  outcome?: string;
-  outcome_notes?: string;
   scheduled_for?: string;
   duration_minutes?: number;
 }
@@ -54,7 +53,12 @@ export const useLeadActivities = (leadId?: string) => {
         console.error("Error fetching lead activities:", error);
         throw error;
       }
-      return (data || []) as LeadActivity[];
+      return (data || []).map((item: any) => ({
+        ...item,
+        type: item.activity_type,
+        scheduled_for: item.scheduled_at,
+        is_completed: !!item.completed_at,
+      })) as LeadActivity[];
     },
     enabled: !!user,
     retry: 1,
@@ -62,11 +66,18 @@ export const useLeadActivities = (leadId?: string) => {
 
   const createActivity = useMutation({
     mutationFn: async (activityData: LeadActivityFormData) => {
+      const effectiveUserId = await getEffectiveUserId();
+      
       const { data, error } = await (supabase as any)
         .from("lead_activities")
         .insert([{
-          ...activityData,
-          user_id: user?.id,
+          lead_id: activityData.lead_id,
+          user_id: effectiveUserId,
+          activity_type: activityData.type,
+          title: activityData.title,
+          description: activityData.description,
+          scheduled_at: activityData.scheduled_for,
+          duration_minutes: activityData.duration_minutes,
         }])
         .select()
         .single();
@@ -86,9 +97,16 @@ export const useLeadActivities = (leadId?: string) => {
 
   const updateActivity = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<LeadActivityFormData> }) => {
+      const updateData: any = {};
+      if (data.type) updateData.activity_type = data.type;
+      if (data.title) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.scheduled_for !== undefined) updateData.scheduled_at = data.scheduled_for;
+      if (data.duration_minutes !== undefined) updateData.duration_minutes = data.duration_minutes;
+
       const { data: updated, error } = await (supabase as any)
         .from("lead_activities")
-        .update(data)
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -107,18 +125,11 @@ export const useLeadActivities = (leadId?: string) => {
   });
 
   const completeActivity = useMutation({
-    mutationFn: async ({ id, outcome, outcome_notes }: { 
-      id: string; 
-      outcome?: string; 
-      outcome_notes?: string;
-    }) => {
+    mutationFn: async ({ id }: { id: string }) => {
       const { data, error } = await (supabase as any)
         .from("lead_activities")
         .update({
-          is_completed: true,
           completed_at: new Date().toISOString(),
-          outcome,
-          outcome_notes,
         })
         .eq("id", id)
         .select()
