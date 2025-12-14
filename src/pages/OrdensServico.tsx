@@ -329,14 +329,15 @@ const OrdensServico = () => {
       let orderId = editingOrder?.id;
 
       if (editingOrder) {
-        updateServiceOrder({ id: editingOrder.id, ...orderData } as any);
+        await updateServiceOrder({ id: editingOrder.id, ...orderData } as any);
+        orderId = editingOrder.id;
       } else {
         const newOrder = await createServiceOrder(orderData as any);
         orderId = newOrder?.id;
       }
 
       // Save items if we have an order ID
-      if (orderId && items.length > 0) {
+      if (orderId) {
         await saveItems({ serviceOrderId: orderId, items });
       }
 

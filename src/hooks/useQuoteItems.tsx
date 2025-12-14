@@ -44,36 +44,54 @@ export const useQuoteItems = (quoteId?: string) => {
       if (!user) throw new Error("Usuário não autenticado");
 
       // First, delete existing items for this quote
-      await supabase
+      const { error: deleteError } = await supabase
         .from("quote_items")
         .delete()
         .eq("quote_id", quoteId);
+        
+      if (deleteError) {
+        console.error("Error deleting quote items:", deleteError);
+        throw deleteError;
+      }
 
       // Then insert new items
       if (items.length > 0) {
-        const itemsToInsert = items.map(item => ({
-          quote_id: quoteId,
-          user_id: user.id,
-          item_type: item.item_type,
-          product_id: item.product_id || null,
-          service_id: item.service_id || null,
-          name: item.name,
-          unit: item.unit || "UN",
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          discount: item.discount || 0,
-          subtotal: (item.quantity * item.unit_price) - (item.discount || 0),
-        }));
+        const itemsToInsert = items.map(item => {
+          const qty = Number(item.quantity) || 1;
+          const price = Number(item.unit_price) || 0;
+          const disc = Number(item.discount) || 0;
+          const sub = (qty * price) - disc;
+          
+          return {
+            quote_id: quoteId,
+            user_id: user.id,
+            item_type: item.item_type,
+            product_id: item.product_id || null,
+            service_id: item.service_id || null,
+            name: item.name || "",
+            unit: item.unit || "UN",
+            quantity: qty,
+            unit_price: price,
+            discount: disc,
+            subtotal: sub,
+          };
+        });
 
+        console.log("Inserting quote items:", itemsToInsert);
+        
         const { error } = await supabase
           .from("quote_items")
           .insert(itemsToInsert);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting quote items:", error);
+          throw error;
+        }
       }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["quote_items", variables.quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao salvar itens do orçamento");

@@ -187,7 +187,7 @@ export const useSales = () => {
     sales,
     isLoading,
     createSale: createMutation.mutateAsync,
-    updateSale: updateMutation.mutate,
+    updateSale: updateMutation.mutateAsync,
     deleteSale: deleteMutation.mutate,
   };
 };

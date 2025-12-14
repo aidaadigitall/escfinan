@@ -194,7 +194,7 @@ export const useServiceOrders = () => {
     serviceOrders,
     isLoading,
     createServiceOrder: createMutation.mutateAsync,
-    updateServiceOrder: updateMutation.mutate,
+    updateServiceOrder: updateMutation.mutateAsync,
     deleteServiceOrder: deleteMutation.mutate,
   };
 };

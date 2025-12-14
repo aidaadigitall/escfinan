@@ -258,14 +258,15 @@ const Vendas = () => {
       let saleId = editingSale?.id;
 
       if (editingSale) {
-        updateSale({ id: editingSale.id, ...saleData } as any);
+        await updateSale({ id: editingSale.id, ...saleData } as any);
+        saleId = editingSale.id;
       } else {
         const newSale = await createSale(saleData as any);
         saleId = newSale?.id;
       }
 
       // Save items if we have a sale ID
-      if (saleId && items.length > 0) {
+      if (saleId) {
         await saveItems({ saleId, items });
       }
 

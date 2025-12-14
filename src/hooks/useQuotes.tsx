@@ -191,7 +191,7 @@ export const useQuotes = () => {
     quotes,
     isLoading,
     createQuote: createMutation.mutateAsync,
-    updateQuote: updateMutation.mutate,
+    updateQuote: updateMutation.mutateAsync,
     deleteQuote: deleteMutation.mutate,
     addItem: addItemMutation.mutate,
   };

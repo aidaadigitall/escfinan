@@ -83,8 +83,10 @@ export const useServiceOrderItems = (serviceOrderId?: string) => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["service_order_items", variables.serviceOrderId] });
+      queryClient.invalidateQueries({ queryKey: ["service_orders"] });
     },
     onError: (error: any) => {
+      console.error("Error saving service order items:", error);
       toast.error(error.message || "Erro ao salvar itens da OS");
     },
   });

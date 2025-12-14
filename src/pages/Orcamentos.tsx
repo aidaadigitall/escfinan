@@ -242,14 +242,15 @@ const Orcamentos = () => {
       let quoteId = editingQuote?.id;
 
       if (editingQuote) {
-        updateQuote({ id: editingQuote.id, ...quoteData } as any);
+        await updateQuote({ id: editingQuote.id, ...quoteData } as any);
+        quoteId = editingQuote.id;
       } else {
         const newQuote = await createQuote(quoteData as any);
         quoteId = newQuote?.id;
       }
 
       // Save items if we have a quote ID
-      if (quoteId && items.length > 0) {
+      if (quoteId) {
         await saveItems({ quoteId, items });
       }
 
