@@ -24,7 +24,9 @@ interface DocumentData {
   entry_date?: string;
   exit_date?: string;
   validity_date?: string;
+  validity_days?: number;
   delivery_date?: string;
+  sale_date?: string;
   status?: string;
   equipment_name?: string;
   equipment_brand?: string;
@@ -46,6 +48,7 @@ interface DocumentData {
   discount_total?: number;
   discount_amount?: number;
   notes?: string;
+  internal_notes?: string;
   client?: {
     name?: string;
     fantasy_name?: string;
@@ -91,7 +94,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
     const titleMap = {
       os: "ORDEM DE SERVIÇO",
       budget: "ORÇAMENTO",
-      sale: "PEDIDO DE VENDA",
+      sale: "PEDIDO",
     };
 
     const docNumber = data.number || data.order_number || data.quote_number || data.sale_number || data.id || 0;
@@ -128,6 +131,18 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
       if (typeof person === "string") return person;
       return person.name || "";
     };
+
+    // Determine delivery/validity label and date
+    const getDeliveryInfo = () => {
+      if (type === "budget") {
+        return { label: "PREVISÃO DE ENTREGA:", date: formatDate(data.delivery_date) };
+      } else if (type === "sale") {
+        return { label: "PRAZO DE ENTREGA:", date: formatDate(data.delivery_date) };
+      }
+      return null;
+    };
+
+    const deliveryInfo = getDeliveryInfo();
 
     return (
       <div ref={ref} className="bg-white text-black max-w-[210mm] mx-auto font-sans text-[10px] leading-tight p-6">
@@ -169,8 +184,9 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
             <div className="font-bold">{company.phone || ""}{company.phone2 ? ` - ${company.phone2}` : ""}</div>
             <div className="text-blue-600">{company.email || ""}</div>
             <div className="text-blue-600">{company.website || ""}</div>
-            {company.responsible && <div>Responsável: <span className="font-semibold">{company.responsible}</span></div>}
-            {company.technician && <div>Técnico: <span className="font-semibold">{company.technician}</span></div>}
+            {type === "os" && company.responsible && <div>Responsável: <span className="font-semibold">{company.responsible}</span></div>}
+            {type === "os" && company.technician && <div>Técnico: <span className="font-semibold">{company.technician}</span></div>}
+            {type !== "os" && getPersonName(data.seller) && <div>Vendedor: <span className="font-semibold">{getPersonName(data.seller)}</span></div>}
           </div>
         </div>
 
@@ -180,10 +196,17 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
           <span className="text-xs font-bold">{docDate}</span>
         </div>
 
+        {/* Delivery/Validity Info for Budget and Sale */}
+        {deliveryInfo && deliveryInfo.date && (
+          <div className="mb-3 text-[10px] font-bold border border-black px-2 py-1">
+            {deliveryInfo.label} {deliveryInfo.date}
+          </div>
+        )}
+
         {/* Período de Execução (OS only) */}
         {type === "os" && (
           <div className="mb-3">
-            <div className="bg-gray-800 text-white px-2 py-0.5 font-bold text-[9px]">
+            <div className="bg-amber-400 text-black px-2 py-0.5 font-bold text-[9px]">
               PERÍODO DE EXECUÇÃO
             </div>
             <div className="border border-black text-[9px]">
@@ -212,27 +235,27 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
           </div>
           <div className="border border-black text-[9px]">
             <div className="flex border-b border-black">
-              <div className="w-16 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Cliente:</div>
+              <div className="w-20 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Razão social:</div>
               <div className="flex-1 px-2 py-1 border-r border-black">{client.company_name || client.name || ""}</div>
+              <div className="w-24 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Nome fantasia:</div>
+              <div className="flex-1 px-2 py-1">{client.fantasy_name || client.name || ""}</div>
+            </div>
+            <div className="flex border-b border-black">
               <div className="w-20 px-2 py-1 font-semibold bg-gray-100 border-r border-black">CNPJ/CPF:</div>
-              <div className="w-36 px-2 py-1">{clientDocument}</div>
+              <div className="flex-1 px-2 py-1 border-r border-black">{clientDocument}</div>
+              <div className="w-20 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Endereço:</div>
+              <div className="flex-1 px-2 py-1">{client.address || ""}</div>
             </div>
             <div className="flex border-b border-black">
-              <div className="w-16 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Endereço:</div>
-              <div className="flex-1 px-2 py-1 border-r border-black">{client.address || ""}</div>
-              <div className="w-12 px-2 py-1 font-semibold bg-gray-100 border-r border-black">CEP:</div>
-              <div className="w-24 px-2 py-1">{client.zipcode || client.zip_code || ""}</div>
-            </div>
-            <div className="flex border-b border-black">
-              <div className="w-16 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Cidade:</div>
-              <div className="flex-1 px-2 py-1 border-r border-black">{client.city || ""}</div>
-              <div className="w-16 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Estado:</div>
-              <div className="w-16 px-2 py-1">{client.state || ""}</div>
+              <div className="w-20 px-2 py-1 font-semibold bg-gray-100 border-r border-black">CEP:</div>
+              <div className="flex-1 px-2 py-1 border-r border-black">{client.zipcode || client.zip_code || ""}</div>
+              <div className="w-20 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Cidade/UF:</div>
+              <div className="flex-1 px-2 py-1">{client.city || ""}/{client.state || ""}</div>
             </div>
             <div className="flex">
-              <div className="w-16 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Telefone:</div>
+              <div className="w-20 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Telefone:</div>
               <div className="flex-1 px-2 py-1 border-r border-black">{client.phone || ""}</div>
-              <div className="w-16 px-2 py-1 font-semibold bg-gray-100 border-r border-black">E-mail:</div>
+              <div className="w-20 px-2 py-1 font-semibold bg-gray-100 border-r border-black">E-mail:</div>
               <div className="flex-1 px-2 py-1">{client.email || ""}</div>
             </div>
           </div>
@@ -245,7 +268,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
               EQUIPAMENTO
             </div>
             <div className="border border-black text-[9px]">
-              <div className="flex border-b border-black">
+              <div className="flex">
                 <div className="w-32 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Nome do equipamento:</div>
                 <div className="flex-1 px-2 py-1 border-r border-black">{data.equipment_name || ""}</div>
                 <div className="w-14 px-2 py-1 font-semibold bg-gray-100 border-r border-black">Marca:</div>
@@ -282,7 +305,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
         )}
 
         {/* Warranty Terms (OS only) */}
-        {type === "os" && (
+        {type === "os" && data.warranty_terms && (
           <div className="mb-3">
             <div className="border border-black text-[9px]">
               <div className="px-2 py-0.5 font-semibold bg-gray-100 border-b border-black text-red-600 underline">Termos de garantia</div>
@@ -291,7 +314,7 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
           </div>
         )}
 
-        {/* Services Table */}
+        {/* Services Table (OS only or when there are services) */}
         {displayServiceItems.length > 0 && (
           <div className="mb-3">
             <div className="bg-gray-800 text-white px-2 py-0.5 font-bold text-[9px]">
@@ -387,22 +410,22 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
 
         {/* Summary Totals */}
         <div className="flex justify-end mb-3">
-          <div className="border border-black text-[9px] w-48">
+          <div className="text-[9px] text-right">
             {displayProductItems.length > 0 && (
-              <div className="flex justify-between px-2 py-0.5 border-b border-black">
-                <span className="font-semibold">PRODUTOS:</span>
-                <span>{formatCurrency(productsTotal)}</span>
+              <div className="flex justify-end">
+                <span className="font-semibold mr-2">PRODUTOS:</span>
+                <span className="w-24 text-right">{formatCurrency(productsTotal)}</span>
               </div>
             )}
             {displayServiceItems.length > 0 && (
-              <div className="flex justify-between px-2 py-0.5 border-b border-black">
-                <span className="font-semibold">SERVIÇOS:</span>
-                <span>{formatCurrency(servicesTotal)}</span>
+              <div className="flex justify-end">
+                <span className="font-semibold mr-2">SERVIÇOS:</span>
+                <span className="w-24 text-right">{formatCurrency(servicesTotal)}</span>
               </div>
             )}
-            <div className="flex justify-between px-2 py-1 font-bold bg-gray-100">
-              <span>TOTAL:</span>
-              <span>R$ {formatCurrency(totalAmount)}</span>
+            <div className="flex justify-end font-bold">
+              <span className="mr-2">TOTAL: R$</span>
+              <span className="w-24 text-right">{formatCurrency(totalAmount)}</span>
             </div>
           </div>
         </div>
@@ -424,59 +447,49 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
             <tbody>
               <tr>
                 <td className="px-1 py-0.5 border border-black">
-                  {data.delivery_date ? formatDate(data.delivery_date) : docDate}
+                  {formatDate(data.delivery_date) || docDate}
                 </td>
                 <td className="px-1 py-0.5 border border-black">{formatCurrency(totalAmount)}</td>
                 <td className="px-1 py-0.5 border border-black">{data.payment_method || "A Combinar"}</td>
-                <td className="px-1 py-0.5 border border-black">{data.notes || ""}</td>
+                <td className="px-1 py-0.5 border border-black"></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* Observations (for budget and sale) */}
-        {type !== "os" && data.notes && (
+        {/* Observations (for budget and sale - warranty/notes section) */}
+        {type !== "os" && (data.warranty_terms || data.notes) && (
           <div className="mb-3">
             <div className="bg-gray-800 text-white px-2 py-0.5 font-bold text-[9px]">
               OBSERVAÇÕES
             </div>
             <div className="border border-black px-2 py-1 text-[9px] min-h-[30px] whitespace-pre-wrap">
-              {data.notes}
+              {data.warranty_terms || data.notes}
             </div>
-          </div>
-        )}
-
-        {/* Validity (budget only) */}
-        {type === "budget" && data.validity_date && (
-          <div className="mb-3 text-[9px]">
-            <span className="font-semibold">Validade da proposta:</span> {formatDate(data.validity_date)}
-          </div>
-        )}
-
-        {/* Delivery Date (sale only) */}
-        {type === "sale" && data.delivery_date && (
-          <div className="mb-3 text-[9px]">
-            <span className="font-semibold">Previsão de entrega:</span> {formatDate(data.delivery_date)}
           </div>
         )}
 
         {/* Signatures */}
-        <div className="flex justify-between mt-8 mb-4">
-          <div className="w-56 text-center">
-            <div className="border-t border-black pt-1 text-[9px]">
-              Assinatura do cliente
+        <div className="border border-black p-4 mt-6 mb-4">
+          <div className="flex justify-between">
+            <div className="w-56 text-center">
+              <div className="border-t border-black pt-1 text-[9px]">
+                Assinatura do cliente
+              </div>
             </div>
-          </div>
-          <div className="w-56 text-center">
-            <div className="border-t border-black pt-1 text-[9px]">
-              {type === "os" ? "Assinatura do técnico" : "Assinatura do vendedor"}
-            </div>
+            {type === "os" && (
+              <div className="w-56 text-center">
+                <div className="border-t border-black pt-1 text-[9px]">
+                  Assinatura do técnico
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="text-center text-[8px] text-gray-500 mt-4">
-          {titleMap[type]} emitido pelo sistema Esc Solutions – {company.website || "www.escsistemas.com.br"}
+          {titleMap[type]} emitido no Esc Solutions – {company.website || "www.escinformaticago.com.br"}
         </div>
       </div>
     );
