@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DocumentTemplate } from "@/components/DocumentTemplate";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const PrintDocument = () => {
   const { type, id } = useParams();
-  const { companySettings } = useCompanySettings();
   const [data, setData] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [companySettings, setCompanySettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,15 +39,10 @@ const PrintDocument = () => {
             return;
         }
 
-        // Fetch main document data with relations - use simpler query
-        let selectQuery = "*, clients(*)";
-        if (type === "os") {
-          selectQuery = "*, clients(*)";
-        }
-        
+        // Fetch main document data with relations
         const { data: docData, error: docError } = await (supabase as any)
           .from(tableName)
-          .select(selectQuery)
+          .select("*, clients(*)")
           .eq("id", id)
           .maybeSingle();
 
@@ -67,12 +61,32 @@ const PrintDocument = () => {
         const { data: itemsData, error: itemsError } = await (supabase as any)
           .from(itemsTableName)
           .select("*")
-          .eq(itemsForeignKey, id);
+          .eq(itemsForeignKey, id)
+          .order("created_at", { ascending: true });
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error("Error fetching items:", itemsError);
+        }
+
+        console.log("Document data:", docData);
+        console.log("Items data:", itemsData);
+
+        // Fetch company settings using the document's user_id
+        const { data: settings, error: settingsError } = await supabase
+          .from("company_settings")
+          .select("*")
+          .eq("user_id", docData.user_id)
+          .maybeSingle();
+
+        if (settingsError) {
+          console.error("Error fetching company settings:", settingsError);
+        }
+
+        console.log("Company settings:", settings);
 
         setData(docData);
         setItems(itemsData || []);
+        setCompanySettings(settings);
       } catch (error) {
         console.error("Error fetching document:", error);
       } finally {
@@ -83,14 +97,12 @@ const PrintDocument = () => {
     fetchData();
   }, [type, id]);
 
-  // Removed auto-print - user will print manually via browser
-
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando documento...</div>;
+    return <div className="flex items-center justify-center h-screen bg-white text-black">Carregando documento...</div>;
   }
 
   if (!data) {
-    return <div className="flex items-center justify-center h-screen">Documento não encontrado.</div>;
+    return <div className="flex items-center justify-center h-screen bg-white text-black">Documento não encontrado.</div>;
   }
 
   // Map data to DocumentTemplate format
@@ -100,7 +112,7 @@ const PrintDocument = () => {
     solution: data.technical_report,
     technician: data.technician,
     seller: data.seller,
-    client: data.clients || data.client, // clients is the relation name from Supabase
+    client: data.clients || data.client,
   };
 
   // Map items with proper item_type
@@ -110,21 +122,25 @@ const PrintDocument = () => {
     subtotal: item.subtotal ?? (item.quantity * item.unit_price - (item.discount || 0)),
   }));
 
-  // Fallback for company settings if not loaded yet - use logo_header_url for PDF
+  // Build company object for PDF
   const company = companySettings ? {
     name: companySettings.company_name || companySettings.trading_name || "Minha Empresa",
-    cnpj: companySettings.cnpj,
-    address: `${companySettings.address || ""} ${companySettings.city || ""}/${companySettings.state || ""}`,
-    phone: companySettings.phone,
-    email: companySettings.email,
-    website: companySettings.website,
-    logo_url: companySettings.logo_header_url, // Use logo from settings
+    cnpj: companySettings.cnpj || "",
+    address: `${companySettings.address || ""} ${companySettings.city || ""}/${companySettings.state || ""}`.trim(),
+    phone: companySettings.phone || "",
+    phone2: companySettings.phone2 || "",
+    email: companySettings.email || "",
+    website: companySettings.website || "",
+    logo_url: companySettings.logo_header_url || "",
   } : {
     name: "Minha Empresa",
-    address: "Endereço da Empresa",
-    phone: "(00) 0000-0000",
-    email: "contato@empresa.com",
-  } as any;
+    cnpj: "",
+    address: "",
+    phone: "",
+    email: "",
+    website: "",
+    logo_url: "",
+  };
 
   return (
     <div className="min-h-screen bg-white">

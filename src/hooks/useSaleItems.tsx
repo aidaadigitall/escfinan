@@ -44,36 +44,54 @@ export const useSaleItems = (saleId?: string) => {
       if (!user) throw new Error("Usuário não autenticado");
 
       // First, delete existing items for this sale
-      await supabase
+      const { error: deleteError } = await supabase
         .from("sale_items")
         .delete()
         .eq("sale_id", saleId);
+        
+      if (deleteError) {
+        console.error("Error deleting sale items:", deleteError);
+        throw deleteError;
+      }
 
       // Then insert new items
       if (items.length > 0) {
-        const itemsToInsert = items.map(item => ({
-          sale_id: saleId,
-          user_id: user.id,
-          item_type: item.item_type,
-          product_id: item.product_id || null,
-          service_id: item.service_id || null,
-          name: item.name,
-          unit: item.unit || "UN",
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          discount: item.discount || 0,
-          subtotal: (item.quantity * item.unit_price) - (item.discount || 0),
-        }));
+        const itemsToInsert = items.map(item => {
+          const qty = Number(item.quantity) || 1;
+          const price = Number(item.unit_price) || 0;
+          const disc = Number(item.discount) || 0;
+          const sub = (qty * price) - disc;
+          
+          return {
+            sale_id: saleId,
+            user_id: user.id,
+            item_type: item.item_type,
+            product_id: item.product_id || null,
+            service_id: item.service_id || null,
+            name: item.name || "",
+            unit: item.unit || "UN",
+            quantity: qty,
+            unit_price: price,
+            discount: disc,
+            subtotal: sub,
+          };
+        });
 
+        console.log("Inserting sale items:", itemsToInsert);
+        
         const { error } = await supabase
           .from("sale_items")
           .insert(itemsToInsert);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting sale items:", error);
+          throw error;
+        }
       }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["sale_items", variables.saleId] });
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao salvar itens da venda");
