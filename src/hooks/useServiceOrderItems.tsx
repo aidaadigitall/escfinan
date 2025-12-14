@@ -44,26 +44,35 @@ export const useServiceOrderItems = (serviceOrderId?: string) => {
       if (!user) throw new Error("Usuário não autenticado");
 
       // First, delete existing items for this service order
-      await supabase
+      const { error: deleteError } = await supabase
         .from("service_order_items")
         .delete()
         .eq("service_order_id", serviceOrderId);
+      
+      if (deleteError) throw deleteError;
 
       // Then insert new items
       if (items.length > 0) {
-        const itemsToInsert = items.map(item => ({
-          service_order_id: serviceOrderId,
-          user_id: user.id,
-          item_type: item.item_type,
-          product_id: item.product_id || null,
-          service_id: item.service_id || null,
-          name: item.name,
-          unit: item.unit || "UN",
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          discount: item.discount || 0,
-          subtotal: (item.quantity * item.unit_price) - (item.discount || 0),
-        }));
+        const itemsToInsert = items.map(item => {
+          const qty = Number(item.quantity) || 1;
+          const price = Number(item.unit_price) || 0;
+          const disc = Number(item.discount) || 0;
+          const sub = (qty * price) - disc;
+          
+          return {
+            service_order_id: serviceOrderId,
+            user_id: user.id,
+            item_type: item.item_type,
+            product_id: item.product_id || null,
+            service_id: item.service_id || null,
+            name: item.name || "",
+            unit: item.unit || "UN",
+            quantity: qty,
+            unit_price: price,
+            discount: disc,
+            subtotal: sub,
+          };
+        });
 
         const { error } = await supabase
           .from("service_order_items")

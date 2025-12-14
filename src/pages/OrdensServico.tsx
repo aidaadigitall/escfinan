@@ -94,7 +94,7 @@ const OrdensServico = () => {
     responsible_id: "",
     status: "pending",
     priority: "medium",
-    entry_date: new Date().toISOString(),
+    entry_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
     exit_date: "",
     equipment_name: "",
     equipment_brand: "",
@@ -138,14 +138,26 @@ const OrdensServico = () => {
   const handleOpenDialog = async (order?: any) => {
     if (order) {
       setEditingOrder(order);
+      // Format dates properly for datetime-local input
+      const formatDateForInput = (dateStr: string | null) => {
+        if (!dateStr) return "";
+        try {
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) return "";
+          return format(date, "yyyy-MM-dd'T'HH:mm");
+        } catch {
+          return "";
+        }
+      };
+      
       setFormData({
         client_id: order.client_id || "",
         technician_id: order.technician_id || "",
         responsible_id: order.responsible_id || "",
         status: order.status || "pending",
         priority: order.priority || "medium",
-        entry_date: order.entry_date || new Date().toISOString(),
-        exit_date: order.exit_date || "",
+        entry_date: formatDateForInput(order.entry_date) || format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        exit_date: formatDateForInput(order.exit_date),
         equipment_name: order.equipment_name || "",
         equipment_brand: order.equipment_brand || "",
         equipment_model: order.equipment_model || "",
@@ -190,7 +202,7 @@ const OrdensServico = () => {
         responsible_id: "",
         status: "pending",
         priority: "medium",
-        entry_date: new Date().toISOString(),
+        entry_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
         exit_date: "",
         equipment_name: "",
         equipment_brand: "",
@@ -270,8 +282,44 @@ const OrdensServico = () => {
     setIsSaving(true);
     try {
       const totals = calculateTotals();
+      
+      // Format dates for database (timestamp with time zone)
+      const formatDateForDB = (dateStr: string) => {
+        if (!dateStr) return null;
+        try {
+          // If it's already an ISO string, return it
+          if (dateStr.includes('T') && dateStr.includes(':')) {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+              return date.toISOString();
+            }
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      };
+      
       const orderData = {
-        ...formData,
+        client_id: formData.client_id,
+        technician_id: formData.technician_id || null,
+        responsible_id: formData.responsible_id || null,
+        status: formData.status,
+        priority: formData.priority,
+        entry_date: formatDateForDB(formData.entry_date),
+        exit_date: formatDateForDB(formData.exit_date),
+        equipment_name: formData.equipment_name || null,
+        equipment_brand: formData.equipment_brand || null,
+        equipment_model: formData.equipment_model || null,
+        equipment_serial: formData.equipment_serial || null,
+        equipment_memory: formData.equipment_memory || null,
+        equipment_storage: formData.equipment_storage || null,
+        equipment_processor: formData.equipment_processor || null,
+        defects: formData.defects || null,
+        technical_report: formData.technical_report || null,
+        warranty_terms: formData.warranty_terms || null,
+        payment_method: formData.payment_method || null,
+        notes: formData.notes || null,
         products_total: totals.productsTotal,
         services_total: totals.servicesTotal,
         discount_total: totals.discountTotal,

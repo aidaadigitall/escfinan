@@ -16,14 +16,12 @@ export type Sale = {
   services_total: number;
   discount_total: number;
   total_amount: number;
-  paid_amount?: number;
   payment_method: string | null;
   notes: string | null;
   warranty_terms: string | null;
   created_at: string;
   updated_at: string;
 };
-
 // Statuses that trigger financial integration
 const FINANCIAL_STATUSES = ['approved', 'confirmed', 'delivered'];
 
@@ -43,7 +41,7 @@ export const useSales = () => {
     },
   });
 
-  // Helper to create financial transactions (handles partial payments)
+  // Helper to create financial transactions
   const createFinancialTransaction = async (sale: any, clientName?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -58,30 +56,9 @@ export const useSales = () => {
       const dueDate = sale.delivery_date || sale.sale_date || new Date().toISOString().split("T")[0];
       const today = new Date().toISOString().split("T")[0];
       const totalAmount = sale.total_amount || 0;
-      const paidAmount = sale.paid_amount || 0;
-      const remainingAmount = totalAmount - paidAmount;
 
-      // If there's a paid amount, create a confirmed transaction
-      if (paidAmount > 0) {
-        await supabase
-          .from("transactions")
-          .insert({
-            user_id: user.id,
-            description: `Venda #${sale.sale_number}${clientName ? ` - ${clientName}` : ""} (Pago)`,
-            amount: paidAmount,
-            type: "income",
-            client: clientName || null,
-            payment_method: sale.payment_method || null,
-            status: "received",
-            paid_amount: paidAmount,
-            paid_date: today,
-            due_date: today,
-            notes: `sale:${sale.id}:paid`,
-          });
-      }
-
-      // If there's remaining amount, create a pending transaction (projection)
-      if (remainingAmount > 0) {
+      // Create a pending transaction for the total amount
+      if (totalAmount > 0) {
         let status = "pending";
         if (dueDate < today) status = "overdue";
 
@@ -89,14 +66,14 @@ export const useSales = () => {
           .from("transactions")
           .insert({
             user_id: user.id,
-            description: `Venda #${sale.sale_number}${clientName ? ` - ${clientName}` : ""} (A Receber)`,
-            amount: remainingAmount,
+            description: `Venda #${sale.sale_number}${clientName ? ` - ${clientName}` : ""}`,
+            amount: totalAmount,
             type: "income",
             client: clientName || null,
             payment_method: sale.payment_method || null,
             status,
             due_date: dueDate,
-            notes: `sale:${sale.id}:pending`,
+            notes: `sale:${sale.id}`,
           });
       }
 
