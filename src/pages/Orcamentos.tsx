@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useSearchParams } from "react-router-dom";
 import { useQuotes } from "@/hooks/useQuotes";
+import { useQuoteItems } from "@/hooks/useQuoteItems";
 import { useClients } from "@/hooks/useClients";
 import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
@@ -23,6 +24,7 @@ import { Plus, Calendar as CalendarIcon, Search, Loader, Trash2 } from "lucide-r
 import { cn } from "@/lib/utils";
 import { DiscountInput } from "@/components/DiscountInput";
 import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuoteItem {
   id?: string;
@@ -66,6 +68,8 @@ const Orcamentos = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [deliveryDateOpen, setDeliveryDateOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { items: existingItems, saveItems } = useQuoteItems(editingQuote?.id);
   const [formData, setFormData] = useState({
     client_id: "",
     seller_id: "",
@@ -99,7 +103,7 @@ const Orcamentos = () => {
     q.clients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleOpenDialog = (quote?: any) => {
+  const handleOpenDialog = async (quote?: any) => {
     if (quote) {
       setEditingQuote(quote);
       setFormData({
@@ -111,7 +115,28 @@ const Orcamentos = () => {
         internal_notes: quote.internal_notes || "",
         status: quote.status || "draft",
       });
-      setItems([]);
+      // Load existing items for this quote
+      const { data: quoteItems } = await supabase
+        .from("quote_items")
+        .select("*")
+        .eq("quote_id", quote.id);
+      
+      if (quoteItems && quoteItems.length > 0) {
+        setItems(quoteItems.map((item: any) => ({
+          id: item.id,
+          item_type: item.item_type as "product" | "service",
+          product_id: item.product_id,
+          service_id: item.service_id,
+          name: item.name,
+          unit: item.unit || "UN",
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          discount: item.discount || 0,
+          subtotal: item.subtotal || (item.quantity * item.unit_price - (item.discount || 0)),
+        })));
+      } else {
+        setItems([]);
+      }
     } else {
       setEditingQuote(null);
       setFormData({
@@ -184,39 +209,54 @@ const Orcamentos = () => {
 
   const handleSave = async () => {
     if (!formData.client_id) return;
+    if (isSaving) return;
 
-    const totals = calculateTotals();
-    
-    // Ensure delivery_date is in ISO format
-    let deliveryDate = formData.delivery_date;
-    if (deliveryDate && !deliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      try {
-        const date = new Date(deliveryDate);
-        if (!isNaN(date.getTime())) {
-          deliveryDate = date.toISOString().split("T")[0];
-        } else {
+    setIsSaving(true);
+    try {
+      const totals = calculateTotals();
+      
+      // Ensure delivery_date is in ISO format
+      let deliveryDate = formData.delivery_date;
+      if (deliveryDate && !deliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        try {
+          const date = new Date(deliveryDate);
+          if (!isNaN(date.getTime())) {
+            deliveryDate = date.toISOString().split("T")[0];
+          } else {
+            deliveryDate = "";
+          }
+        } catch {
           deliveryDate = "";
         }
-      } catch {
-        deliveryDate = "";
       }
-    }
 
-    const quoteData = {
-      ...formData,
-      delivery_date: deliveryDate || null,
-      products_total: totals.productsTotal,
-      services_total: totals.servicesTotal,
-      discount_total: totals.discountTotal,
-      total_amount: totals.total,
-    };
+      const quoteData = {
+        ...formData,
+        delivery_date: deliveryDate || null,
+        products_total: totals.productsTotal,
+        services_total: totals.servicesTotal,
+        discount_total: totals.discountTotal,
+        total_amount: totals.total,
+      };
 
-    if (editingQuote) {
-      updateQuote({ id: editingQuote.id, ...quoteData } as any);
-    } else {
-      await createQuote(quoteData as any);
+      let quoteId = editingQuote?.id;
+
+      if (editingQuote) {
+        updateQuote({ id: editingQuote.id, ...quoteData } as any);
+      } else {
+        const newQuote = await createQuote(quoteData as any);
+        quoteId = newQuote?.id;
+      }
+
+      // Save items if we have a quote ID
+      if (quoteId && items.length > 0) {
+        await saveItems({ quoteId, items });
+      }
+
+      setDialogOpen(false);
+    } finally {
+      setIsSaving(false);
     }
-    setDialogOpen(false);
   };
 
   const handleDateSelect = (date: Date | undefined) => {

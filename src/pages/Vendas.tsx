@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useSearchParams } from "react-router-dom";
 import { useSales } from "@/hooks/useSales";
+import { useSaleItems } from "@/hooks/useSaleItems";
 import { useClients } from "@/hooks/useClients";
 import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
@@ -23,6 +24,7 @@ import { ptBR } from "date-fns/locale";
 import { Plus, Calendar as CalendarIcon, Search, Loader, ShoppingCart, Trash2 } from "lucide-react";
 import { DiscountInput } from "@/components/DiscountInput";
 import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SaleItem {
   id?: string;
@@ -68,6 +70,8 @@ const Vendas = () => {
   const [items, setItems] = useState<SaleItem[]>([]);
   const [saleDateOpen, setSaleDateOpen] = useState(false);
   const [deliveryDateOpen, setDeliveryDateOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { saveItems } = useSaleItems(editingSale?.id);
   const [formData, setFormData] = useState({
     client_id: "",
     seller_id: "",
@@ -107,7 +111,7 @@ const Vendas = () => {
     s.clients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleOpenDialog = (sale?: any) => {
+  const handleOpenDialog = async (sale?: any) => {
     if (sale) {
       setEditingSale(sale);
       setFormData({
@@ -121,7 +125,28 @@ const Vendas = () => {
         notes: sale.notes || "",
         warranty_terms: sale.warranty_terms || "",
       });
-      setItems([]);
+      // Load existing items for this sale
+      const { data: saleItems } = await supabase
+        .from("sale_items")
+        .select("*")
+        .eq("sale_id", sale.id);
+      
+      if (saleItems && saleItems.length > 0) {
+        setItems(saleItems.map((item: any) => ({
+          id: item.id,
+          item_type: item.item_type as "product" | "service",
+          product_id: item.product_id,
+          service_id: item.service_id,
+          name: item.name,
+          unit: item.unit || "UN",
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          discount: item.discount || 0,
+          subtotal: item.subtotal || (item.quantity * item.unit_price - (item.discount || 0)),
+        })));
+      } else {
+        setItems([]);
+      }
     } else {
       setEditingSale(null);
       setFormData({
@@ -195,47 +220,62 @@ const Vendas = () => {
 
   const handleSave = async () => {
     if (!formData.client_id) return;
+    if (isSaving) return;
 
-    const totals = calculateTotals();
-    
-    // Ensure dates are in ISO format
-    let saleDate = formData.sale_date;
-    let deliveryDate = formData.delivery_date;
+    setIsSaving(true);
+    try {
+      const totals = calculateTotals();
+      
+      // Ensure dates are in ISO format
+      let saleDate = formData.sale_date;
+      let deliveryDate = formData.delivery_date;
 
-    if (saleDate && !saleDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      try {
-        const date = new Date(saleDate);
-        saleDate = !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
-      } catch {
-        saleDate = new Date().toISOString().split("T")[0];
+      if (saleDate && !saleDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        try {
+          const date = new Date(saleDate);
+          saleDate = !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+        } catch {
+          saleDate = new Date().toISOString().split("T")[0];
+        }
       }
-    }
 
-    if (deliveryDate && !deliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      try {
-        const date = new Date(deliveryDate);
-        deliveryDate = !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : "";
-      } catch {
-        deliveryDate = "";
+      if (deliveryDate && !deliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        try {
+          const date = new Date(deliveryDate);
+          deliveryDate = !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : "";
+        } catch {
+          deliveryDate = "";
+        }
       }
-    }
 
-    const saleData = {
-      ...formData,
-      sale_date: saleDate,
-      delivery_date: deliveryDate || null,
-      products_total: totals.productsTotal,
-      services_total: totals.servicesTotal,
-      discount_total: totals.discountTotal,
-      total_amount: totals.total,
-    };
+      const saleData = {
+        ...formData,
+        sale_date: saleDate,
+        delivery_date: deliveryDate || null,
+        products_total: totals.productsTotal,
+        services_total: totals.servicesTotal,
+        discount_total: totals.discountTotal,
+        total_amount: totals.total,
+      };
 
-    if (editingSale) {
-      updateSale({ id: editingSale.id, ...saleData } as any);
-    } else {
-      await createSale(saleData as any);
+      let saleId = editingSale?.id;
+
+      if (editingSale) {
+        updateSale({ id: editingSale.id, ...saleData } as any);
+      } else {
+        const newSale = await createSale(saleData as any);
+        saleId = newSale?.id;
+      }
+
+      // Save items if we have a sale ID
+      if (saleId && items.length > 0) {
+        await saveItems({ saleId, items });
+      }
+
+      setDialogOpen(false);
+    } finally {
+      setIsSaving(false);
     }
-    setDialogOpen(false);
   };
 
   const handleSaleDateSelect = (date: Date | undefined) => {
