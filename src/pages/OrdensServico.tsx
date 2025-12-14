@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useSearchParams } from "react-router-dom";
 import { useServiceOrders } from "@/hooks/useServiceOrders";
+import { useServiceOrderItems } from "@/hooks/useServiceOrderItems";
 import { useClients } from "@/hooks/useClients";
 import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +23,7 @@ import { ptBR } from "date-fns/locale";
 import { Plus, Search, Loader, Wrench, Monitor, Trash2 } from "lucide-react";
 import { DiscountInput } from "@/components/DiscountInput";
 import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OrderItem {
   id?: string;
@@ -76,12 +79,15 @@ const OrdensServico = () => {
   const { services } = useServices();
   const { employees } = useEmployees();
   const { companySettings } = useCompanySettings();
+  const { paymentMethods } = usePaymentMethods();
   const { leads } = useLeads();
   const [searchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<OrderItem[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const { saveItems } = useServiceOrderItems(editingOrder?.id);
   const [formData, setFormData] = useState({
     client_id: "",
     technician_id: "",
@@ -100,7 +106,7 @@ const OrdensServico = () => {
     defects: "",
     technical_report: "",
     warranty_terms: companySettings?.warranty_terms || "",
-    paid_amount: 0,
+    payment_method: "",
     notes: "",
   });
 
@@ -150,7 +156,7 @@ const OrdensServico = () => {
         defects: order.defects || "",
         technical_report: order.technical_report || "",
         warranty_terms: order.warranty_terms || companySettings?.warranty_terms || "",
-        paid_amount: order.paid_amount || 0,
+        payment_method: order.payment_method || "",
         notes: order.notes || "",
       });
       setItems([]);
@@ -174,7 +180,7 @@ const OrdensServico = () => {
         defects: "",
         technical_report: "",
         warranty_terms: companySettings?.warranty_terms || "",
-        paid_amount: 0,
+        payment_method: "",
         notes: "",
       });
       setItems([]);
@@ -237,22 +243,37 @@ const OrdensServico = () => {
 
   const handleSave = async () => {
     if (!formData.client_id) return;
+    if (isSaving) return;
 
-    const totals = calculateTotals();
-    const orderData = {
-      ...formData,
-      products_total: totals.productsTotal,
-      services_total: totals.servicesTotal,
-      discount_total: totals.discountTotal,
-      total_amount: totals.total,
-    };
+    setIsSaving(true);
+    try {
+      const totals = calculateTotals();
+      const orderData = {
+        ...formData,
+        products_total: totals.productsTotal,
+        services_total: totals.servicesTotal,
+        discount_total: totals.discountTotal,
+        total_amount: totals.total,
+      };
 
-    if (editingOrder) {
-      updateServiceOrder({ id: editingOrder.id, ...orderData } as any);
-    } else {
-      await createServiceOrder(orderData as any);
+      let orderId = editingOrder?.id;
+
+      if (editingOrder) {
+        updateServiceOrder({ id: editingOrder.id, ...orderData } as any);
+      } else {
+        const newOrder = await createServiceOrder(orderData as any);
+        orderId = newOrder?.id;
+      }
+
+      // Save items if we have an order ID
+      if (orderId && items.length > 0) {
+        await saveItems({ serviceOrderId: orderId, items });
+      }
+
+      setDialogOpen(false);
+    } finally {
+      setIsSaving(false);
     }
-    setDialogOpen(false);
   };
 
   const totals = calculateTotals();
@@ -472,14 +493,16 @@ const OrdensServico = () => {
               {['approved', 'completed', 'delivered'].includes(formData.status) && (
                 <div>
                   <label className="text-sm font-medium">Valor Pago (Parcial)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.paid_amount || ""}
-                    onChange={(e) => setFormData({ ...formData, paid_amount: parseFloat(e.target.value) || 0 })}
-                    placeholder="0,00"
-                  />
+                  <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.map((pm) => (
+                        <SelectItem key={pm.id} value={pm.name}>{pm.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground mt-1">
                     Deixe em branco ou 0 para gerar todo o valor em contas a receber
                   </p>
