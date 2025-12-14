@@ -230,7 +230,7 @@ const OrdensServico = () => {
       name: "",
       unit: "UN",
       quantity: 1,
-      unit_price: 0,
+      unit_price: "" as any, // Empty string to avoid showing 0
       discount: 0,
       subtotal: 0,
     }]);
@@ -735,9 +735,10 @@ const OrdensServico = () => {
                         <TableCell>
                           <Input
                             type="number"
-                            value={item.unit_price}
-                            onChange={(e) => handleItemChange(index, "unit_price", parseFloat(e.target.value) || 0)}
+                            value={item.unit_price === 0 ? "" : item.unit_price}
+                            onChange={(e) => handleItemChange(index, "unit_price", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)}
                             className="w-24"
+                            placeholder="0,00"
                           />
                         </TableCell>
                         <TableCell>
