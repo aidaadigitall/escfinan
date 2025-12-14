@@ -27,7 +27,7 @@ export type ServiceOrder = {
   services_total: number;
   discount_total: number;
   total_amount: number;
-  paid_amount?: number;
+  payment_method: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -67,45 +67,24 @@ export const useServiceOrders = () => {
       const dueDate = order.exit_date?.split("T")[0] || new Date().toISOString().split("T")[0];
       const today = new Date().toISOString().split("T")[0];
       const totalAmount = order.total_amount || 0;
-      const paidAmount = order.paid_amount || 0;
-      const remainingAmount = totalAmount - paidAmount;
 
-      // If there's a paid amount, create a confirmed transaction
-      if (paidAmount > 0) {
-        await supabase
-          .from("transactions")
-          .insert({
-            user_id: user.id,
-            description: `OS #${order.order_number}${clientName ? ` - ${clientName}` : ""} (Pago)`,
-            amount: paidAmount,
-            type: "income",
-            client: clientName || null,
-            status: "received",
-            paid_amount: paidAmount,
-            paid_date: today,
-            due_date: today,
-            notes: `service_order:${order.id}:paid`,
-          });
-      }
+      // Create a pending transaction for the full amount
+      let status = "pending";
+      if (dueDate < today) status = "overdue";
 
-      // If there's remaining amount, create a pending transaction (projection)
-      if (remainingAmount > 0) {
-        let status = "pending";
-        if (dueDate < today) status = "overdue";
-
-        await supabase
-          .from("transactions")
-          .insert({
-            user_id: user.id,
-            description: `OS #${order.order_number}${clientName ? ` - ${clientName}` : ""} (A Receber)`,
-            amount: remainingAmount,
-            type: "income",
-            client: clientName || null,
-            status,
-            due_date: dueDate,
-            notes: `service_order:${order.id}:pending`,
-          });
-      }
+      await supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          description: `OS #${order.order_number}${clientName ? ` - ${clientName}` : ""}`,
+          amount: totalAmount,
+          type: "income",
+          client: clientName || null,
+          status,
+          due_date: dueDate,
+          payment_method: order.payment_method || null,
+          notes: `service_order:${order.id}`,
+        });
 
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     } catch (error) {
