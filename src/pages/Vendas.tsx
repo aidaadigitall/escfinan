@@ -79,7 +79,6 @@ const Vendas = () => {
     delivery_date: "",
     payment_method: "",
     status: "pending",
-    paid_amount: 0,
     notes: "",
     warranty_terms: "",
   });
@@ -121,7 +120,6 @@ const Vendas = () => {
         delivery_date: sale.delivery_date || "",
         payment_method: sale.payment_method || "",
         status: sale.status || "pending",
-        paid_amount: sale.paid_amount || 0,
         notes: sale.notes || "",
         warranty_terms: sale.warranty_terms || "",
       });
@@ -156,7 +154,6 @@ const Vendas = () => {
         delivery_date: "",
         payment_method: "",
         status: "pending",
-        paid_amount: 0,
         notes: "",
         warranty_terms: "",
       });
@@ -509,22 +506,6 @@ const Vendas = () => {
                   </Select>
                 </div>
 
-                {['approved', 'confirmed', 'delivered'].includes(formData.status) && (
-                  <div>
-                    <label className="text-sm font-medium">Valor Pago (Parcial)</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.paid_amount || ""}
-                      onChange={(e) => setFormData({ ...formData, paid_amount: parseFloat(e.target.value) || 0 })}
-                      placeholder="0,00"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Deixe em branco ou 0 para gerar todo o valor em contas a receber
-                    </p>
-                  </div>
-                )}
               </div>
             </TabsContent>
 
