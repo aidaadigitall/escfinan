@@ -51,26 +51,28 @@ export const useServiceOrderItems = (serviceOrderId?: string) => {
       
       if (deleteError) throw deleteError;
 
-      // Then insert new items
-      if (items.length > 0) {
-        const itemsToInsert = items.map(item => {
+      // Then insert new items - filter out items without a name
+      const validItems = items.filter(item => item.name && item.name.trim() !== "");
+      
+      if (validItems.length > 0) {
+        const itemsToInsert = validItems.map(item => {
           const qty = Number(item.quantity) || 1;
           const price = Number(item.unit_price) || 0;
           const disc = Number(item.discount) || 0;
-          const sub = (qty * price) - disc;
           
+          // Note: subtotal is a GENERATED column calculated by the database
+          // Do NOT include it in the insert
           return {
             service_order_id: serviceOrderId,
             user_id: user.id,
-            item_type: item.item_type,
+            item_type: item.item_type || "product",
             product_id: item.product_id || null,
             service_id: item.service_id || null,
-            name: item.name || "",
+            name: item.name.trim(),
             unit: item.unit || "UN",
             quantity: qty,
             unit_price: price,
             discount: disc,
-            subtotal: sub,
           };
         });
 
