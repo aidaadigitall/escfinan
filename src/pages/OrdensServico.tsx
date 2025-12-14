@@ -135,7 +135,7 @@ const OrdensServico = () => {
     o.clients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleOpenDialog = (order?: any) => {
+  const handleOpenDialog = async (order?: any) => {
     if (order) {
       setEditingOrder(order);
       setFormData({
@@ -159,7 +159,29 @@ const OrdensServico = () => {
         payment_method: order.payment_method || "",
         notes: order.notes || "",
       });
-      setItems([]);
+      
+      // Carregar itens existentes do banco
+      const { data: existingItems } = await supabase
+        .from("service_order_items")
+        .select("*")
+        .eq("service_order_id", order.id);
+      
+      if (existingItems && existingItems.length > 0) {
+        setItems(existingItems.map((item: any) => ({
+          id: item.id,
+          item_type: item.item_type as "product" | "service",
+          product_id: item.product_id,
+          service_id: item.service_id,
+          name: item.name,
+          unit: item.unit || "UN",
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          discount: item.discount || 0,
+          subtotal: item.subtotal || (item.quantity * item.unit_price - (item.discount || 0)),
+        })));
+      } else {
+        setItems([]);
+      }
     } else {
       setEditingOrder(null);
       setFormData({
