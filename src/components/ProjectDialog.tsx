@@ -37,7 +37,10 @@ const projectSchema = z.object({
   payment_method_id: z.string().optional(),
   budget_amount: z.number().min(0).default(0),
   budget_hours: z.number().min(0).default(0),
-  hourly_rate: z.number().min(0).optional().nullable(),
+  hourly_rate: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null || isNaN(Number(val)) ? null : Number(val)),
+    z.number().min(0).nullable().optional()
+  ),
   start_date: z.string().optional(),
   expected_end_date: z.string().optional(),
   status: z.enum(["planning", "active", "on_hold", "completed", "cancelled"]).default("planning"),
