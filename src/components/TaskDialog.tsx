@@ -198,7 +198,10 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                     <PopoverContent className="w-auto p-0 z-[9999]" align="start" sideOffset={4}>
                       <Calendar
                         mode="single"
-                        selected={formData.due_date ? new Date(formData.due_date + "T12:00:00") : undefined}
+                        selected={formData.due_date ? (() => {
+                          const [year, month, day] = formData.due_date.split('-').map(Number);
+                          return new Date(year, month - 1, day);
+                        })() : undefined}
                         onSelect={(date) => {
                           if (date) {
                             // Use local date formatting to avoid timezone issues
@@ -335,8 +338,14 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                         onSelect={(date) => {
                           if (date) {
                             const currentReminder = formData.reminder_date ? new Date(formData.reminder_date) : new Date();
-                            date.setHours(currentReminder.getHours(), currentReminder.getMinutes());
-                            setFormData({ ...formData, reminder_date: date.toISOString() });
+                            // Create date without timezone issues
+                            const year = date.getFullYear();
+                            const month = date.getMonth();
+                            const day = date.getDate();
+                            const hours = currentReminder.getHours();
+                            const minutes = currentReminder.getMinutes();
+                            const newDate = new Date(year, month, day, hours, minutes);
+                            setFormData({ ...formData, reminder_date: newDate.toISOString() });
                           }
                           setReminderPopoverOpen(false);
                         }}
