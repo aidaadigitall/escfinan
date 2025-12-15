@@ -24,6 +24,7 @@ import { Plus, Calendar as CalendarIcon, Search, Loader, Trash2 } from "lucide-r
 import { cn } from "@/lib/utils";
 import { DiscountInput } from "@/components/DiscountInput";
 import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
+import { SearchableSelect } from "@/components/SearchableSelect";
 import { supabase } from "@/integrations/supabase/client";
 
 interface QuoteItem {
@@ -34,7 +35,7 @@ interface QuoteItem {
   name: string;
   unit: string;
   quantity: number;
-  unit_price: number;
+  unit_price: number | string;
   discount: number;
   subtotal: number;
 }
@@ -161,7 +162,7 @@ const Orcamentos = () => {
       name: "",
       unit: "UN",
       quantity: 1,
-      unit_price: "" as any, // Empty string to avoid showing 0
+      unit_price: "",
       discount: 0,
       subtotal: 0,
     }]);
@@ -190,7 +191,8 @@ const Orcamentos = () => {
 
     // Calculate subtotal
     const item = newItems[index];
-    item.subtotal = (item.quantity * item.unit_price) - item.discount;
+    const unitPriceNum = typeof item.unit_price === 'string' ? parseFloat(item.unit_price) || 0 : item.unit_price;
+    item.subtotal = (item.quantity * unitPriceNum) - item.discount;
 
     setItems(newItems);
   };
@@ -251,7 +253,11 @@ const Orcamentos = () => {
 
       // Save items if we have a quote ID
       if (quoteId) {
-        await saveItems({ quoteId, items });
+        const itemsToSave = items.map(item => ({
+          ...item,
+          unit_price: typeof item.unit_price === 'string' ? parseFloat(item.unit_price) || 0 : item.unit_price
+        }));
+        await saveItems({ quoteId, items: itemsToSave });
       }
 
       setDialogOpen(false);
@@ -373,16 +379,14 @@ const Orcamentos = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Cliente *</label>
-                  <Select value={formData.client_id} onValueChange={(value) => setFormData({ ...formData, client_id: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={clients.map((client) => ({ value: client.id, label: client.name }))}
+                    value={formData.client_id}
+                    onValueChange={(value) => setFormData({ ...formData, client_id: value })}
+                    placeholder="Selecione o cliente"
+                    searchPlaceholder="Buscar cliente..."
+                    emptyMessage="Nenhum cliente encontrado"
+                  />
                 </div>
 
                 <div>
@@ -537,7 +541,7 @@ const Orcamentos = () => {
                           <DiscountInput
                             value={item.discount}
                             onChange={(value) => handleItemChange(index, "discount", value)}
-                            baseValue={item.quantity * item.unit_price}
+                            baseValue={item.quantity * (typeof item.unit_price === 'string' ? parseFloat(item.unit_price) || 0 : item.unit_price)}
                           />
                         </TableCell>
                         <TableCell className="font-medium">
