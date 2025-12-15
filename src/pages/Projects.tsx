@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +22,7 @@ import {
 } from "@/hooks/useProjects";
 
 export default function Projects() {
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -244,6 +246,7 @@ export default function Projects() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onStatusChange={handleStatusChange}
+                    onViewDetail={() => navigate(`/projetos/${project.id}`)}
                   />
                 ))}
               </div>
