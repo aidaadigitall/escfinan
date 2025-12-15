@@ -7,6 +7,7 @@ import { useClients } from "@/hooks/useClients";
 import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useFinancialIntegration } from "@/hooks/useFinancialIntegration";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ import { DiscountInput } from "@/components/DiscountInput";
 import { DocumentActionsMenu } from "@/components/DocumentActionsMenu";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface QuoteItem {
   id?: string;
@@ -63,6 +65,7 @@ const Orcamentos = () => {
   const { services } = useServices();
   const { employees } = useEmployees();
   const { leads } = useLeads();
+  const { createIncomeFromCommercial } = useFinancialIntegration();
   const [searchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<any>(null);
@@ -242,13 +245,16 @@ const Orcamentos = () => {
       };
 
       let quoteId = editingQuote?.id;
+      let quoteNumber = editingQuote?.quote_number;
 
       if (editingQuote) {
         await updateQuote({ id: editingQuote.id, ...quoteData } as any);
         quoteId = editingQuote.id;
+        quoteNumber = editingQuote.quote_number;
       } else {
         const newQuote = await createQuote(quoteData as any);
         quoteId = newQuote?.id;
+        quoteNumber = newQuote?.quote_number;
       }
 
       // Save items if we have a quote ID
@@ -258,6 +264,25 @@ const Orcamentos = () => {
           unit_price: typeof item.unit_price === 'string' ? parseFloat(item.unit_price) || 0 : item.unit_price
         }));
         await saveItems({ quoteId, items: itemsToSave });
+      }
+
+      // Criar transação financeira se status for aprovado
+      if (formData.status === "approved" && quoteId && totals.total > 0) {
+        const client = clients.find((c) => c.id === formData.client_id);
+        try {
+          await createIncomeFromCommercial({
+            source_type: "sale",
+            source_id: quoteId,
+            source_number: quoteNumber || 0,
+            client_id: formData.client_id,
+            client_name: client?.name || "Cliente",
+            total_amount: totals.total,
+            due_date: deliveryDate || new Date().toISOString().split("T")[0],
+          });
+          toast.success("Transação financeira criada com sucesso!");
+        } catch (error) {
+          console.error("Erro ao criar transação financeira:", error);
+        }
       }
 
       setDialogOpen(false);
