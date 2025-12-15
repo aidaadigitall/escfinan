@@ -3,6 +3,7 @@ import { Task, useTaskComments } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useUsers } from "@/hooks/useUsers";
 import { useTaskLabels } from "@/hooks/useTaskLabels";
+import { useProjects } from "@/hooks/useProjects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Calendar as CalendarIcon, Clock, Tag, Users, Paperclip, MessageSquare, AtSign, Trash2, Send, Settings } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Clock, Tag, Users, Paperclip, MessageSquare, AtSign, Trash2, Send, Settings, FolderKanban } from "lucide-react";
 import { TaskAttachments, Attachment } from "./TaskAttachments";
 import { LabelManagerDialog } from "./LabelManagerDialog";
 
@@ -25,14 +26,16 @@ interface TaskDialogProps {
   onOpenChange: (open: boolean) => void;
   task?: Task | null;
   parentTaskId?: string | null;
+  defaultProjectId?: string | null;
   onSave: (taskData: Partial<Task>) => void;
 }
 
-export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: TaskDialogProps) => {
+export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, defaultProjectId, onSave }: TaskDialogProps) => {
   const { employees } = useEmployees();
   const { users } = useUsers();
   const { labels: savedLabels, createLabel } = useTaskLabels();
   const { comments, addComment, deleteComment } = useTaskComments(task?.id);
+  const { data: projects } = useProjects();
   
   const [formData, setFormData] = useState<Partial<Task>>({
     title: "",
@@ -49,6 +52,11 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
     recurrence_type: null,
     parent_task_id: parentTaskId || null,
     attachments: [],
+    project_id: defaultProjectId || null,
+    estimated_hours: null,
+    actual_hours: null,
+    start_date: null,
+    progress_percentage: null,
   });
   
   const [newLabel, setNewLabel] = useState("");
@@ -57,6 +65,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [reminderPopoverOpen, setReminderPopoverOpen] = useState(false);
   const [labelManagerOpen, setLabelManagerOpen] = useState(false);
+  const [startDatePopoverOpen, setStartDatePopoverOpen] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -77,9 +86,14 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
         recurrence_type: null,
         parent_task_id: parentTaskId || null,
         attachments: [],
+        project_id: defaultProjectId || null,
+        estimated_hours: null,
+        actual_hours: null,
+        start_date: null,
+        progress_percentage: null,
       });
     }
-  }, [task, parentTaskId, open]);
+  }, [task, parentTaskId, defaultProjectId, open]);
 
   const handleSave = () => {
     if (!formData.title) return;
@@ -273,6 +287,83 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, onSave }: T
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Project Section */}
+              <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4" />
+                  Vincular a Projeto
+                </label>
+                <Select
+                  value={formData.project_id || "none"}
+                  onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum projeto" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100]">
+                    <SelectItem value="none">Nenhum projeto</SelectItem>
+                    {projects?.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                        {project.code && <span className="text-xs text-muted-foreground ml-2">({project.code})</span>}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {formData.project_id && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Data Início</label>
+                      <Popover open={startDatePopoverOpen} onOpenChange={setStartDatePopoverOpen} modal={true}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start">
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {formData.start_date
+                              ? format(new Date(formData.start_date), "dd/MM/yyyy", { locale: ptBR })
+                              : "Selecionar"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 z-[9999]" align="start" sideOffset={4}>
+                          <Calendar
+                            mode="single"
+                            selected={formData.start_date ? (() => {
+                              const [year, month, day] = formData.start_date.split('-').map(Number);
+                              return new Date(year, month - 1, day);
+                            })() : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                setFormData({ ...formData, start_date: `${year}-${month}-${day}` });
+                              } else {
+                                setFormData({ ...formData, start_date: null });
+                              }
+                              setStartDatePopoverOpen(false);
+                            }}
+                            locale={ptBR}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Horas Estimadas</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        placeholder="0"
+                        value={formData.estimated_hours || ""}
+                        onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value ? parseFloat(e.target.value) : null })}
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
