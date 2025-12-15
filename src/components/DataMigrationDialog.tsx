@@ -158,7 +158,7 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const parseCSV = (csv: string): Record<string, string>[] => {
-    const lines = csv.trim().split("\n");
+    const lines = csv.trim().split("\n").filter((l) => l.trim() !== "");
     if (lines.length < 2) return [];
 
     const headers = lines[0].split(delimiter).map((h) => h.trim().replace(/"/g, ""));
@@ -166,13 +166,15 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(delimiter).map((v) => v.trim().replace(/"/g, ""));
-      if (values.length === headers.length) {
-        const row: Record<string, string> = {};
-        headers.forEach((header, index) => {
-          row[header] = values[index];
-        });
-        data.push(row);
-      }
+
+      const row: Record<string, string> = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index] ?? "";
+      });
+
+      // ignore empty rows (no values)
+      const hasAnyValue = Object.values(row).some((v) => String(v).trim() !== "");
+      if (hasAnyValue) data.push(row);
     }
 
     return data;
@@ -284,46 +286,45 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
     });
   };
 
-  // Check for duplicates in database using REST API to avoid TypeScript issues
-  const checkDuplicate = async (type: keyof typeof MIGRATION_TEMPLATES, record: any, userId: string): Promise<boolean> => {
+  // Check for duplicates in database using Supabase client
+  const checkDuplicate = async (
+    type: keyof typeof MIGRATION_TEMPLATES,
+    record: any,
+    userId: string
+  ): Promise<boolean> => {
     const duplicateFields: Record<string, string[]> = {
       clients: ["name", "cpf", "cnpj", "email"],
       suppliers: ["name", "cpf", "cnpj", "email"],
       products: ["name", "sku"],
       services: ["name"],
-      categories: ["name"],
+      categories: ["name", "type"],
       payment_methods: ["name"],
       bank_accounts: ["name", "account_number"],
       employees: ["name", "cpf", "email"],
-      transactions: ["description"],
+      transactions: ["description", "amount", "due_date", "type"],
     };
 
     const fields = duplicateFields[type] || ["name"];
-    const tableName = type as string;
-    
+
     for (const field of fields) {
-      if (record[field] && record[field] !== "" && record[field] !== null) {
-        try {
-          const session = await supabase.auth.getSession();
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${tableName}?user_id=eq.${userId}&${field}=eq.${encodeURIComponent(String(record[field]))}&select=id&limit=1`,
-            {
-              headers: {
-                'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                'Authorization': `Bearer ${session.data.session?.access_token}`
-              }
-            }
-          );
-          const result = await response.json();
-          if (Array.isArray(result) && result.length > 0) {
-            return true;
-          }
-        } catch {
-          // Skip duplicate check if fetch fails
-          continue;
-        }
+      const value = record[field];
+      if (value === undefined || value === null || String(value).trim() === "") continue;
+
+      const { data, error } = await (supabase as any)
+        .from(type as any)
+        .select("id")
+        .eq("user_id", userId)
+        .eq(field, value)
+        .limit(1);
+
+      if (error) {
+        console.warn("Falha ao checar duplicidade", { type, field, error });
+        return false;
       }
+
+      if (data && data.length > 0) return true;
     }
+
     return false;
   };
 
@@ -479,21 +480,34 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
 
   const handleDeleteImportedType = async () => {
     if (!selectedType) return;
-    
+
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { error, count } = await supabase
+      const { error, count } = await (supabase as any)
         .from(selectedType)
-        .delete({ count: 'exact' })
+        .delete({ count: "exact" })
         .eq("user_id", user.id);
 
       if (error) throw error;
 
-      toast.success(`${count || 0} registros de ${MIGRATION_TEMPLATES[selectedType].name} excluídos com sucesso!`);
+      toast.success(
+        `${count || 0} registros de ${MIGRATION_TEMPLATES[selectedType].name} excluídos com sucesso!`
+      );
       setImportResult(null);
+
+      // importante: fechar o modal e limpar cache/listas (evita continuar aparecendo em buscas)
+      setDeleteConfirmOpen(false);
+      // força recarregar as listas do app após exclusão em massa
+      try {
+        window.dispatchEvent(new Event("lovable:data-changed"));
+      } catch {
+        // ignore
+      }
     } catch (error: any) {
       toast.error(error.message || "Erro ao excluir dados");
     } finally {
