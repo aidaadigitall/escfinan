@@ -27,9 +27,20 @@ import { TimeEntryEditDialog } from "@/components/TimeEntryEditDialog";
 import { useTimeTracking } from "@/hooks/useTimeTracking";
 import { useUsers } from "@/hooks/useUsers";
 import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
+import { useVacations } from "@/hooks/useVacations";
 import { format, startOfMonth, endOfMonth, parseISO, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, Users, Calendar, TrendingUp, Timer, AlertCircle, Search, Download, Edit } from "lucide-react";
+import { Clock, Users, Calendar, TrendingUp, Timer, AlertCircle, Search, Download, Edit, Palmtree, Plus } from "lucide-react";
+
+// New chart components
+import { TimeTrackingBarChart } from "@/components/ponto/TimeTrackingBarChart";
+import { TimeTrackingLineChart } from "@/components/ponto/TimeTrackingLineChart";
+import { TimeDistributionPieChart } from "@/components/ponto/TimeDistributionPieChart";
+import { HoursProgressGauge } from "@/components/ponto/HoursProgressGauge";
+import { AttendanceHeatmap } from "@/components/ponto/AttendanceHeatmap";
+import { VacationBalanceCard } from "@/components/ponto/VacationBalanceCard";
+import { VacationRequestDialog } from "@/components/ponto/VacationRequestDialog";
+import { VacationHistoryTable } from "@/components/ponto/VacationHistoryTable";
 
 export default function ControlePonto() {
   const { timeEntries, isLoading } = useTimeEntries();
@@ -44,6 +55,18 @@ export default function ControlePonto() {
 
   const isAdmin = permissions?.can_manage_users || false;
   const { pendingRequests } = useTimeTracking();
+  const [vacationDialogOpen, setVacationDialogOpen] = useState(false);
+
+  // Vacation dialog trigger component
+  const VacationRequestDialogTrigger = () => (
+    <>
+      <Button onClick={() => setVacationDialogOpen(true)}>
+        <Plus className="h-4 w-4 mr-2" />
+        Solicitar Férias
+      </Button>
+      <VacationRequestDialog open={vacationDialogOpen} onOpenChange={setVacationDialogOpen} />
+    </>
+  );
 
   // Filter entries based on selected filters
   const filteredEntries = useMemo(() => {
@@ -159,10 +182,11 @@ export default function ControlePonto() {
         </div>
 
         <Tabs defaultValue="records" className="space-y-3">
-          <TabsList className="h-9">
+          <TabsList className="h-9 flex-wrap">
             <TabsTrigger value="records" className="text-sm">Registros</TabsTrigger>
+            <TabsTrigger value="charts" className="text-sm">Gráficos</TabsTrigger>
+            <TabsTrigger value="vacation" className="text-sm">Férias</TabsTrigger>
             {isAdmin && <TabsTrigger value="dashboard" className="text-sm">Dashboard</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="users" className="text-sm">Por Usuário</TabsTrigger>}
             {isAdmin && <TabsTrigger value="approvals" className="text-sm">Aprovações</TabsTrigger>}
           </TabsList>
 
@@ -291,6 +315,28 @@ export default function ControlePonto() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Charts Tab */}
+          <TabsContent value="charts" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <HoursProgressGauge currentHours={metrics.totalHours} />
+              <TimeDistributionPieChart entries={filteredEntries} />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TimeTrackingBarChart entries={filteredEntries} />
+              <TimeTrackingLineChart entries={filteredEntries} selectedMonth={selectedMonth} />
+            </div>
+            <AttendanceHeatmap entries={filteredEntries} selectedMonth={selectedMonth} />
+          </TabsContent>
+
+          {/* Vacation Tab */}
+          <TabsContent value="vacation" className="space-y-4">
+            <div className="flex justify-end">
+              <VacationRequestDialogTrigger />
+            </div>
+            <VacationBalanceCard />
+            <VacationHistoryTable />
           </TabsContent>
 
           {isAdmin && (

@@ -26,7 +26,7 @@ import { useTimeEntries, TimeEntry } from "@/hooks/useTimeEntries";
 import { useTimeTracking } from "@/hooks/useTimeTracking";
 import { useUsers } from "@/hooks/useUsers";
 import { useEmployees } from "@/hooks/useEmployees";
-import { format, startOfMonth, endOfMonth, parseISO, differenceInMinutes, differenceInHours } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Clock,
@@ -42,8 +42,16 @@ import {
   XCircle,
   AlertTriangle,
   Edit,
+  Palmtree,
 } from "lucide-react";
 import { toast } from "sonner";
+
+// New chart components
+import { TeamHoursChart } from "@/components/ponto/TeamHoursChart";
+import { TimeTrackingLineChart } from "@/components/ponto/TimeTrackingLineChart";
+import { HoursProgressGauge } from "@/components/ponto/HoursProgressGauge";
+import { VacationApprovalPanel } from "@/components/ponto/VacationApprovalPanel";
+import { VacationHistoryTable } from "@/components/ponto/VacationHistoryTable";
 
 export default function ControlePontoRH() {
   const { timeEntries, isLoading } = useTimeEntries();
@@ -340,9 +348,11 @@ export default function ControlePontoRH() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full sm:w-auto">
+          <TabsList className="w-full sm:w-auto flex-wrap">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Visão Geral</TabsTrigger>
+            <TabsTrigger value="charts" className="text-xs sm:text-sm">Gráficos</TabsTrigger>
             <TabsTrigger value="details" className="text-xs sm:text-sm">Detalhes</TabsTrigger>
+            <TabsTrigger value="vacations" className="text-xs sm:text-sm">Férias</TabsTrigger>
             <TabsTrigger value="approvals" className="text-xs sm:text-sm">Aprovações</TabsTrigger>
           </TabsList>
 
@@ -421,6 +431,15 @@ export default function ControlePontoRH() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Charts Tab */}
+          <TabsContent value="charts" className="space-y-4 mt-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <HoursProgressGauge currentHours={summary.totalHours} />
+              <TeamHoursChart staffMetrics={staffMetrics} />
+            </div>
+            <TimeTrackingLineChart entries={filteredEntries} selectedMonth={selectedMonth} title="Evolução de Horas da Equipe" />
           </TabsContent>
 
           {/* Details Tab */}
