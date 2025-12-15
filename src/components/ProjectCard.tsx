@@ -12,6 +12,7 @@ import {
   Play,
   Pause,
   CheckCircle2,
+  LayoutDashboard,
 } from "lucide-react";
 import { type Project } from "@/hooks/useProjects";
 import { format } from "date-fns";
@@ -22,6 +23,7 @@ interface ProjectCardProps {
   onEdit: (project: Project) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: Project["status"]) => void;
+  onViewDetail?: () => void;
 }
 
 const statusConfig = {
@@ -46,7 +48,7 @@ const typeConfig = {
   internal: "Interno",
 };
 
-export function ProjectCard({ project, onEdit, onDelete, onStatusChange }: ProjectCardProps) {
+export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewDetail }: ProjectCardProps) {
   const status = statusConfig[project.status];
   const priority = priorityConfig[project.priority];
   const typeLabel = typeConfig[project.project_type || "fixed_price"];
@@ -160,6 +162,17 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange }: Proje
 
         {/* Ações Rápidas */}
         <div className="flex gap-2 pt-2 border-t">
+          {onViewDetail && (
+            <Button
+              size="sm"
+              variant="default"
+              className="flex-1"
+              onClick={onViewDetail}
+            >
+              <LayoutDashboard className="h-3 w-3 mr-1" />
+              Dashboard
+            </Button>
+          )}
           {project.status === "planning" && (
             <Button
               size="sm"
