@@ -12,7 +12,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
     <DayPicker
       showOutsideDays={showOutsideDays}
       fixedWeeks
-      ISOWeek={false}
+      weekStartsOn={0}
       className={cn("p-3 pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
