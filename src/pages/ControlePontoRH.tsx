@@ -511,6 +511,21 @@ export default function ControlePontoRH() {
             </Card>
           </TabsContent>
 
+          {/* Charts Tab */}
+          <TabsContent value="charts" className="space-y-4 mt-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <HoursProgressGauge currentHours={summary.totalHours} />
+              <TeamHoursChart staffMetrics={staffMetrics} />
+            </div>
+            <TimeTrackingLineChart entries={filteredEntries} selectedMonth={selectedMonth} title="Evolução de Horas da Equipe" />
+          </TabsContent>
+
+          {/* Vacations Tab */}
+          <TabsContent value="vacations" className="space-y-4 mt-4">
+            <VacationApprovalPanel />
+            <VacationHistoryTable showEmployee />
+          </TabsContent>
+
           {/* Approvals Tab */}
           <TabsContent value="approvals" className="space-y-4 mt-4">
             <TimeClockApprovalPanel />
