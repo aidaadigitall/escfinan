@@ -9,6 +9,7 @@ import { useServices } from "@/hooks/useServices";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { useFinancialIntegration } from "@/hooks/useFinancialIntegration";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +83,7 @@ const OrdensServico = () => {
   const { companySettings } = useCompanySettings();
   const { paymentMethods } = usePaymentMethods();
   const { leads } = useLeads();
+  const { createIncomeFromCommercial, deleteTransactionFromCommercial } = useFinancialIntegration();
   const [searchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any>(null);
@@ -345,6 +347,27 @@ const OrdensServico = () => {
           unit_price: typeof item.unit_price === 'string' ? parseFloat(item.unit_price) || 0 : item.unit_price
         }));
         await saveItems({ serviceOrderId: orderId, items: itemsToSave });
+
+        // Create financial transaction if status is approved, completed or delivered
+        const financialStatuses = ["approved", "completed", "delivered"];
+        if (financialStatuses.includes(formData.status) && totals.total > 0) {
+          const client = clients.find(c => c.id === formData.client_id);
+          try {
+            await createIncomeFromCommercial({
+              source_type: "service_order",
+              source_id: orderId,
+              source_number: editingOrder?.order_number || 0,
+              client_id: formData.client_id,
+              client_name: client?.name || "",
+              total_amount: totals.total,
+              payment_method: formData.payment_method,
+              due_date: formData.exit_date ? formData.exit_date.split("T")[0] : undefined,
+              notes: formData.notes,
+            });
+          } catch (err) {
+            console.error("Erro ao criar transação financeira:", err);
+          }
+        }
       }
 
       setDialogOpen(false);
