@@ -538,6 +538,68 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_vacations: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          employee_id: string
+          end_date: string
+          id: string
+          notes: string | null
+          owner_user_id: string | null
+          rejection_reason: string | null
+          start_date: string
+          status: string
+          total_days: number
+          updated_at: string
+          user_id: string
+          vacation_type: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          employee_id: string
+          end_date: string
+          id?: string
+          notes?: string | null
+          owner_user_id?: string | null
+          rejection_reason?: string | null
+          start_date: string
+          status?: string
+          total_days: number
+          updated_at?: string
+          user_id: string
+          vacation_type?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          employee_id?: string
+          end_date?: string
+          id?: string
+          notes?: string | null
+          owner_user_id?: string | null
+          rejection_reason?: string | null
+          start_date?: string
+          status?: string
+          total_days?: number
+          updated_at?: string
+          user_id?: string
+          vacation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_vacations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           cpf: string | null
@@ -2776,6 +2838,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vacation_balance: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          owner_user_id: string | null
+          pending_days: number
+          total_days: number
+          updated_at: string
+          used_days: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          owner_user_id?: string | null
+          pending_days?: number
+          total_days?: number
+          updated_at?: string
+          used_days?: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          owner_user_id?: string | null
+          pending_days?: number
+          total_days?: number
+          updated_at?: string
+          used_days?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vacation_balance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
