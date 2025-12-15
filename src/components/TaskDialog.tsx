@@ -161,22 +161,22 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, defaultProj
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {task ? "Editar Tarefa" : parentTaskId ? "Nova Subtarefa" : "Nova Tarefa"}
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="details" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="details" className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <TabsList className="grid w-full grid-cols-4 flex-shrink-0">
             <TabsTrigger value="details">Detalhes</TabsTrigger>
             <TabsTrigger value="assign">Delegação</TabsTrigger>
             <TabsTrigger value="attachments">Anexos</TabsTrigger>
             <TabsTrigger value="comments">Comentários</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 mt-4">
+          <ScrollArea className="flex-1 mt-4 min-h-0 max-h-[calc(90vh-200px)]">
             <TabsContent value="details" className="space-y-4 m-0 p-1">
               <div>
                 <label className="text-sm font-medium">Título *</label>
@@ -604,7 +604,7 @@ export const TaskDialog = ({ open, onOpenChange, task, parentTaskId, defaultProj
           </ScrollArea>
         </Tabs>
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-4 flex-shrink-0 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
