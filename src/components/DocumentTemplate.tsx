@@ -145,18 +145,36 @@ export const DocumentTemplate = React.forwardRef<HTMLDivElement, DocumentTemplat
     const deliveryInfo = getDeliveryInfo();
 
     return (
-      <div ref={ref} className="bg-white text-black font-sans text-[10px] leading-tight" style={{ width: '210mm', minHeight: '297mm', padding: '15mm 20mm', boxSizing: 'border-box', margin: '0 auto' }}>
+      <div 
+        ref={ref} 
+        className="bg-white text-black font-sans text-[11px] leading-snug" 
+        style={{ 
+          width: '210mm', 
+          minHeight: '297mm', 
+          padding: '10mm 15mm', 
+          boxSizing: 'border-box', 
+          margin: '0 auto' 
+        }}
+      >
         <style>{`
           @media print {
-            @page { size: A4; margin: 15mm 20mm; }
+            @page { 
+              size: A4; 
+              margin: 10mm 15mm; 
+            }
             html, body { 
               width: 210mm;
               height: 297mm;
               margin: 0;
               padding: 0;
               background: white !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
-            * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            * { 
+              print-color-adjust: exact !important; 
+              -webkit-print-color-adjust: exact !important; 
+            }
           }
           @media screen {
             body { background: #f0f0f0 !important; }

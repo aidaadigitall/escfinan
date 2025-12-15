@@ -8,6 +8,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
 import { useEmployees } from "@/hooks/useEmployees";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { useFinancialIntegration } from "@/hooks/useFinancialIntegration";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +65,7 @@ const Vendas = () => {
   const { employees } = useEmployees();
   const { paymentMethods } = usePaymentMethods();
   const { leads } = useLeads();
+  const { createIncomeFromCommercial, deleteTransactionFromCommercial } = useFinancialIntegration();
   const [searchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<any>(null);
@@ -274,6 +276,27 @@ const Vendas = () => {
           unit_price: typeof item.unit_price === 'string' ? parseFloat(item.unit_price) || 0 : item.unit_price
         }));
         await saveItems({ saleId, items: itemsToSave });
+
+        // Create financial transaction if status is approved, confirmed or delivered
+        const financialStatuses = ["approved", "confirmed", "delivered"];
+        if (financialStatuses.includes(formData.status) && totals.total > 0) {
+          const client = clients.find(c => c.id === formData.client_id);
+          try {
+            await createIncomeFromCommercial({
+              source_type: "sale",
+              source_id: saleId,
+              source_number: editingSale?.sale_number || 0,
+              client_id: formData.client_id,
+              client_name: client?.name || "",
+              total_amount: totals.total,
+              payment_method: formData.payment_method,
+              due_date: formData.delivery_date || formData.sale_date,
+              notes: formData.notes,
+            });
+          } catch (err) {
+            console.error("Erro ao criar transação financeira:", err);
+          }
+        }
       }
 
       setDialogOpen(false);

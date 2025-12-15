@@ -257,6 +257,10 @@ export const DocumentActionsMenu = ({
     toast.info("Funcionalidade de geração em desenvolvimento");
   };
 
+  // Only show "Ver no financeiro" for approved/confirmed/completed/delivered status
+  const financialStatuses = ["approved", "confirmed", "completed", "delivered"];
+  const showFinancialLink = financialStatuses.includes(document.status || "");
+
   const handleViewFinancial = () => {
     navigate("/receitas");
   };
@@ -397,11 +401,13 @@ export const DocumentActionsMenu = ({
 
             <DropdownMenuSeparator />
 
-            {/* Ver no financeiro */}
-            <DropdownMenuItem onClick={handleViewFinancial}>
-              <PiggyBank className="mr-2 h-4 w-4 text-green-500" />
-              Ver no financeiro
-            </DropdownMenuItem>
+            {/* Ver no financeiro - only for approved/confirmed/completed/delivered */}
+            {showFinancialLink && (
+              <DropdownMenuItem onClick={handleViewFinancial}>
+                <PiggyBank className="mr-2 h-4 w-4 text-green-500" />
+                Ver no financeiro
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
