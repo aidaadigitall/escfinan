@@ -37,7 +37,7 @@ const projectSchema = z.object({
   payment_method_id: z.string().optional(),
   budget_amount: z.number().min(0).default(0),
   budget_hours: z.number().min(0).default(0),
-  hourly_rate: z.number().min(0).optional(),
+  hourly_rate: z.number().min(0).optional().nullable(),
   start_date: z.string().optional(),
   expected_end_date: z.string().optional(),
   status: z.enum(["planning", "active", "on_hold", "completed", "cancelled"]).default("planning"),
@@ -373,16 +373,6 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 step="0.01"
                 {...form.register("hourly_rate", { valueAsNumber: true })}
                 placeholder="0,00"
-                onFocus={(e) => {
-                  if (e.target.value === '0' || e.target.value === '0.00') {
-                    e.target.value = '';
-                  }
-                }}
-                onBlur={(e) => {
-                  if (e.target.value === '') {
-                    e.target.value = '0';
-                  }
-                }}
               />
               <p className="text-xs text-muted-foreground mt-1">
                 💡 Usado para calcular custo das horas trabalhadas
