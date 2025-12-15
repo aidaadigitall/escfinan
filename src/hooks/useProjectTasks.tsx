@@ -2,33 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getEffectiveUserId } from "./useEffectiveUserId";
+import { Task } from "./useTasks";
 
-export interface ProjectTask {
-  id: string;
-  project_id: string;
-  parent_task_id: string | null;
-  title: string;
-  description: string | null;
-  task_number: number | null;
-  estimated_hours: number;
-  actual_hours: number;
-  start_date: string | null;
-  due_date: string | null;
-  completed_date: string | null;
-  status: "todo" | "in_progress" | "review" | "completed" | "blocked";
-  priority: "low" | "medium" | "high" | "critical";
-  progress_percentage: number;
-  assigned_to: string | null;
-  user_id: string;
-  owner_user_id: string | null;
-  created_at: string;
-  updated_at: string;
-  assigned_user?: {
-    id: string;
-    name: string;
-  };
-  subtasks?: ProjectTask[];
-}
+// Re-export Task type for backwards compatibility
+export type ProjectTask = Task;
 
 export interface CreateTaskInput {
   project_id: string;
@@ -38,8 +15,8 @@ export interface CreateTaskInput {
   estimated_hours?: number;
   start_date?: string;
   due_date?: string;
-  status?: "todo" | "in_progress" | "review" | "completed" | "blocked";
-  priority?: "low" | "medium" | "high" | "critical";
+  status?: "pending" | "in_progress" | "completed" | "cancelled";
+  priority?: "low" | "medium" | "high" | "urgent";
   assigned_to?: string;
 }
 
@@ -50,6 +27,7 @@ export interface UpdateTaskInput extends CreateTaskInput {
   progress_percentage?: number;
 }
 
+// Hook to fetch tasks for a specific project
 export const useProjectTasks = (projectId: string | undefined) => {
   return useQuery({
     queryKey: ["project-tasks", projectId],
@@ -57,36 +35,38 @@ export const useProjectTasks = (projectId: string | undefined) => {
       if (!projectId) return [];
       
       const { data, error } = await supabase
-        .from("project_tasks")
+        .from("tasks")
         .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data as ProjectTask[];
+      return data as Task[];
     },
     enabled: !!projectId,
   });
 };
 
+// Hook to fetch a single task
 export const useProjectTask = (id: string | undefined) => {
   return useQuery({
     queryKey: ["project-task", id],
     queryFn: async () => {
       if (!id) return null;
       const { data, error } = await supabase
-        .from("project_tasks")
+        .from("tasks")
         .select("*")
         .eq("id", id)
         .single();
 
       if (error) throw error;
-      return data as ProjectTask;
+      return data as Task;
     },
     enabled: !!id,
   });
 };
 
+// Hook to create a task for a project
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
 
@@ -95,11 +75,19 @@ export const useCreateTask = () => {
       const effectiveUserId = await getEffectiveUserId();
       
       const { data, error } = await supabase
-        .from("project_tasks")
+        .from("tasks")
         .insert({
-          ...input,
+          title: input.title,
+          description: input.description || null,
+          project_id: input.project_id,
+          parent_task_id: input.parent_task_id || null,
+          estimated_hours: input.estimated_hours || 0,
+          start_date: input.start_date || null,
+          due_date: input.due_date || null,
+          status: input.status || "pending",
+          priority: input.priority || "medium",
+          responsible_id: input.assigned_to || null,
           user_id: effectiveUserId,
-          owner_user_id: effectiveUserId,
         })
         .select()
         .single();
@@ -113,6 +101,7 @@ export const useCreateTask = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["project-tasks", variables.project_id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
       toast.success("Tarefa criada com sucesso!");
@@ -123,6 +112,7 @@ export const useCreateTask = () => {
   });
 };
 
+// Hook to update a task
 export const useUpdateTask = () => {
   const queryClient = useQueryClient();
 
@@ -131,13 +121,22 @@ export const useUpdateTask = () => {
       const { id, project_id, ...updateData } = input;
       
       // Se status for completed, definir data de conclusão
+      const taskUpdate: any = {
+        ...updateData,
+        responsible_id: updateData.assigned_to || null,
+      };
+      
       if (updateData.status === "completed" && !updateData.completed_date) {
-        (updateData as any).completed_date = new Date().toISOString().split("T")[0];
+        taskUpdate.completed_at = new Date().toISOString();
+        taskUpdate.progress_percentage = 100;
       }
       
+      // Remove assigned_to from update as we renamed it
+      delete taskUpdate.assigned_to;
+      
       const { data, error } = await supabase
-        .from("project_tasks")
-        .update(updateData)
+        .from("tasks")
+        .update(taskUpdate)
         .eq("id", id)
         .select()
         .single();
@@ -153,6 +152,7 @@ export const useUpdateTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
       toast.success("Tarefa atualizada com sucesso!");
@@ -163,13 +163,14 @@ export const useUpdateTask = () => {
   });
 };
 
+// Hook to delete a task
 export const useDeleteTask = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, project_id }: { id: string; project_id: string }) => {
       const { error } = await supabase
-        .from("project_tasks")
+        .from("tasks")
         .delete()
         .eq("id", id);
 
@@ -180,6 +181,7 @@ export const useDeleteTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
       toast.success("Tarefa excluída com sucesso!");
@@ -190,20 +192,21 @@ export const useDeleteTask = () => {
   });
 };
 
+// Hook to update task status
 export const useUpdateTaskStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, status, project_id }: { id: string; status: ProjectTask["status"]; project_id: string }) => {
+    mutationFn: async ({ id, status, project_id }: { id: string; status: string; project_id: string }) => {
       const updateData: any = { status };
       
       if (status === "completed") {
-        updateData.completed_date = new Date().toISOString().split("T")[0];
+        updateData.completed_at = new Date().toISOString();
         updateData.progress_percentage = 100;
       }
       
       const { data, error } = await supabase
-        .from("project_tasks")
+        .from("tasks")
         .update(updateData)
         .eq("id", id)
         .select()
@@ -218,6 +221,7 @@ export const useUpdateTaskStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
       toast.success("Status atualizado!");

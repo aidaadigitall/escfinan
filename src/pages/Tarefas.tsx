@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useUsers } from "@/hooks/useUsers";
 import { useTaskDueNotifications } from "@/hooks/useTaskDueNotifications";
 import { useTaskLabels } from "@/hooks/useTaskLabels";
+import { useProjects } from "@/hooks/useProjects";
 import { TaskDialog } from "@/components/TaskDialog";
 import { TaskAdvancedFilters } from "@/components/TaskAdvancedFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { format, differenceInMinutes, isPast, isWithinInterval } from "date-fns"
 import { ptBR } from "date-fns/locale";
 import { 
   Plus, Calendar as CalendarIcon, Tag, Trash2, Edit, 
-  CheckCircle2, Circle, Clock, User, ChevronDown, ChevronRight, Users, Timer, AlertTriangle, BarChart3, Check
+  CheckCircle2, Circle, Clock, User, ChevronDown, ChevronRight, Users, Timer, AlertTriangle, BarChart3, Check, FolderKanban
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -119,6 +120,7 @@ const Tarefas = () => {
   const { employees } = useEmployees();
   const { users } = useUsers();
   const { labels } = useTaskLabels();
+  const { data: projects } = useProjects();
   
   // Enable due notifications for tasks
   useTaskDueNotifications(tasks);
@@ -265,6 +267,11 @@ const Tarefas = () => {
     return ids.map(id => allUsers.find(u => u.id === id)?.name).filter(Boolean).join(", ");
   };
 
+  const getProjectName = (projectId: string | null) => {
+    if (!projectId || !projects) return null;
+    return projects.find((p) => p.id === projectId)?.name;
+  };
+
   const renderTask = (task: Task, isSubtask = false) => {
     const subtasks = getSubtasks(task.id);
     const hasSubtasks = subtasks.length > 0;
@@ -305,6 +312,14 @@ const Tarefas = () => {
                 <Badge variant="secondary" className="text-xs">
                   {subtasks.length} subtarefa{subtasks.length > 1 ? "s" : ""}
                 </Badge>
+              )}
+              {task.project_id && getProjectName(task.project_id) && (
+                <Link to={`/projetos/${task.project_id}`}>
+                  <Badge variant="outline" className="text-xs bg-primary/10 hover:bg-primary/20 cursor-pointer">
+                    <FolderKanban className="h-3 w-3 mr-1" />
+                    {getProjectName(task.project_id)}
+                  </Badge>
+                </Link>
               )}
             </div>
             {task.description && (

@@ -25,6 +25,13 @@ export type Task = {
   attachments: any[] | null;
   created_at: string;
   updated_at: string;
+  // Project-related fields
+  project_id: string | null;
+  estimated_hours: number | null;
+  actual_hours: number | null;
+  start_date: string | null;
+  progress_percentage: number | null;
+  task_number: number | null;
 };
 
 export type TaskComment = {
@@ -70,6 +77,12 @@ export const useTasks = () => {
       parent_task_id?: string;
       attachments?: any[];
       sendWhatsAppNotification?: boolean;
+      // Project fields
+      project_id?: string;
+      estimated_hours?: number;
+      actual_hours?: number;
+      start_date?: string;
+      progress_percentage?: number;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
@@ -91,7 +104,13 @@ export const useTasks = () => {
           recurrence_type: taskData.recurrence_type || null,
           parent_task_id: taskData.parent_task_id || null,
           attachments: taskData.attachments || [],
-          user_id: user.id 
+          user_id: user.id,
+          // Project fields
+          project_id: taskData.project_id || null,
+          estimated_hours: taskData.estimated_hours || 0,
+          actual_hours: taskData.actual_hours || 0,
+          start_date: taskData.start_date || null,
+          progress_percentage: taskData.progress_percentage || 0,
         }])
         .select()
         .single();
@@ -137,8 +156,15 @@ export const useTasks = () => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
+      // Recalculate project progress if task is linked to a project
+      if (data?.project_id) {
+        supabase.rpc("calculate_project_progress", { p_project_id: data.project_id });
+      }
       toast.success("Tarefa criada com sucesso!");
     },
     onError: (error: any) => {
@@ -160,8 +186,15 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
+      // Recalculate project progress if task is linked to a project
+      if (data?.project_id) {
+        supabase.rpc("calculate_project_progress", { p_project_id: data.project_id });
+      }
       toast.success("Tarefa atualizada com sucesso!");
     },
     onError: (error: any) => {
@@ -180,6 +213,9 @@ export const useTasks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
       toast.success("Tarefa excluída com sucesso!");
     },
     onError: (error: any) => {
@@ -203,8 +239,15 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-metrics"] });
+      // Recalculate project progress if task is linked to a project
+      if (data?.project_id) {
+        supabase.rpc("calculate_project_progress", { p_project_id: data.project_id });
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao atualizar tarefa");

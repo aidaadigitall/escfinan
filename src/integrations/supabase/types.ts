@@ -2291,6 +2291,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          actual_hours: number | null
           assigned_users: string[] | null
           attachments: Json | null
           completed_at: string | null
@@ -2298,20 +2299,26 @@ export type Database = {
           description: string | null
           due_date: string | null
           due_time: string | null
+          estimated_hours: number | null
           id: string
           is_recurring: boolean | null
           labels: string[] | null
           parent_task_id: string | null
           priority: string | null
+          progress_percentage: number | null
+          project_id: string | null
           recurrence_type: string | null
           reminder_date: string | null
           responsible_id: string | null
+          start_date: string | null
           status: string | null
+          task_number: number | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          actual_hours?: number | null
           assigned_users?: string[] | null
           attachments?: Json | null
           completed_at?: string | null
@@ -2319,20 +2326,26 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           due_time?: string | null
+          estimated_hours?: number | null
           id?: string
           is_recurring?: boolean | null
           labels?: string[] | null
           parent_task_id?: string | null
           priority?: string | null
+          progress_percentage?: number | null
+          project_id?: string | null
           recurrence_type?: string | null
           reminder_date?: string | null
           responsible_id?: string | null
+          start_date?: string | null
           status?: string | null
+          task_number?: number | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          actual_hours?: number | null
           assigned_users?: string[] | null
           attachments?: Json | null
           completed_at?: string | null
@@ -2340,15 +2353,20 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           due_time?: string | null
+          estimated_hours?: number | null
           id?: string
           is_recurring?: boolean | null
           labels?: string[] | null
           parent_task_id?: string | null
           priority?: string | null
+          progress_percentage?: number | null
+          project_id?: string | null
           recurrence_type?: string | null
           reminder_date?: string | null
           responsible_id?: string | null
+          start_date?: string | null
           status?: string | null
+          task_number?: number | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -2359,6 +2377,13 @@ export type Database = {
             columns: ["parent_task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
