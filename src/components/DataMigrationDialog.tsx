@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowRightLeft, Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowRightLeft, Upload, FileSpreadsheet, Loader2, CheckCircle2, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "./ConfirmDialog";
 import * as XLSX from "xlsx";
 
 interface DataMigrationDialogProps {
@@ -154,6 +155,7 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
   const [jsonData, setJsonData] = useState("");
   const [delimiter, setDelimiter] = useState(",");
   const [importResult, setImportResult] = useState<{ success: number; errors: string[] } | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const parseCSV = (csv: string): Record<string, string>[] => {
     const lines = csv.trim().split("\n");
@@ -282,6 +284,49 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
     });
   };
 
+  // Check for duplicates in database using REST API to avoid TypeScript issues
+  const checkDuplicate = async (type: keyof typeof MIGRATION_TEMPLATES, record: any, userId: string): Promise<boolean> => {
+    const duplicateFields: Record<string, string[]> = {
+      clients: ["name", "cpf", "cnpj", "email"],
+      suppliers: ["name", "cpf", "cnpj", "email"],
+      products: ["name", "sku"],
+      services: ["name"],
+      categories: ["name"],
+      payment_methods: ["name"],
+      bank_accounts: ["name", "account_number"],
+      employees: ["name", "cpf", "email"],
+      transactions: ["description"],
+    };
+
+    const fields = duplicateFields[type] || ["name"];
+    const tableName = type as string;
+    
+    for (const field of fields) {
+      if (record[field] && record[field] !== "" && record[field] !== null) {
+        try {
+          const session = await supabase.auth.getSession();
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${tableName}?user_id=eq.${userId}&${field}=eq.${encodeURIComponent(String(record[field]))}&select=id&limit=1`,
+            {
+              headers: {
+                'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                'Authorization': `Bearer ${session.data.session?.access_token}`
+              }
+            }
+          );
+          const result = await response.json();
+          if (Array.isArray(result) && result.length > 0) {
+            return true;
+          }
+        } catch {
+          // Skip duplicate check if fetch fails
+          continue;
+        }
+      }
+    }
+    return false;
+  };
+
   const handleImportCSV = async () => {
     if (!csvData.trim()) {
       toast.error("Cole os dados CSV para importar");
@@ -306,6 +351,7 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
       const template = MIGRATION_TEMPLATES[selectedType];
       
       let successCount = 0;
+      let duplicateCount = 0;
       const errors: string[] = [];
 
       for (let i = 0; i < mappedData.length; i++) {
@@ -315,6 +361,14 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
         const missingRequired = template.required.filter((field) => !record[field]);
         if (missingRequired.length > 0) {
           errors.push(`Linha ${i + 2}: campos obrigatórios faltando (${missingRequired.join(", ")})`);
+          continue;
+        }
+
+        // Check for duplicates
+        const isDuplicate = await checkDuplicate(selectedType, record, user.id);
+        if (isDuplicate) {
+          duplicateCount++;
+          errors.push(`Linha ${i + 2}: registro duplicado (${record.name || record.description || 'sem nome'})`);
           continue;
         }
 
@@ -334,8 +388,11 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
       if (successCount > 0) {
         toast.success(`${successCount} registros importados com sucesso!`);
       }
-      if (errors.length > 0) {
-        toast.warning(`${errors.length} registros com erros`);
+      if (duplicateCount > 0) {
+        toast.info(`${duplicateCount} registros duplicados ignorados`);
+      }
+      if (errors.length > 0 && duplicateCount !== errors.length) {
+        toast.warning(`${errors.length - duplicateCount} registros com outros erros`);
       }
 
     } catch (error: any) {
@@ -365,6 +422,7 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
       const template = MIGRATION_TEMPLATES[selectedType];
       
       let successCount = 0;
+      let duplicateCount = 0;
       const errors: string[] = [];
 
       for (let i = 0; i < mappedData.length; i++) {
@@ -374,6 +432,14 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
         const missingRequired = template.required.filter((field) => !record[field]);
         if (missingRequired.length > 0) {
           errors.push(`Registro ${i + 1}: campos obrigatórios faltando (${missingRequired.join(", ")})`);
+          continue;
+        }
+
+        // Check for duplicates
+        const isDuplicate = await checkDuplicate(selectedType, record, user.id);
+        if (isDuplicate) {
+          duplicateCount++;
+          errors.push(`Registro ${i + 1}: registro duplicado (${record.name || record.description || 'sem nome'})`);
           continue;
         }
 
@@ -393,8 +459,11 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
       if (successCount > 0) {
         toast.success(`${successCount} registros importados com sucesso!`);
       }
-      if (errors.length > 0) {
-        toast.warning(`${errors.length} registros com erros`);
+      if (duplicateCount > 0) {
+        toast.info(`${duplicateCount} registros duplicados ignorados`);
+      }
+      if (errors.length > 0 && duplicateCount !== errors.length) {
+        toast.warning(`${errors.length - duplicateCount} registros com outros erros`);
       }
 
     } catch (error: any) {
@@ -403,6 +472,30 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
       } else {
         toast.error(error.message || "Erro ao importar dados");
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteImportedType = async () => {
+    if (!selectedType) return;
+    
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { error, count } = await supabase
+        .from(selectedType)
+        .delete({ count: 'exact' })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      toast.success(`${count || 0} registros de ${MIGRATION_TEMPLATES[selectedType].name} excluídos com sucesso!`);
+      setImportResult(null);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao excluir dados");
     } finally {
       setLoading(false);
     }
@@ -607,7 +700,7 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
           </Tabs>
 
           {importResult && (
-            <div className={`p-4 rounded-xl ${importResult.errors.length > 0 ? "bg-yellow-50 border border-yellow-200" : "bg-green-50 border border-green-200"}`}>
+            <div className={`p-4 rounded-xl ${importResult.errors.length > 0 ? "bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800" : "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"}`}>
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className={`h-5 w-5 ${importResult.errors.length > 0 ? "text-yellow-600" : "text-green-600"}`} />
                 <p className="font-medium">
@@ -616,18 +709,47 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
               </div>
               {importResult.errors.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm font-medium text-yellow-800 mb-1">Erros ({importResult.errors.length}):</p>
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Erros ({importResult.errors.length}):</p>
                   <div className="max-h-32 overflow-y-auto">
                     {importResult.errors.map((error, i) => (
-                      <p key={i} className="text-xs text-yellow-700">{error}</p>
+                      <p key={i} className="text-xs text-yellow-700 dark:text-yellow-300">{error}</p>
                     ))}
                   </div>
                 </div>
               )}
             </div>
           )}
+
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+            <h4 className="font-medium text-destructive mb-2 flex items-center gap-2">
+              <Trash2 className="h-4 w-4" />
+              Excluir Dados por Tipo
+            </h4>
+            <p className="text-sm text-muted-foreground mb-3">
+              Exclua todos os registros de {MIGRATION_TEMPLATES[selectedType].name} de uma vez. Esta ação não pode ser desfeita.
+            </p>
+            <Button 
+              variant="destructive" 
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={loading}
+              className="rounded-xl"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir todos os {MIGRATION_TEMPLATES[selectedType].name}
+            </Button>
+          </div>
         </div>
       </DialogContent>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={`Excluir todos os ${MIGRATION_TEMPLATES[selectedType].name}`}
+        description={`Tem certeza que deseja excluir TODOS os registros de ${MIGRATION_TEMPLATES[selectedType].name}? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir Tudo"
+        onConfirm={handleDeleteImportedType}
+        variant="destructive"
+      />
     </Dialog>
   );
 }
