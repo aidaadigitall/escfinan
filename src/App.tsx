@@ -49,6 +49,7 @@ import ControlePontoRH from "./pages/ControlePontoRH";
 import PontoApprovalsPage from "./pages/PontoApprovalsPage";
 import CRM from "./pages/CRM";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import PrintDocument from "./pages/PrintDocument";
 import LeadCapturePublic from "./pages/LeadCapturePublic";
 
@@ -183,6 +184,11 @@ const App = () => (
             <Route path="/projetos" element={
               <PermissionProtectedRoute permission="can_view_projects">
                 <Layout><Projects /></Layout>
+              </PermissionProtectedRoute>
+            } />
+            <Route path="/projetos/:id" element={
+              <PermissionProtectedRoute permission="can_view_projects">
+                <Layout><ProjectDetail /></Layout>
               </PermissionProtectedRoute>
             } />
             

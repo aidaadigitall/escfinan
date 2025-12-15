@@ -1112,6 +1112,327 @@ export type Database = {
         }
         Relationships: []
       }
+      project_expenses: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          billable_amount: number | null
+          category_id: string | null
+          created_at: string
+          description: string
+          expense_date: string
+          expense_type: string | null
+          id: string
+          is_billable: boolean | null
+          is_billed: boolean | null
+          markup_percentage: number | null
+          notes: string | null
+          owner_user_id: string | null
+          project_id: string
+          receipt_url: string | null
+          status: string | null
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          billable_amount?: number | null
+          category_id?: string | null
+          created_at?: string
+          description: string
+          expense_date?: string
+          expense_type?: string | null
+          id?: string
+          is_billable?: boolean | null
+          is_billed?: boolean | null
+          markup_percentage?: number | null
+          notes?: string | null
+          owner_user_id?: string | null
+          project_id: string
+          receipt_url?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          billable_amount?: number | null
+          category_id?: string | null
+          created_at?: string
+          description?: string
+          expense_date?: string
+          expense_type?: string | null
+          id?: string
+          is_billable?: boolean | null
+          is_billed?: boolean | null
+          markup_percentage?: number | null
+          notes?: string | null
+          owner_user_id?: string | null
+          project_id?: string
+          receipt_url?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_expenses_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          actual_hours: number | null
+          assigned_to: string | null
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          owner_user_id: string | null
+          parent_task_id: string | null
+          priority: string | null
+          progress_percentage: number | null
+          project_id: string
+          start_date: string | null
+          status: string | null
+          task_number: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          owner_user_id?: string | null
+          parent_task_id?: string | null
+          priority?: string | null
+          progress_percentage?: number | null
+          project_id: string
+          start_date?: string | null
+          status?: string | null
+          task_number?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          owner_user_id?: string | null
+          parent_task_id?: string | null
+          priority?: string | null
+          progress_percentage?: number | null
+          project_id?: string
+          start_date?: string | null
+          status?: string | null
+          task_number?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_time_entries: {
+        Row: {
+          amount: number | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          description: string | null
+          entry_date: string
+          hourly_rate: number | null
+          hours: number
+          id: string
+          is_billable: boolean | null
+          owner_user_id: string | null
+          project_id: string
+          status: string | null
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          hourly_rate?: number | null
+          hours?: number
+          id?: string
+          is_billable?: boolean | null
+          owner_user_id?: string | null
+          project_id: string
+          status?: string | null
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          hourly_rate?: number | null
+          hours?: number
+          id?: string
+          is_billable?: boolean | null
+          owner_user_id?: string | null
+          project_id?: string
+          status?: string | null
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_time_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_time_entries_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          actual_end_date: string | null
+          budget_amount: number | null
+          budget_hours: number | null
+          client_id: string | null
+          code: string | null
+          created_at: string
+          description: string | null
+          expected_end_date: string | null
+          hourly_rate: number | null
+          id: string
+          name: string
+          owner_user_id: string | null
+          priority: string | null
+          progress_percentage: number | null
+          project_type: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_end_date?: string | null
+          budget_amount?: number | null
+          budget_hours?: number | null
+          client_id?: string | null
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          expected_end_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          name: string
+          owner_user_id?: string | null
+          priority?: string | null
+          progress_percentage?: number | null
+          project_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_end_date?: string | null
+          budget_amount?: number | null
+          budget_hours?: number | null
+          client_id?: string | null
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          expected_end_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          name?: string
+          owner_user_id?: string | null
+          priority?: string | null
+          progress_percentage?: number | null
+          project_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_items: {
         Row: {
           created_at: string
@@ -2436,6 +2757,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_project_progress: {
+        Args: { p_project_id: string }
+        Returns: number
+      }
       can_access_user_data: {
         Args: { _data_user_id: string }
         Returns: boolean
@@ -2493,6 +2818,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_project_metrics: { Args: { p_project_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

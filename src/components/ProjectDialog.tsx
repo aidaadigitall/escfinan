@@ -26,6 +26,7 @@ import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { Switch } from "@/components/ui/switch";
 import { QuickClientDialog } from "./QuickClientDialog";
 import { QuickPaymentMethodDialog } from "./QuickPaymentMethodDialog";
+import { SearchableSelect } from "./SearchableSelect";
 
 const projectSchema = z.object({
   name: z.string().min(1, "Nome obrigatório"),
@@ -41,7 +42,6 @@ const projectSchema = z.object({
   expected_end_date: z.string().optional(),
   status: z.enum(["planning", "active", "on_hold", "completed", "cancelled"]).default("planning"),
   priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-  project_manager_id: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -99,11 +99,11 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
         expected_end_date: project.expected_end_date || "",
         status: project.status,
         priority: project.priority,
-        project_manager_id: project.project_manager_id || "",
       });
       setSelectedType(project.project_type || "fixed_price");
       setSelectedStatus(project.status);
       setSelectedPriority(project.priority);
+      setSelectedClientId(project.client_id || "");
     } else {
       form.reset({
         name: "",
@@ -118,6 +118,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       setSelectedType("fixed_price");
       setSelectedStatus("planning");
       setSelectedPriority("medium");
+      setSelectedClientId("");
     }
   }, [project, form]);
 
@@ -127,13 +128,11 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       code: data.code,
       description: data.description,
       client_id: data.client_id,
-      payment_method_id: data.payment_method_id,
       budget_amount: data.budget_amount,
       budget_hours: data.budget_hours,
       hourly_rate: data.hourly_rate,
       start_date: data.start_date,
       expected_end_date: data.expected_end_date,
-      project_manager_id: data.project_manager_id,
       project_type: selectedType as any,
       status: selectedStatus as any,
       priority: selectedPriority as any,
@@ -213,8 +212,12 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
             {/* Cliente */}
             <div>
               <Label htmlFor="client_id">Cliente</Label>
-              <Select
-                value={form.watch("client_id")}
+              <SearchableSelect
+                options={clients?.map((client) => ({
+                  value: client.id,
+                  label: client.name,
+                })) || []}
+                value={form.watch("client_id") || ""}
                 onValueChange={(value) => {
                   form.setValue("client_id", value);
                   setSelectedClientId(value);
@@ -226,23 +229,11 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                     form.setValue("code", code);
                   }
                 }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients?.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="mt-2">
-                <Button type="button" variant="ghost" size="sm" onClick={() => setClientDialogOpen(true)}>
-                  + Novo Cliente
-                </Button>
-              </div>
+                placeholder="Buscar cliente..."
+                searchPlaceholder="Digite o nome do cliente..."
+                onAddNew={() => setClientDialogOpen(true)}
+                addNewLabel="+ Novo Cliente"
+              />
               {selectedClient && (
                 <p className="text-xs text-muted-foreground mt-1">
                   📧 {selectedClient.email} | 📞 {selectedClient.phone}
