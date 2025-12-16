@@ -5,6 +5,10 @@ import { SalesChart } from "@/components/dashboard/SalesChart";
 import { UpcomingRecurringBills } from "@/components/dashboard/UpcomingRecurringBills";
 import { BankAccountsCard } from "@/components/dashboard/BankAccountsCard";
 import { TasksDashboard } from "@/components/dashboard/TasksDashboard";
+import { ProjectsDashboard } from "@/components/dashboard/ProjectsDashboard";
+import { ProjectBurndownChart } from "@/components/dashboard/ProjectBurndownChart";
+import { ProjectHoursWidget } from "@/components/dashboard/ProjectHoursWidget";
+import { ProjectDeadlineCalendar } from "@/components/dashboard/ProjectDeadlineCalendar";
 import { FinancialInsightsWidget } from "@/components/FinancialInsightsWidget";
 import RecurringCalendar from "@/components/dashboard/RecurringCalendar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -112,6 +116,26 @@ const Dashboard = () => {
         <ErrorBoundary>
           <TasksDashboard hideValues={hideValues} />
         </ErrorBoundary>
+      )}
+
+      {/* Projects Dashboard */}
+      {permissions.can_view_projects && (
+        <ErrorBoundary>
+          <ProjectsDashboard hideValues={hideValues} />
+        </ErrorBoundary>
+      )}
+
+      {/* Project Widgets */}
+      {permissions.can_view_projects && (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <ErrorBoundary><ProjectBurndownChart hideValues={hideValues} /></ErrorBoundary>
+            <ErrorBoundary><ProjectHoursWidget hideValues={hideValues} /></ErrorBoundary>
+          </div>
+          <div className="grid grid-cols-1 gap-6">
+            <ErrorBoundary><ProjectDeadlineCalendar hideValues={hideValues} /></ErrorBoundary>
+          </div>
+        </>
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
