@@ -131,8 +131,8 @@ export default function ControlePonto() {
   };
 
   return (
-    <Layout>
-      <div className="space-y-4 w-full">
+    <Layout fullWidth>
+      <div className="space-y-4 w-full px-3 py-4 sm:px-4 sm:py-5">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>

@@ -13,9 +13,10 @@ import { useFavicon } from "@/hooks/useFavicon";
 
 interface LayoutProps {
   children: ReactNode;
+  fullWidth?: boolean;
 }
 
-export const Layout = ({ children }: LayoutProps) => {
+export const Layout = ({ children, fullWidth = false }: LayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -64,7 +65,7 @@ export const Layout = ({ children }: LayoutProps) => {
           onMenuClick={isMobile ? () => setSidebarOpen(true) : () => setSidebarCollapsed(!sidebarCollapsed)} 
           showMenuButton={isMobile}
         />
-        <main className="pt-16 sm:pt-20 px-3 py-4 sm:px-4 sm:py-5">
+        <main className={`pt-16 sm:pt-20 ${fullWidth ? 'px-0 py-0' : 'px-3 py-4 sm:px-4 sm:py-5'}`}>
           {children}
         </main>
       </div>
