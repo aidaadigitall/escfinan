@@ -7,6 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTasks } from "@/hooks/useTasks";
 import { useUsers } from "@/hooks/useUsers";
+import { useEmployees } from "@/hooks/useEmployees";
 import { useCurrentUserPermissions } from "@/hooks/useUserPermissions";
 import { format, startOfMonth, endOfMonth, subMonths, subDays, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,11 +15,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend 
 } from "recharts";
-import { CheckCircle2, Clock, AlertTriangle, Target, TrendingUp, Users, CalendarIcon, Lock } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Target, TrendingUp, Users, CalendarIcon, Lock, Download, FileText, Sheet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -28,6 +30,7 @@ const RelatorioTarefas = () => {
   const navigate = useNavigate();
   const { tasks } = useTasks();
   const { users } = useUsers();
+  const { employees } = useEmployees();
   const { permissions, isLoading: permissionsLoading } = useCurrentUserPermissions();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("3m");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
@@ -208,11 +211,22 @@ const RelatorioTarefas = () => {
     { name: "Baixa", value: metrics.tasksByPriority.low },
   ];
 
+  // Combined list of all users (employees + users)
+  const allUsers = useMemo(() => {
+    const combined = [...(employees || []), ...(users || [])];
+    return combined.reduce((acc, user) => {
+      if (!acc.find(u => u.id === user.id)) {
+        acc.push(user);
+      }
+      return acc;
+    }, [] as any[]);
+  }, [employees, users]);
+
   // User productivity data
   const userProductivityData = useMemo(() => {
     return Object.entries(metrics.tasksByUser).map(([userId, data]) => {
-      // Try to find user by user_id or by id
-      const user = users.find(u => u.user_id === userId || u.id === userId);
+      // Try to find user in the combined list
+      const user = allUsers.find(u => u.id === userId || u.user_id === userId);
       return {
         userId,
         userName: user?.name || "Usuário Desconhecido",
@@ -220,7 +234,147 @@ const RelatorioTarefas = () => {
         completionRate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
       };
     }).sort((a, b) => b.completionRate - a.completionRate);
-  }, [metrics.tasksByUser, users]);
+  }, [metrics.tasksByUser, allUsers]);
+
+  // Export to Excel
+  const exportToExcel = () => {
+    try {
+      const workbook = XLSX.utils.book_new();
+
+      // Sheet 1: Produtividade por Usuário
+      const userProductivitySheet = XLSX.utils.json_to_sheet(
+        userProductivityData.map(user => ({
+          "Usuário": user.userName,
+          "Total": user.total,
+          "Concluídas": user.completed,
+          "Pendentes": user.pending,
+          "Atrasadas": user.overdue,
+          "Taxa de Conclusão": `${user.completionRate}%`,
+        }))
+      );
+      XLSX.utils.book_append_sheet(workbook, userProductivitySheet, "Produtividade");
+
+      // Sheet 2: Resumo Geral
+      const summarySheet = XLSX.utils.json_to_sheet([
+        { "Métrica": "Total de Tarefas", "Valor": metrics.totalTasks },
+        { "Métrica": "Tarefas Concluídas", "Valor": metrics.completedTasks },
+        { "Métrica": "Tarefas Pendentes", "Valor": metrics.pendingTasks },
+        { "Métrica": "Tarefas em Progresso", "Valor": metrics.inProgressTasks },
+        { "Métrica": "Tarefas Atrasadas", "Valor": metrics.overdueTasks },
+        { "Métrica": "Taxa de Conclusão", "Valor": `${metrics.completionRate}%` },
+      ]);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumo");
+
+      // Sheet 3: Evolução Mensal
+      const evolutionSheet = XLSX.utils.json_to_sheet(
+        metrics.tasksByMonth.map(month => ({
+          "Mês": month.month,
+          "Criadas": month.created,
+          "Concluídas": month.completed,
+        }))
+      );
+      XLSX.utils.book_append_sheet(workbook, evolutionSheet, "Evolução");
+
+      // Save the workbook
+      XLSX.writeFile(workbook, `Relatorio_Tarefas_${format(new Date(), "dd-MM-yyyy")}.xlsx`);
+      toast.success("Relatório exportado para Excel com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar para Excel:", error);
+      toast.error("Erro ao exportar para Excel");
+    }
+  };
+
+  // Export to PDF (using HTML to PDF conversion)
+  const exportToPDF = async () => {
+    try {
+      // Create HTML content for PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório de Tarefas</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+            h2 { color: #555; margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th { background-color: #007bff; color: white; padding: 10px; text-align: left; }
+            td { border: 1px solid #ddd; padding: 8px; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+            .summary-card { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+            .summary-card h3 { margin: 0; color: #555; }
+            .summary-card p { margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: #007bff; }
+          </style>
+        </head>
+        <body>
+          <h1>Relatório de Produtividade de Tarefas</h1>
+          <p><strong>Período:</strong> ${format(periodStart, "dd/MM/yyyy", { locale: ptBR })} até ${format(periodEnd, "dd/MM/yyyy", { locale: ptBR })}</p>
+          <p><strong>Data de Geração:</strong> ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+
+          <h2>Resumo Geral</h2>
+          <div class="summary">
+            <div class="summary-card">
+              <h3>Total de Tarefas</h3>
+              <p>${metrics.totalTasks}</p>
+            </div>
+            <div class="summary-card">
+              <h3>Concluídas</h3>
+              <p>${metrics.completedTasks}</p>
+            </div>
+            <div class="summary-card">
+              <h3>Taxa de Conclusão</h3>
+              <p>${metrics.completionRate}%</p>
+            </div>
+          </div>
+
+          <h2>Produtividade por Usuário</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Total</th>
+                <th>Concluídas</th>
+                <th>Pendentes</th>
+                <th>Atrasadas</th>
+                <th>Taxa de Conclusão</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${userProductivityData.map(user => `
+                <tr>
+                  <td>${user.userName}</td>
+                  <td>${user.total}</td>
+                  <td>${user.completed}</td>
+                  <td>${user.pending}</td>
+                  <td>${user.overdue}</td>
+                  <td>${user.completionRate}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      // Create a blob and download
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Relatorio_Tarefas_${format(new Date(), "dd-MM-yyyy")}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Relatório exportado como PDF com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar para PDF:", error);
+      toast.error("Erro ao exportar para PDF");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -286,6 +440,27 @@ const RelatorioTarefas = () => {
               </Popover>
             </div>
           )}
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToExcel}
+              className="gap-2"
+            >
+              <Sheet className="h-4 w-4" />
+              Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToPDF}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -298,56 +473,60 @@ const RelatorioTarefas = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totalTasks}</div>
+            <p className="text-xs text-muted-foreground">no período selecionado</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Concluídas</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{metrics.completedTasks}</div>
+            <div className="text-2xl font-bold">{metrics.completedTasks}</div>
+            <p className="text-xs text-muted-foreground">{metrics.completionRate}% de conclusão</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
+            <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{metrics.pendingTasks}</div>
+            <div className="text-2xl font-bold">{metrics.pendingTasks}</div>
+            <p className="text-xs text-muted-foreground">aguardando execução</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Atrasadas</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{metrics.overdueTasks}</div>
+            <div className="text-2xl font-bold">{metrics.overdueTasks}</div>
+            <p className="text-xs text-muted-foreground">além do prazo</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Taxa de Conclusão</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-500" />
+            <TrendingUp className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{metrics.completionRate}%</div>
+            <div className="text-2xl font-bold">{metrics.completionRate}%</div>
+            <p className="text-xs text-muted-foreground">eficiência geral</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Tasks by Status Pie Chart */}
+      {/* Charts */}
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Tarefas por Status</CardTitle>
+            <CardTitle>Distribuição por Status</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -359,26 +538,24 @@ const RelatorioTarefas = () => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={100}
+                    outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
                     {statusChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Tasks by Priority Bar Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Tarefas por Prioridade</CardTitle>
+            <CardTitle>Distribuição por Prioridade</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -388,7 +565,7 @@ const RelatorioTarefas = () => {
                   <XAxis dataKey="name" className="text-muted-foreground" />
                   <YAxis className="text-muted-foreground" />
                   <Tooltip />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="hsl(var(--chart-1))" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -396,7 +573,7 @@ const RelatorioTarefas = () => {
         </Card>
       </div>
 
-      {/* Tasks Over Time Line Chart */}
+      {/* Evolution Chart */}
       <Card>
         <CardHeader>
           <CardTitle>Evolução de Tarefas</CardTitle>
