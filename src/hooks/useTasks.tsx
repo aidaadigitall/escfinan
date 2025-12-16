@@ -176,6 +176,11 @@ export const useTasks = () => {
     mutationFn: async (taskData: Partial<Task> & { id: string }) => {
       const { id, user_id, created_at, updated_at, ...updateData } = taskData;
       
+      // Ensure status is a string, as null or undefined can cause check constraint violation
+      if (updateData.status === undefined || updateData.status === null) {
+        delete updateData.status;
+      }
+      
       const { data, error } = await supabase
         .from("tasks")
         .update(updateData)

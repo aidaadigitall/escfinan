@@ -166,6 +166,14 @@ const Tarefas = () => {
   const handleDropOnColumn = (e: React.DragEvent, targetStatus: "pending" | "completed") => {
     e.preventDefault();
     if (draggedTask && draggedTask.status !== targetStatus) {
+      // Validate that targetStatus is a valid value
+      const validStatuses = ["pending", "completed"];
+      if (!validStatuses.includes(targetStatus)) {
+        console.error(`Invalid status: ${targetStatus}`);
+        setDraggedTask(null);
+        return;
+      }
+
       updateTask({
         id: draggedTask.id,
         status: targetStatus,
