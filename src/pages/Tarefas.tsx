@@ -32,6 +32,7 @@ const Tarefas = () => {
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCompleted, setShowCompleted] = useState(true);
 
   // Advanced filters state
   const [filters, setFilters] = useState({
@@ -97,7 +98,7 @@ const Tarefas = () => {
   const getSubtasks = (parentId: string) => filteredTasks.filter(t => t.parent_task_id === parentId);
 
   const pendingTasks = parentTasks.filter((t) => t.status !== "completed" && t.status !== "cancelled");
-  const completedTasks = parentTasks.filter((t) => t.status === "completed");
+  const completedTasks = showCompleted ? parentTasks.filter((t) => t.status === "completed") : [];
 
   const handleOpenDialog = (task?: Task, asSubtask?: string) => {
     if (task) {
@@ -181,6 +182,11 @@ const Tarefas = () => {
       });
     }
     setDraggedTask(null);
+  };
+
+  // Toggle completed tasks visibility
+  const toggleCompletedVisibility = () => {
+    setShowCompleted(!showCompleted);
   };
 
   const renderTask = (task: Task, isSubtask = false) => {
@@ -299,10 +305,18 @@ const Tarefas = () => {
           )}
         >
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleCompletedVisibility}
+              className="p-0 h-6 w-6"
+              title={showCompleted ? "Ocultar tarefas concluídas" : "Mostrar tarefas concluídas"}
+            >
+              <CheckCircle2 className={cn("h-5 w-5", showCompleted ? "text-green-600" : "text-muted-foreground")} />
+            </Button>
             <h2 className="text-lg font-semibold">Concluídas</h2>
             <span className="ml-auto text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
-              {completedTasks.length}
+              {showCompleted ? completedTasks.length : parentTasks.filter((t) => t.status === "completed").length}
             </span>
           </div>
 
