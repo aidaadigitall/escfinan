@@ -239,6 +239,8 @@ interface ProjectMetricsData {
 }
 
 export const useProjectMetrics = (projectId: string | undefined) => {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: ["project-metrics", projectId],
     queryFn: async () => {
@@ -251,6 +253,23 @@ export const useProjectMetrics = (projectId: string | undefined) => {
       if (error) throw error;
       
       const metrics = data as unknown as ProjectMetricsData;
+      const taskCompletionRate = metrics?.total_tasks > 0 
+        ? Math.round((metrics?.completed_tasks / metrics?.total_tasks) * 100) 
+        : 0;
+      
+      // Auto-update project progress if completion rate is greater than 0
+      if (projectId && taskCompletionRate > 0) {
+        supabase
+          .from("projects")
+          .update({ progress_percentage: taskCompletionRate })
+          .eq("id", projectId)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
+          })
+          .catch((err) => {
+            console.error("Erro ao atualizar progresso do projeto:", err);
+          });
+      }
       
       return {
         totalTasks: metrics?.total_tasks || 0,
@@ -260,9 +279,7 @@ export const useProjectMetrics = (projectId: string | undefined) => {
         billableHours: Number(metrics?.billable_hours) || 0,
         totalExpenses: Number(metrics?.total_expenses) || 0,
         billableExpenses: Number(metrics?.billable_expenses) || 0,
-        taskCompletionRate: metrics?.total_tasks > 0 
-          ? Math.round((metrics?.completed_tasks / metrics?.total_tasks) * 100) 
-          : 0,
+        taskCompletionRate,
       };
     },
     enabled: !!projectId,
