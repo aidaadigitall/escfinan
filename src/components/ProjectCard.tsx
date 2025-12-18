@@ -13,10 +13,12 @@ import {
   Pause,
   CheckCircle2,
   LayoutDashboard,
+  AlertCircle,
 } from "lucide-react";
 import { type Project } from "@/hooks/useProjects";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useEffect, useState } from "react";
 
 interface ProjectCardProps {
   project: Project;
@@ -52,6 +54,59 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
   const status = statusConfig[project.status];
   const priority = priorityConfig[project.priority];
   const typeLabel = typeConfig[project.project_type || "fixed_price"];
+  const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  // Calcular dias restantes
+  useEffect(() => {
+    if (project.expected_end_date) {
+      const today = new Date();
+      const endDate = new Date(project.expected_end_date);
+      const days = differenceInDays(endDate, today);
+      setDaysRemaining(days);
+      setIsOverdue(days < 0 && project.status !== "completed");
+    }
+  }, [project.expected_end_date, project.status]);
+
+  const getTimeStatus = () => {
+    if (daysRemaining === null) return null;
+    
+    if (isOverdue) {
+      return {
+        text: `${Math.abs(daysRemaining)} dias atrasado`,
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+      };
+    }
+    
+    if (daysRemaining === 0) {
+      return {
+        text: "Vence hoje",
+        color: "text-orange-600",
+        bgColor: "bg-orange-50",
+      };
+    }
+    
+    if (daysRemaining === 1) {
+      return {
+        text: "Vence amanhã",
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-50",
+      };
+    }
+    
+    if (daysRemaining > 0) {
+      return {
+        text: `${daysRemaining} dias restantes`,
+        color: "text-green-600",
+        bgColor: "bg-green-50",
+      };
+    }
+    
+    return null;
+  };
+
+  const timeStatus = getTimeStatus();
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -110,18 +165,66 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
           </div>
         )}
 
-        {/* Datas */}
-        <div className="flex items-center gap-4 text-sm">
-          {project.start_date && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>{format(new Date(project.start_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+        {/* Datas e Contador */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-4 text-sm">
+            {project.start_date && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span>{format(new Date(project.start_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+              </div>
+            )}
+            {project.expected_end_date && (
+              <span className="text-muted-foreground">
+                → {format(new Date(project.expected_end_date), "dd/MM/yyyy", { locale: ptBR })}
+              </span>
+            )}
+          </div>
+
+          {/* Contador Decrescente */}
+          {timeStatus && (
+            <div className={`p-2 rounded text-sm font-semibold ${timeStatus.bgColor} ${timeStatus.color} flex items-center gap-2`}>
+              {isOverdue ? (
+                <AlertCircle className="h-4 w-4" />
+              ) : (
+                <Clock className="h-4 w-4" />
+              )}
+              {timeStatus.text}
             </div>
           )}
-          {project.expected_end_date && (
-            <span className="text-muted-foreground">
-              → {format(new Date(project.expected_end_date), "dd/MM/yyyy", { locale: ptBR })}
-            </span>
+        </div>
+
+        {/* Responsável e Executores */}
+        <div className="space-y-2 border-t pt-3">
+          {project.responsible_user_id && (
+            <div className="text-sm">
+              <span className="text-muted-foreground text-xs font-semibold">RESPONSÁVEL</span>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                  {project.responsible_user_id.substring(0, 1).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium">{project.responsible_user_id}</span>
+              </div>
+            </div>
+          )}
+
+          {project.executor_user_ids && project.executor_user_ids.length > 0 && (
+            <div className="text-sm">
+              <span className="text-muted-foreground text-xs font-semibold">EXECUTORES ({project.executor_user_ids.length})</span>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {project.executor_user_ids.map((userId, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-1"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">
+                      {userId.substring(0, 1).toUpperCase()}
+                    </div>
+                    <span className="text-xs font-medium">{userId.substring(0, 10)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
@@ -208,36 +311,25 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
             </Button>
           )}
           {project.status === "active" && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={() => onStatusChange(project.id, "on_hold")}
-              >
-                <Pause className="h-3 w-3 mr-1" />
-                Pausar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={() => onStatusChange(project.id, "completed")}
-              >
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                Concluir
-              </Button>
-            </>
-          )}
-          {project.status === "on_hold" && (
             <Button
               size="sm"
               variant="outline"
               className="flex-1"
-              onClick={() => onStatusChange(project.id, "active")}
+              onClick={() => onStatusChange(project.id, "on_hold")}
             >
-              <Play className="h-3 w-3 mr-1" />
-              Retomar
+              <Pause className="h-3 w-3 mr-1" />
+              Pausar
+            </Button>
+          )}
+          {project.status !== "completed" && project.status !== "cancelled" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => onStatusChange(project.id, "completed")}
+            >
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              Concluir
             </Button>
           )}
         </div>

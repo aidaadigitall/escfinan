@@ -22,6 +22,8 @@ export interface Project {
   priority: "low" | "medium" | "high" | "critical";
   user_id: string;
   owner_user_id: string | null;
+  responsible_user_id: string | null;
+  executor_user_ids: string[] | null;
   created_at: string;
   updated_at: string;
   client?: {
@@ -44,6 +46,8 @@ export interface CreateProjectInput {
   status?: "planning" | "active" | "on_hold" | "completed" | "cancelled";
   progress_percentage?: number;
   priority?: "low" | "medium" | "high" | "critical";
+  responsible_user_id?: string;
+  executor_user_ids?: string[];
 }
 
 export interface UpdateProjectInput extends CreateProjectInput {
