@@ -171,11 +171,15 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
           </div>
           <Progress value={Math.round(project.progress_percentage || 0)} className="h-2" />
           <div className="text-xs text-muted-foreground text-center">
-            {project.progress_percentage === 0 
+            {project.status === "planning" && project.progress_percentage === 0
               ? "Projeto não iniciado" 
-              : project.progress_percentage === 100 
-                ? "Projeto concluído" 
-                : `${Math.round(project.progress_percentage || 0)}% concluído`}
+              : project.status === "completed" || project.progress_percentage === 100
+                ? "Projeto concluído"
+                : project.status === "on_hold"
+                  ? "Projeto em espera"
+                  : project.status === "cancelled"
+                    ? "Projeto cancelado"
+                    : `${Math.round(project.progress_percentage || 0)}% concluído`}
           </div>
         </div>
 
