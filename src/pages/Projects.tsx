@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,11 @@ export default function Projects() {
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  
+  // Drag-to-scroll state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, scrollLeft: 0 });
+  const scrollContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { data: projects, isLoading } = useProjects();
   const deleteProject = useDeleteProject();
@@ -59,6 +64,33 @@ export default function Projects() {
   const handleNewProject = () => {
     setSelectedProject(null);
     setDialogOpen(true);
+  };
+
+  // Drag-to-scroll handlers
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, statusKey: string) => {
+    const container = scrollContainerRefs.current[statusKey];
+    if (!container) return;
+    
+    setIsDragging(true);
+    setDragStart({
+      x: e.pageX,
+      scrollLeft: container.scrollLeft,
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, statusKey: string) => {
+    if (!isDragging) return;
+    
+    const container = scrollContainerRefs.current[statusKey];
+    if (!container) return;
+    
+    e.preventDefault();
+    const walk = e.pageX - dragStart.x;
+    container.scrollLeft = dragStart.scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
 
   // Filtrar projetos
@@ -227,9 +259,9 @@ export default function Projects() {
           </TabsTrigger>
         </TabsList>
 
-        {Object.entries(projectsByStatus).map(([status, projects]) => (
+        {Object.entries(projectsByStatus).map(([status, statusProjects]) => (
           <TabsContent key={status} value={status} className="mt-6">
-            {projects.length === 0 ? (
+            {statusProjects.length === 0 ? (
               <Card>
                 <CardContent className="flex items-center justify-center h-32">
                   <p className="text-muted-foreground">
@@ -238,16 +270,29 @@ export default function Projects() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {projects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onStatusChange={handleStatusChange}
-                    onViewDetail={() => navigate(`/projetos/${project.id}`)}
-                  />
+              <div
+                ref={(el) => {
+                  if (el) scrollContainerRefs.current[status] = el;
+                }}
+                className="flex gap-4 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing select-none"
+                onMouseDown={(e) => handleMouseDown(e, status)}
+                onMouseMove={(e) => handleMouseMove(e, status)}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                style={{
+                  scrollBehavior: isDragging ? "auto" : "smooth",
+                }}
+              >
+                {statusProjects.map((project) => (
+                  <div key={project.id} className="flex-shrink-0 w-full md:w-96">
+                    <ProjectCard
+                      project={project}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onStatusChange={handleStatusChange}
+                      onViewDetail={() => navigate(`/projetos/${project.id}`)}
+                    />
+                  </div>
                 ))}
               </div>
             )}

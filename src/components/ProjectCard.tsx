@@ -141,23 +141,42 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
           </div>
 
           {project.budget_hours > 0 && (
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>Horas:</span>
+            <>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>Horas Orçadas:</span>
+                </div>
+                <span className="font-semibold">{project.budget_hours}h</span>
               </div>
-              <span className="font-semibold">{project.budget_hours}h</span>
-            </div>
+              
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-green-600" />
+                  <span>Horas Restantes:</span>
+                </div>
+                <span className="font-semibold text-green-600">
+                  {Math.max(0, project.budget_hours - (project.hours_spent || 0))}h
+                </span>
+              </div>
+            </>
           )}
         </div>
 
         {/* Progresso */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progresso</span>
-            <span className="font-semibold">{project.progress_percentage}%</span>
+            <span className="text-muted-foreground">Progresso do Projeto</span>
+            <span className="font-semibold text-blue-600">{Math.round(project.progress_percentage || 0)}%</span>
           </div>
-          <Progress value={project.progress_percentage} />
+          <Progress value={Math.round(project.progress_percentage || 0)} className="h-2" />
+          <div className="text-xs text-muted-foreground text-center">
+            {project.progress_percentage === 0 
+              ? "Projeto não iniciado" 
+              : project.progress_percentage === 100 
+                ? "Projeto concluído" 
+                : `${Math.round(project.progress_percentage || 0)}% concluído`}
+          </div>
         </div>
 
         {/* Ações Rápidas */}
