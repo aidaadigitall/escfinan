@@ -19,6 +19,8 @@ import { type Project } from "@/hooks/useProjects";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useEffect, useState } from "react";
+import { useUsers } from "@/hooks/useUsers";
+import { useEmployees } from "@/hooks/useEmployees";
 
 interface ProjectCardProps {
   project: Project;
@@ -56,6 +58,23 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
   const typeLabel = typeConfig[project.project_type || "fixed_price"];
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
   const [isOverdue, setIsOverdue] = useState(false);
+  const { users } = useUsers();
+  const { employees } = useEmployees();
+
+  // Função para obter o nome do usuário pelo ID
+  const getUserName = (userId: string | null | undefined): string => {
+    if (!userId) return "Desconhecido";
+    
+    // Procurar em system_users
+    const user = users.find((u) => u.id === userId || u.user_id === userId);
+    if (user) return user.name || user.email || "Desconhecido";
+    
+    // Procurar em employees
+    const employee = employees.find((e) => e.id === userId || e.user_id === userId);
+    if (employee) return employee.name || "Desconhecido";
+    
+    return "Desconhecido";
+  };
 
   // Calcular dias restantes
   useEffect(() => {
@@ -201,9 +220,9 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
               <span className="text-muted-foreground text-xs font-semibold">RESPONSÁVEL</span>
               <div className="flex items-center gap-2 mt-1">
                 <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
-                  {project.responsible_user_id.substring(0, 1).toUpperCase()}
+                  {getUserName(project.responsible_user_id).substring(0, 1).toUpperCase()}
                 </div>
-                <span className="text-sm font-medium">{project.responsible_user_id}</span>
+                <span className="text-sm font-medium">{getUserName(project.responsible_user_id)}</span>
               </div>
             </div>
           )}
@@ -212,17 +231,21 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
             <div className="text-sm">
               <span className="text-muted-foreground text-xs font-semibold">EXECUTORES ({project.executor_user_ids.length})</span>
               <div className="flex flex-wrap gap-2 mt-2">
-                {project.executor_user_ids.map((userId, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-1"
-                  >
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">
-                      {userId.substring(0, 1).toUpperCase()}
+                {project.executor_user_ids.map((userId, index) => {
+                  const userName = getUserName(userId);
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-1"
+                      title={userName}
+                    >
+                      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">
+                        {userName.substring(0, 1).toUpperCase()}
+                      </div>
+                      <span className="text-xs font-medium truncate max-w-[100px]">{userName}</span>
                     </div>
-                    <span className="text-xs font-medium">{userId.substring(0, 10)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
