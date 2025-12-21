@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,10 @@ import { formatCurrency } from "@/lib/utils";
 import { Lead } from "@/hooks/useLeads";
 import { LeadActivity } from "@/hooks/useLeadActivities";
 import { useLeadDocuments, ClientDocument } from "@/hooks/useClientDocuments";
-import { Plus, Bell, Calendar, Clock, CheckCircle2, AlertCircle, Phone, Mail, MessageSquare, FileText, ShoppingCart, Wrench } from "lucide-react";
+import { Plus, Bell, Calendar, Clock, CheckCircle2, AlertCircle, Phone, Mail, MessageSquare, FileText, ShoppingCart, Wrench, Trash2 } from "lucide-react";
 import { format, isAfter, isBefore, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMemo, useState } from "react";
 
 interface LeadCardProps {
   lead: Lead;
@@ -19,6 +19,7 @@ interface LeadCardProps {
   onEdit: (lead: Lead) => void;
   onNewActivity: (leadId: string) => void;
   onNavigate: (path: string) => void;
+  onDelete?: (leadId: string) => void;
 }
 
 export const LeadCard = ({
@@ -29,7 +30,10 @@ export const LeadCard = ({
   onEdit,
   onNewActivity,
   onNavigate,
+  onDelete,
 }: LeadCardProps) => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
   // Fetch documents for this lead's client
   const { documents } = useLeadDocuments(lead.client_id);
 
@@ -280,6 +284,20 @@ export const LeadCard = ({
             >
               <Plus className="h-3 w-3" />
             </Button>
+            {onDelete && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                title="Excluir Lead"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteConfirm(true);
+                }}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
         
@@ -310,6 +328,42 @@ export const LeadCard = ({
             Venda
           </Button>
         </div>
+
+        {/* Modal de Confirmação de Exclusão */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDeleteConfirm(false)}>
+            <Card className="w-80 p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-6 w-6 text-red-500" />
+                  <h3 className="font-semibold text-lg">Excluir Lead?</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Tem certeza que deseja excluir o lead <strong>{lead.name}</strong>? Esta ação não pode ser desfeita.
+                </p>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      onDelete(lead.id);
+                      setShowDeleteConfirm(false);
+                    }}
+                  >
+                    Excluir
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </Card>
   );
