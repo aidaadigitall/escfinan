@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { updateLeadExpectedValue, invalidateLeadsCache } from "@/lib/leadDocumentSync";
 
 export type Quote = {
   id: string;
@@ -92,8 +93,10 @@ export const useQuotes = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      invalidateLeadsCache(queryClient);
+      updateLeadExpectedValue(data.client_id);
       toast.success("Orçamento criado com sucesso!");
     },
     onError: (error: any) => {
@@ -115,8 +118,10 @@ export const useQuotes = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      invalidateLeadsCache(queryClient);
+      updateLeadExpectedValue(data.client_id);
       toast.success("Orçamento atualizado com sucesso!");
     },
     onError: (error: any) => {
@@ -126,15 +131,27 @@ export const useQuotes = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Buscar o quote antes de deletar para obter o client_id
+      const { data: quote } = await supabase
+        .from("quotes")
+        .select("client_id")
+        .eq("id", id)
+        .single();
+      
       const { error } = await supabase
         .from("quotes")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
+      return quote?.client_id;
     },
-    onSuccess: () => {
+    onSuccess: (clientId) => {
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      invalidateLeadsCache(queryClient);
+      if (clientId) {
+        updateLeadExpectedValue(clientId);
+      }
       toast.success("Orçamento excluído com sucesso!");
     },
     onError: (error: any) => {
