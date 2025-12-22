@@ -16,6 +16,7 @@ interface VirtualizedPipelineColumnProps {
   onEditLead: (lead: Lead) => void;
   onNewActivity: (leadId: string) => void;
   onNavigate: (path: string) => void;
+  onDeleteLead?: (leadId: string) => void;
 }
 
 const CARD_HEIGHT = 180; // Altura estimada de cada card
@@ -28,6 +29,7 @@ export const VirtualizedPipelineColumn = ({
   onEditLead,
   onNewActivity,
   onNavigate,
+  onDeleteLead,
 }: VirtualizedPipelineColumnProps) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +130,7 @@ export const VirtualizedPipelineColumn = ({
                                 onEdit={onEditLead}
                                 onNewActivity={onNewActivity}
                                 onNavigate={onNavigate}
+                                onDelete={onDeleteLead}
                               />
                             </div>
                           )}
@@ -157,6 +160,7 @@ export const VirtualizedPipelineColumn = ({
                             onEdit={onEditLead}
                             onNewActivity={onNewActivity}
                             onNavigate={onNavigate}
+                            onDelete={onDeleteLead}
                           />
                         </div>
                       )}
