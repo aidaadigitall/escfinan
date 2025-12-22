@@ -51,7 +51,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  draft: "Rascunho",
+  draft: "Em Aberto",
   sent: "Enviado",
   approved: "Aprovado",
   rejected: "Rejeitado",

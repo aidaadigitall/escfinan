@@ -95,6 +95,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
         description: project.description || "",
         client_id: project.client_id || "",
         project_type: project.project_type || "fixed_price",
+        payment_method_id: project.payment_method_id || "", // Adicionado para corrigir o bug de persistência
         budget_amount: Number(project.budget_amount) || 0,
         budget_hours: Number(project.budget_hours) || 0,
         hourly_rate: project.hourly_rate ? Number(project.hourly_rate) : undefined,
@@ -136,6 +137,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       hourly_rate: data.hourly_rate,
       start_date: data.start_date,
       expected_end_date: data.expected_end_date,
+      payment_method_id: data.payment_method_id, // Adicionado para persistência
       project_type: selectedType as any,
       status: selectedStatus as any,
       priority: selectedPriority as any,
@@ -263,6 +265,26 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   + Nova Forma de Pagamento
                 </Button>
               </div>
+            </div>
+
+            {/* Forma de Pagamento */}
+            <div>
+              <Label htmlFor="payment_method_id">Forma de Pagamento</Label>
+              <Select
+                value={form.watch("payment_method_id") || ""}
+                onValueChange={(value) => form.setValue("payment_method_id", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a forma de pagamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {paymentMethods?.map((method) => (
+                    <SelectItem key={method.id} value={method.id}>
+                      {method.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Status */}
