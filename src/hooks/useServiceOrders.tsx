@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { updateLeadExpectedValue, invalidateLeadsCache } from "@/lib/leadDocumentSync";
 
 export type ServiceOrder = {
   id: string;
@@ -121,6 +122,8 @@ export const useServiceOrders = () => {
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["service_orders"] });
+      invalidateLeadsCache(queryClient);
+      updateLeadExpectedValue(data.client_id);
       
       // Create financial transaction if status triggers it
       if (FINANCIAL_STATUSES.includes(data.status || "")) {
@@ -150,6 +153,8 @@ export const useServiceOrders = () => {
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["service_orders"] });
+      invalidateLeadsCache(queryClient);
+      updateLeadExpectedValue(data.client_id);
       
       // Handle financial integration based on status
       if (FINANCIAL_STATUSES.includes(data.status || "")) {
@@ -167,6 +172,13 @@ export const useServiceOrders = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Buscar o service_order antes de deletar para obter o client_id
+      const { data: serviceOrder } = await supabase
+        .from("service_orders")
+        .select("client_id")
+        .eq("id", id)
+        .single();
+      
       // Delete associated financial transactions first
       await supabase
         .from("transactions")
@@ -179,10 +191,15 @@ export const useServiceOrders = () => {
         .eq("id", id);
 
       if (error) throw error;
+      return serviceOrder?.client_id;
     },
-    onSuccess: () => {
+    onSuccess: (clientId) => {
       queryClient.invalidateQueries({ queryKey: ["service_orders"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      invalidateLeadsCache(queryClient);
+      if (clientId) {
+        updateLeadExpectedValue(clientId);
+      }
       toast.success("Ordem de serviço excluída com sucesso!");
     },
     onError: (error: any) => {
