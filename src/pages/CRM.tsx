@@ -25,7 +25,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 
 const CRM = () => {
   const navigate = useNavigate();
-  const { leads = [], isLoading: loadingLeads, error: errorLeads, moveToPipelineStage } = useLeads();
+  const { leads = [], isLoading: loadingLeads, error: errorLeads, moveToPipelineStage, deleteLead } = useLeads();
   const { stages = [], isLoading: loadingStages, error: errorStages } = usePipelineStages();
   const { sources = [] } = useLeadSources();
   const { getActivitiesForLead, metrics: activityMetrics } = useAllLeadActivities();
@@ -119,6 +119,10 @@ const CRM = () => {
   const handleNewLead = () => {
     setSelectedLead(null);
     setIsLeadDialogOpen(true);
+  };
+
+  const handleDeleteLead = (leadId: string) => {
+    deleteLead.mutate(leadId);
   };
 
   if (loadingLeads && loadingStages) {
@@ -290,6 +294,7 @@ const CRM = () => {
               onEditLead={handleEditLead}
               onNewActivity={setActivityLeadId}
               onNavigate={navigate}
+              onDeleteLead={handleDeleteLead}
             />
           ))}
 
@@ -328,6 +333,7 @@ const CRM = () => {
                                 onEdit={handleEditLead}
                                 onNewActivity={setActivityLeadId}
                                 onNavigate={navigate}
+                                onDelete={handleDeleteLead}
                               />
                             </div>
                           )}
