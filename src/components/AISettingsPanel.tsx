@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,10 +38,20 @@ export const AISettingsPanel = () => {
 
   const [showOpenAIKey, setShowOpenAIKey] = useState(false);
   const [showGoogleKey, setShowGoogleKey] = useState(false);
-  const [localOpenAIKey, setLocalOpenAIKey] = useState(settings?.openai_api_key || "");
-  const [localGoogleKey, setLocalGoogleKey] = useState(settings?.google_api_key || "");
-  const [localProvider, setLocalProvider] = useState<AIProvider>(settings?.default_provider || "lovable");
-  const [localModel, setLocalModel] = useState<AIModel>(settings?.default_model || "gemini-2.5-flash");
+  const [localOpenAIKey, setLocalOpenAIKey] = useState("");
+  const [localGoogleKey, setLocalGoogleKey] = useState("");
+  const [localProvider, setLocalProvider] = useState<AIProvider>("lovable");
+  const [localModel, setLocalModel] = useState<AIModel>("gemini-2.5-flash");
+
+  // Sync local state when settings load
+  useEffect(() => {
+    if (settings && !isLoading) {
+      setLocalOpenAIKey(settings.openai_api_key || "");
+      setLocalGoogleKey(settings.google_api_key || "");
+      setLocalProvider(settings.default_provider as AIProvider || "lovable");
+      setLocalModel(settings.default_model as AIModel || "gemini-2.5-flash");
+    }
+  }, [settings, isLoading]);
 
   const handleSaveSettings = () => {
     upsertSettings({
