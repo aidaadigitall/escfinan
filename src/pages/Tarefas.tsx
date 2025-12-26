@@ -205,7 +205,7 @@ const Tarefas = () => {
           onToggleComplete={handleToggleComplete}
           onEdit={handleOpenDialog}
           onDelete={deleteTask}
-          onAddSubtask={handleOpenDialog}
+          onAddSubtask={() => handleOpenDialog(undefined, task.id)}
           onToggleExpand={toggleExpand}
           getResponsibleName={getResponsibleName}
           getAssignedNames={getAssignedNames}

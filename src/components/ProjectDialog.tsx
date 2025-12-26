@@ -95,7 +95,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
         description: project.description || "",
         client_id: project.client_id || "",
         project_type: project.project_type || "fixed_price",
-        payment_method_id: project.payment_method_id || "", // Adicionado para corrigir o bug de persistência
+        payment_method_id: "",
         budget_amount: Number(project.budget_amount) || 0,
         budget_hours: Number(project.budget_hours) || 0,
         hourly_rate: project.hourly_rate ? Number(project.hourly_rate) : undefined,

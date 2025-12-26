@@ -51,9 +51,9 @@ interface TaskCardProps {
   getResponsibleName?: (id: string | null) => string | null;
   getAssignedNames?: (ids: string[] | null) => string | null;
   getProjectName?: (projectId: string | null) => string | null;
-  onDragStart?: (e: React.DragEvent, task: Task) => void;
+  onDragStart?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
-  onDrop?: (e: React.DragEvent, task: Task) => void;
+  onDrop?: (e: React.DragEvent) => void;
 }
 
 export const TaskCard = ({

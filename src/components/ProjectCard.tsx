@@ -282,7 +282,7 @@ export function ProjectCard({ project, onEdit, onDelete, onStatusChange, onViewD
                   <span>Horas Restantes:</span>
                 </div>
                 <span className="font-semibold text-green-600">
-                  {Math.max(0, project.budget_hours - (project.hours_spent || 0))}h
+                  {Math.max(0, project.budget_hours - 0)}h
                 </span>
               </div>
             </>
