@@ -24,7 +24,8 @@ import { Plus, Edit, Trash2, Search, Loader } from "lucide-react";
 import { toast } from "sonner";
 
 const Funcionarios = () => {
-  const { employees, isLoading, createEmployee, updateEmployee, deleteEmployee } = useEmployees();
+  const { employees, isLoading, createEmployee, updateEmployee, deleteEmployee, deleteManyEmployees } = useEmployees();
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState({
@@ -101,15 +102,48 @@ const Funcionarios = () => {
     }
   };
 
+  const handleDeleteMany = () => {
+    if (selectedEmployees.length === 0) return;
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedEmployees.length} funcionários selecionados?`)) {
+      deleteManyEmployees(selectedEmployees);
+      setSelectedEmployees([]);
+    }
+  };
+
+  const handleSelectEmployee = (id: string, checked: boolean) => {
+    setSelectedEmployees((prev) =>
+      checked ? [...prev, id] : prev.filter((employeeId) => employeeId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedEmployees(filteredEmployees.map((f) => f.id));
+    } else {
+      setSelectedEmployees([]);
+    }
+  };
+
+  const isAllSelected = selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0;
+  const isIndeterminate = selectedEmployees.length > 0 && selectedEmployees.length < filteredEmployees.length;
+
   return (
     <div className="px-2 sm:px-4 md:px-6 py-4 max-w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-        <h1 className="text-xl sm:text-2xl font-bold">Funcionários</h1>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Funcionário
-        </Button>
-      </div>
+	      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+	        <h1 className="text-xl sm:text-2xl font-bold">Funcionários</h1>
+	        <div className="flex gap-2">
+	          {selectedEmployees.length > 0 && (
+	            <Button variant="destructive" onClick={handleDeleteMany}>
+	              <Trash2 className="h-4 w-4 mr-2" />
+	              Excluir ({selectedEmployees.length})
+	            </Button>
+	          )}
+	          <Button onClick={() => handleOpenDialog()}>
+	            <Plus className="h-4 w-4 mr-2" />
+	            Novo Funcionário
+	          </Button>
+	        </div>
+	      </div>
 
       <Card className="mb-4">
         <div className="p-2 sm:p-4 border-b flex items-center gap-2">
@@ -124,15 +158,22 @@ const Funcionarios = () => {
 
         <div className="overflow-x-auto">
           <Table className="min-w-[700px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
+	          <TableHeader>
+	            <TableRow>
+	              <TableHead className="w-[50px]">
+	                <Checkbox
+	                  checked={isAllSelected || isIndeterminate}
+	                  onCheckedChange={handleSelectAll}
+	                  aria-label="Selecionar todos"
+	                />
+	              </TableHead>
+	              <TableHead>Nome</TableHead>
               <TableHead>CPF</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Cargo</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+	              <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -142,9 +183,16 @@ const Funcionarios = () => {
                   <Loader className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ) : filteredEmployees.map((funcionario) => (
-              <TableRow key={funcionario.id}>
-                <TableCell>{funcionario.name}</TableCell>
+	            ) : filteredEmployees.map((funcionario) => (
+	              <TableRow key={funcionario.id}>
+	                <TableCell>
+	                  <Checkbox
+	                    checked={selectedEmployees.includes(funcionario.id)}
+	                    onCheckedChange={(checked) => handleSelectEmployee(funcionario.id, !!checked)}
+	                    aria-label={`Selecionar ${funcionario.name}`}
+	                  />
+	                </TableCell>
+	                <TableCell>{funcionario.name}</TableCell>
                 <TableCell>{funcionario.cpf}</TableCell>
                 <TableCell>{funcionario.email}</TableCell>
                 <TableCell>{funcionario.phone}</TableCell>

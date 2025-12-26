@@ -12,7 +12,8 @@ import { Plus, Edit, Trash2, Search, Loader, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 const Servicos = () => {
-  const { services, isLoading, createService, updateService, deleteService } = useServices();
+  const { services, isLoading, createService, updateService, deleteService, deleteManyServices } = useServices();
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,6 +85,31 @@ const Servicos = () => {
     }
   };
 
+  const handleDeleteMany = () => {
+    if (selectedServices.length === 0) return;
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedServices.length} serviços selecionados?`)) {
+      deleteManyServices(selectedServices);
+      setSelectedServices([]);
+    }
+  };
+
+  const handleSelectService = (id: string, checked: boolean) => {
+    setSelectedServices((prev) =>
+      checked ? [...prev, id] : prev.filter((serviceId) => serviceId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedServices(filteredServices.map((s) => s.id));
+    } else {
+      setSelectedServices([]);
+    }
+  };
+
+  const isAllSelected = selectedServices.length === filteredServices.length && filteredServices.length > 0;
+  const isIndeterminate = selectedServices.length > 0 && selectedServices.length < filteredServices.length;
+
   const { profit, margin } = calculateProfit();
 
   return (
@@ -93,10 +119,18 @@ const Servicos = () => {
           <h1 className="text-3xl font-bold">Serviços</h1>
           <p className="text-muted-foreground mt-1">Gerencie os serviços oferecidos</p>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Serviço
-        </Button>
+	        <div className="flex gap-2">
+	          {selectedServices.length > 0 && (
+	            <Button variant="destructive" onClick={handleDeleteMany}>
+	              <Trash2 className="h-4 w-4 mr-2" />
+	              Excluir ({selectedServices.length})
+	            </Button>
+	          )}
+	          <Button onClick={() => handleOpenDialog()}>
+	            <Plus className="h-4 w-4 mr-2" />
+	            Novo Serviço
+	          </Button>
+	        </div>
       </div>
 
       <Card>
@@ -114,15 +148,22 @@ const Servicos = () => {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
+	              <TableRow>
+	                <TableHead className="w-[50px]">
+	                  <Checkbox
+	                    checked={isAllSelected || isIndeterminate}
+	                    onCheckedChange={handleSelectAll}
+	                    aria-label="Selecionar todos"
+	                  />
+	                </TableHead>
+	                <TableHead>Nome</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Custo</TableHead>
                 <TableHead>Preço Venda</TableHead>
                 <TableHead>Lucro</TableHead>
                 <TableHead>Horas Est.</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+	                <TableHead className="w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -140,11 +181,18 @@ const Servicos = () => {
                 </TableRow>
               ) : (
                 filteredServices.map((service) => {
-                  const serviceProfit = service.sale_price - service.cost_price;
-                  return (
-                    <TableRow key={service.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
+	                  const serviceProfit = service.sale_price - service.cost_price;
+	                  return (
+	                    <TableRow key={service.id}>
+	                      <TableCell>
+	                        <Checkbox
+	                          checked={selectedServices.includes(service.id)}
+	                          onCheckedChange={(checked) => handleSelectService(service.id, !!checked)}
+	                          aria-label={`Selecionar ${service.name}`}
+	                        />
+	                      </TableCell>
+	                      <TableCell className="font-medium">
+	                        <div className="flex items-center gap-2">
                           <Wrench className="h-4 w-4 text-muted-foreground" />
                           {service.name}
                         </div>

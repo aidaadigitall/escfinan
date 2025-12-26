@@ -99,11 +99,30 @@ export const useSuppliers = () => {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("suppliers")
+        .delete()
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: (data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast.success(`${ids.length} fornecedores excluídos com sucesso!`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao excluir fornecedores");
+    },
+  });
+
   return {
     suppliers,
     isLoading,
     createSupplier: createMutation.mutate,
     updateSupplier: updateMutation.mutate,
     deleteSupplier: deleteMutation.mutate,
+    deleteManySuppliers: deleteManyMutation.mutate,
   };
 };

@@ -125,11 +125,30 @@ export const useProducts = () => {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: (data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success(`${ids.length} produtos excluídos com sucesso!`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao excluir produtos");
+    },
+  });
+
   return {
     products,
     isLoading,
     createProduct: createMutation.mutate,
     updateProduct: updateMutation.mutate,
     deleteProduct: deleteMutation.mutate,
+    deleteManyProducts: deleteManyMutation.mutate,
   };
 };

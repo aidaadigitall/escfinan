@@ -28,7 +28,8 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdvancedSearchBar, AdvancedFilters } from "@/components/AdvancedSearchBar";
 
 const Fornecedores = () => {
-  const { suppliers, isLoading, createSupplier, updateSupplier, deleteSupplier } = useSuppliers();
+  const { suppliers, isLoading, createSupplier, updateSupplier, deleteSupplier, deleteManySuppliers } = useSuppliers();
+  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [loadingCep, setLoadingCep] = useState(false);
@@ -206,14 +207,47 @@ const Fornecedores = () => {
     setSupplierToDelete(null);
   };
 
+  const handleDeleteMany = () => {
+    if (selectedSuppliers.length === 0) return;
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedSuppliers.length} fornecedores selecionados?`)) {
+      deleteManySuppliers(selectedSuppliers);
+      setSelectedSuppliers([]);
+    }
+  };
+
+  const handleSelectSupplier = (id: string, checked: boolean) => {
+    setSelectedSuppliers((prev) =>
+      checked ? [...prev, id] : prev.filter((supplierId) => supplierId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedSuppliers(filteredSuppliers.map((s) => s.id));
+    } else {
+      setSelectedSuppliers([]);
+    }
+  };
+
+  const isAllSelected = selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0;
+  const isIndeterminate = selectedSuppliers.length > 0 && selectedSuppliers.length < filteredSuppliers.length;
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Fornecedores</h1>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Fornecedor
-        </Button>
+        <div className="flex gap-2">
+          {selectedSuppliers.length > 0 && (
+            <Button variant="destructive" onClick={handleDeleteMany}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir ({selectedSuppliers.length})
+            </Button>
+          )}
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Fornecedor
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
@@ -234,15 +268,22 @@ const Fornecedores = () => {
         />
 
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
+	          <TableHeader>
+	            <TableRow>
+	              <TableHead className="w-[50px]">
+	                <Checkbox
+	                  checked={isAllSelected || isIndeterminate}
+	                  onCheckedChange={handleSelectAll}
+	                  aria-label="Selecionar todos"
+	                />
+	              </TableHead>
+	              <TableHead>Nome</TableHead>
               <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Cidade</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+	              <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -252,9 +293,16 @@ const Fornecedores = () => {
                   <Loader className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ) : filteredSuppliers.map((fornecedor) => (
-              <TableRow key={fornecedor.id}>
-                <TableCell>{fornecedor.name}</TableCell>
+	            ) : filteredSuppliers.map((fornecedor) => (
+	              <TableRow key={fornecedor.id}>
+	                <TableCell>
+	                  <Checkbox
+	                    checked={selectedSuppliers.includes(fornecedor.id)}
+	                    onCheckedChange={(checked) => handleSelectSupplier(fornecedor.id, !!checked)}
+	                    aria-label={`Selecionar ${fornecedor.name}`}
+	                  />
+	                </TableCell>
+	                <TableCell>{fornecedor.name}</TableCell>
                 <TableCell>{fornecedor.cpf || fornecedor.cnpj}</TableCell>
                 <TableCell>{fornecedor.email}</TableCell>
                 <TableCell>{fornecedor.phone}</TableCell>

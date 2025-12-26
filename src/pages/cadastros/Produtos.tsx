@@ -28,7 +28,8 @@ import { toast } from "sonner";
 import { UnitManagerDialog, getUnits } from "@/components/UnitManagerDialog";
 
 const Produtos = () => {
-  const { products, isLoading, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, isLoading, createProduct, updateProduct, deleteProduct, deleteManyProducts } = useProducts();
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unitManagerOpen, setUnitManagerOpen] = useState(false);
   const [units, setUnits] = useState(getUnits());
@@ -123,6 +124,31 @@ const Produtos = () => {
     }
   };
 
+  const handleDeleteMany = () => {
+    if (selectedProducts.length === 0) return;
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedProducts.length} produtos selecionados?`)) {
+      deleteManyProducts(selectedProducts);
+      setSelectedProducts([]);
+    }
+  };
+
+  const handleSelectProduct = (id: string, checked: boolean) => {
+    setSelectedProducts((prev) =>
+      checked ? [...prev, id] : prev.filter((productId) => productId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProducts(filteredProducts.map((p) => p.id));
+    } else {
+      setSelectedProducts([]);
+    }
+  };
+
+  const isAllSelected = selectedProducts.length === filteredProducts.length && filteredProducts.length > 0;
+  const isIndeterminate = selectedProducts.length > 0 && selectedProducts.length < filteredProducts.length;
+
   // Calculated fields
   const profitAmount = formData.sale_price - formData.cost_price;
   const profitMargin = formData.cost_price > 0 
@@ -136,10 +162,18 @@ const Produtos = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Produtos</h1>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Produto
-        </Button>
+        <div className="flex gap-2">
+          {selectedProducts.length > 0 && (
+            <Button variant="destructive" onClick={handleDeleteMany}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir ({selectedProducts.length})
+            </Button>
+          )}
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
@@ -156,6 +190,13 @@ const Produtos = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={isAllSelected || isIndeterminate}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Preço Custo</TableHead>
@@ -164,7 +205,7 @@ const Produtos = () => {
               <TableHead>Markup %</TableHead>
               <TableHead>Estoque</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -182,8 +223,14 @@ const Produtos = () => {
               </TableRow>
             ) : filteredProducts.map((produto) => (
               <TableRow key={produto.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedProducts.includes(produto.id)}
+                    onCheckedChange={(checked) => handleSelectProduct(produto.id, !!checked)}
+                    aria-label={`Selecionar ${produto.name}`}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{produto.name}</TableCell>
-                <TableCell>{produto.sku || '-'}</TableCell>
                 <TableCell>
                   {produto.cost_price?.toLocaleString("pt-BR", {
                     style: "currency",

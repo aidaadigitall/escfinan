@@ -113,11 +113,30 @@ export const useServices = () => {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("services")
+        .delete()
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: (data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast.success(`${ids.length} serviços excluídos com sucesso!`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao excluir serviços");
+    },
+  });
+
   return {
     services,
     isLoading,
     createService: createMutation.mutate,
     updateService: updateMutation.mutate,
     deleteService: deleteMutation.mutate,
+    deleteManyServices: deleteManyMutation.mutate,
   };
 };

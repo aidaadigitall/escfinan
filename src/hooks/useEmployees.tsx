@@ -96,11 +96,30 @@ export const useEmployees = () => {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("employees")
+        .delete()
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: (data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success(`${ids.length} funcionários excluídos com sucesso!`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao excluir funcionários");
+    },
+  });
+
   return {
     employees,
     isLoading,
     createEmployee: createMutation.mutate,
     updateEmployee: updateMutation.mutate,
     deleteEmployee: deleteMutation.mutate,
+    deleteManyEmployees: deleteManyMutation.mutate,
   };
 };

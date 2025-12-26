@@ -32,7 +32,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Usuarios = () => {
   const { user } = useAuth();
-  const { users, isLoading, createUser, updateUser, deleteUser } = useUsers();
+  const { users, isLoading, createUser, updateUser, deleteUser, deleteManyUsers } = useUsers();
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -151,6 +152,31 @@ const Usuarios = () => {
     setDeleteDialogOpen(false);
   };
 
+  const handleDeleteMany = () => {
+    if (selectedUsers.length === 0) return;
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedUsers.length} usuários selecionados?`)) {
+      deleteManyUsers(selectedUsers);
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleSelectUser = (id: string, checked: boolean) => {
+    setSelectedUsers((prev) =>
+      checked ? [...prev, id] : prev.filter((userId) => userId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(filteredUsers.map((u) => u.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const isAllSelected = selectedUsers.length === filteredUsers.length && filteredUsers.length > 0;
+  const isIndeterminate = selectedUsers.length > 0 && selectedUsers.length < filteredUsers.length;
+
   // Set default permissions based on role
   const handleRoleChange = (role: "Administrador" | "Gerente" | "Usuário") => {
     setFormData({ ...formData, role });
@@ -179,13 +205,21 @@ const Usuarios = () => {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Usuários</h1>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Usuário
-        </Button>
-      </div>
+	      <div className="flex justify-between items-center mb-6">
+	        <h1 className="text-3xl font-bold">Usuários</h1>
+	        <div className="flex gap-2">
+	          {selectedUsers.length > 0 && (
+	            <Button variant="destructive" onClick={handleDeleteMany}>
+	              <Trash2 className="h-4 w-4 mr-2" />
+	              Excluir ({selectedUsers.length})
+	            </Button>
+	          )}
+	          <Button onClick={() => handleOpenDialog()}>
+	            <Plus className="h-4 w-4 mr-2" />
+	            Novo Usuário
+	          </Button>
+	        </div>
+	      </div>
 
       <Card className="mb-6">
         <div className="p-4 border-b flex items-center gap-2">
@@ -199,14 +233,21 @@ const Usuarios = () => {
         </div>
 
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
+	          <TableHeader>
+	            <TableRow>
+	              <TableHead className="w-[50px]">
+	                <Checkbox
+	                  checked={isAllSelected || isIndeterminate}
+	                  onCheckedChange={handleSelectAll}
+	                  aria-label="Selecionar todos"
+	                />
+	              </TableHead>
+	              <TableHead>Nome</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Papel</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+	              <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -216,9 +257,16 @@ const Usuarios = () => {
                   <Loader className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ) : filteredUsers.map((usuario) => (
-              <TableRow key={usuario.id}>
-                <TableCell>{usuario.name}</TableCell>
+	            ) : filteredUsers.map((usuario) => (
+	              <TableRow key={usuario.id}>
+	                <TableCell>
+	                  <Checkbox
+	                    checked={selectedUsers.includes(usuario.id)}
+	                    onCheckedChange={(checked) => handleSelectUser(usuario.id, !!checked)}
+	                    aria-label={`Selecionar ${usuario.name}`}
+	                  />
+	                </TableCell>
+	                <TableCell>{usuario.name}</TableCell>
                 <TableCell>{usuario.email}</TableCell>
                 <TableCell>{usuario.phone}</TableCell>
                 <TableCell>

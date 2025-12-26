@@ -150,11 +150,30 @@ export const useUsers = () => {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("system_users")
+        .delete()
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: (data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success(`${ids.length} usuários excluídos com sucesso!`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao excluir usuários");
+    },
+  });
+
   return {
     users,
     isLoading,
     createUser: createMutation.mutate,
     updateUser: updateMutation.mutate,
     deleteUser: deleteMutation.mutate,
+    deleteManyUsers: deleteManyMutation.mutate,
   };
 };
