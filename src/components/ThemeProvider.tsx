@@ -9,17 +9,19 @@ interface ThemeColors {
 }
 
 interface ThemeContextType {
-  mode: ThemeMode;
-  resolvedTheme: "light" | "dark";
-  customColors?: ThemeColors;
-  setMode: (mode: ThemeMode) => void;
-}
+	  mode: ThemeMode;
+	  resolvedTheme: "light" | "dark";
+	  customColors?: ThemeColors;
+	  setMode: (mode: ThemeMode) => void;
+	  toggleTheme: () => void;
+	}
 
 const ThemeContext = createContext<ThemeContextType>({
   mode: "auto",
-  resolvedTheme: "light",
-  setMode: () => {},
-});
+	  resolvedTheme: "light",
+	  setMode: () => {},
+	  toggleTheme: () => {},
+	});
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
@@ -38,10 +40,19 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     const saved = localStorage.getItem("theme-mode");
     return (saved as ThemeMode) || "auto";
   });
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
-  const [customColors, setCustomColors] = useState<ThemeColors | undefined>();
-
-  useEffect(() => {
+	  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+	  const [customColors, setCustomColors] = useState<ThemeColors | undefined>();
+	
+	  const toggleTheme = () => {
+	    setMode((prevMode) => {
+	      if (prevMode === "dark") return "light";
+	      if (prevMode === "light") return "dark";
+	      // Se for 'auto', alterna para o oposto do tema resolvido
+	      return resolvedTheme === "dark" ? "light" : "dark";
+	    });
+	  };
+	
+	  useEffect(() => {
     localStorage.setItem("theme-mode", mode);
   }, [mode]);
 
@@ -100,9 +111,9 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     }
   }, [customColors]);
 
-  return (
-    <ThemeContext.Provider value={{ mode, resolvedTheme, customColors, setMode }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+	  return (
+	    <ThemeContext.Provider value={{ mode, resolvedTheme, customColors, setMode, toggleTheme }}>
+	      {children}
+	    </ThemeContext.Provider>
+	  );
 };

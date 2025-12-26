@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { DailyTransactionDialog } from "./DailyTransactionDialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { NotificationsDropdown } from "./NotificationsDropdown";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface HeaderProps {
   onMenuClick?: () => void;
