@@ -30,8 +30,8 @@ export const useOSDashboardData = () => {
       // 1. Buscar todas as Ordens de Serviço relevantes
       const { data: orders, error } = await supabase
         .from("service_orders")
-        .select("*, technicians(name)")
-        .in("status", ["pending", "in_progress", "waiting_parts", "approved"]);
+	        .select("*, technicians(name)")
+	        .in("status", ["pending", "in_progress", "waiting_parts", "approved", "completed", "delivered"]);
 
       if (error) throw new Error(error.message);
 
