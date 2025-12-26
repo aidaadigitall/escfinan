@@ -42,6 +42,7 @@ import Tarefas from "./pages/Tarefas";
 import RelatorioTarefas from "./pages/RelatorioTarefas";
 import Orcamentos from "./pages/Orcamentos";
 import OrdensServico from "./pages/OrdensServico";
+import PainelOS from "./pages/PainelOS";
 import Vendas from "./pages/Vendas";
 import PublicBilling from "./pages/PublicBilling";
 import ControlePonto from "./pages/ControlePonto";
@@ -162,11 +163,16 @@ const App = () => (
                 <Layout><Orcamentos /></Layout>
               </PermissionProtectedRoute>
             } />
-            <Route path="/ordens-servico" element={
-              <PermissionProtectedRoute permission="can_view_service_orders">
-                <Layout><OrdensServico /></Layout>
-              </PermissionProtectedRoute>
-            } />
+	            <Route path="/ordens-servico" element={
+	              <PermissionProtectedRoute permission="can_view_service_orders">
+	                <Layout><OrdensServico /></Layout>
+	              </PermissionProtectedRoute>
+	            } />
+	            <Route path="/ordens-servico/painel" element={
+	              <PermissionProtectedRoute permission="can_view_service_orders">
+	                <Layout><PainelOS /></Layout>
+	              </PermissionProtectedRoute>
+	            } />
             <Route path="/vendas" element={
               <PermissionProtectedRoute permission="can_view_sales">
                 <Layout><Vendas /></Layout>

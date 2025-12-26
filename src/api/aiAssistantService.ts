@@ -2,6 +2,8 @@
 // A IA é chamada através do Lovable AI Gateway
 import { supabase } from "@/integrations/supabase/client";
 
+export type LLMModel = "gpt-4.1-mini" | "gemini-2.5-flash";
+
 interface AIAssistantRequest {
   message: string;
   systemData?: {
@@ -29,8 +31,8 @@ interface AIAssistantResponse {
  * A edge function usa o Lovable AI Gateway
  */
 export const callAIAssistant = async (
-  request: AIAssistantRequest
-): Promise<AIAssistantResponse> => {
+	  request: AIAssistantRequest & { model: LLMModel }
+	): Promise<AIAssistantResponse> => {
   try {
     // Build messages array from conversation history
     const messages = request.conversationHistory?.map(m => ({
@@ -39,17 +41,18 @@ export const callAIAssistant = async (
     })) || [];
 
     // Add current user message
-    messages.push({
-      role: "user" as const,
-      content: request.message
-    });
-
-    const { data, error } = await supabase.functions.invoke('chat', {
-      body: { 
-        messages,
-        systemData: request.systemData
-      }
-    });
+	    messages.push({
+	      role: "user" as const,
+	      content: request.message
+	    });
+	
+	    const { data, error } = await supabase.functions.invoke('chat', {
+	      body: { 
+	        messages,
+	        systemData: request.systemData,
+	        model: request.model // Adiciona o modelo selecionado
+	      }
+	    });
 
     if (error) {
       console.error("Erro ao chamar assistente de IA:", error);
@@ -71,9 +74,10 @@ export const callAIAssistant = async (
 };
 
 /**
- * Gera insights financeiros através do backend
- */
-export const generateFinancialInsights = async (
+	 * Gera insights financeiros através do backend
+	 */
+	export const generateFinancialInsights = async (
+	  model: LLMModel,
   analysis: {
     totalIncome: number;
     totalExpense: number;
@@ -99,13 +103,14 @@ ${analysis.topIncomes.map(i => `- ${i.description}: R$ ${i.amount.toLocaleString
 Tendência Mensal:
 ${analysis.monthlyTrend.map(m => `- ${m.month}: Receitas R$ ${m.income.toLocaleString('pt-BR')}, Despesas R$ ${m.expense.toLocaleString('pt-BR')}`).join('\n')}
 
-Forneça 3-5 insights práticos e acionáveis para melhorar a saúde financeira.`;
-
-    const { data, error } = await supabase.functions.invoke('chat', {
-      body: { 
-        messages: [{ role: "user", content: prompt }]
-      }
-    });
+	Forneça 3-5 insights práticos e acionáveis para melhorar a saúde financeira.`;
+	
+	    const { data, error } = await supabase.functions.invoke('chat', {
+	      body: { 
+	        messages: [{ role: "user", content: prompt }],
+	        model: model // Adiciona o modelo selecionado
+	      }
+	    });
 
     if (error) {
       throw new Error(error.message || "Erro ao gerar insights");

@@ -12,7 +12,9 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { LLMModel } from "@/api/aiAssistantService";
 
 interface Message {
   id: string;
@@ -34,6 +36,7 @@ interface AIAssistantProps {
 
 export const AIAssistant = ({ systemData }: AIAssistantProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<LLMModel>("gpt-4.1-mini");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -64,6 +67,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
         message: userMessage,
         systemData,
         conversationHistory: messages.map(m => ({ role: m.role, content: m.content })),
+        model: selectedModel, // Passa o modelo selecionado
       });
 
       const assistantMessage: Message = {
@@ -149,15 +153,26 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
       {isOpen && (
         <Card className="fixed bottom-16 right-4 sm:bottom-24 sm:right-6 z-30 w-[calc(100vw-32px)] sm:w-96 max-h-[60vh] sm:max-h-[500px] flex flex-col shadow-2xl border-2 border-blue-200 bg-white">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
-            <h3 className="font-bold text-lg flex items-center gap-2">
-              <Lightbulb className="h-5 w-5" />
-              Assistente de IA
-            </h3>
-            <p className="text-xs text-blue-100 mt-1">
-              Consultoria e suporte inteligente
-            </p>
-          </div>
+	          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
+	            <h3 className="font-bold text-lg flex items-center gap-2">
+	              <Lightbulb className="h-5 w-5" />
+	              Assistente de IA
+	            </h3>
+	            <p className="text-xs text-blue-100 mt-1">
+	              Analista de Negócios (Financeiro, Comercial e Insights)
+	            </p>
+	            <div className="mt-2">
+	              <Select value={selectedModel} onValueChange={(value: LLMModel) => setSelectedModel(value)}>
+	                <SelectTrigger className="w-full h-8 text-xs bg-white/20 border-white/30 text-white hover:bg-white/30">
+	                  <SelectValue placeholder="Selecione o Modelo" />
+	                </SelectTrigger>
+	                <SelectContent>
+	                  <SelectItem value="gpt-4.1-mini">GPT-4.1 Mini (OpenAI)</SelectItem>
+	                  <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (Google)</SelectItem>
+	                </SelectContent>
+	              </Select>
+	            </div>
+	          </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">

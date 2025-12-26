@@ -75,9 +75,17 @@ const getMenuItems = (permissions: Record<string, boolean>): MenuItem[] => {
         { icon: Users, label: "CRM - Funil de Vendas", path: "/crm" },
         { icon: ClipboardList, label: "Orçamentos", path: "/orcamentos" },
         { icon: FileText, label: "Ordens de Serviço", path: "/ordens-servico" },
-        { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
-      ],
-    },
+	        { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
+	      ],
+	    },
+	    {
+	      icon: Wrench,
+	      label: "Ordens de Serviço",
+	      submenu: [
+	        { icon: ClipboardList, label: "Gerenciar O.S.", path: "/ordens-servico" },
+	        { icon: PieChart, label: "Painel", path: "/ordens-servico/painel" },
+	      ],
+	    },
     {
       icon: Briefcase,
       label: "Projetos",
