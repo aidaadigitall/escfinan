@@ -263,16 +263,17 @@ export const useProjectMetrics = (projectId: string | undefined) => {
       
       // Auto-update project progress if completion rate is greater than 0
       if (projectId && taskCompletionRate > 0) {
-        supabase
-          .from("projects")
-          .update({ progress_percentage: taskCompletionRate })
-          .eq("id", projectId)
-          .then(() => {
+        (async () => {
+          try {
+            await supabase
+              .from("projects")
+              .update({ progress_percentage: taskCompletionRate })
+              .eq("id", projectId);
             queryClient.invalidateQueries({ queryKey: ["projects"] });
-          })
-          .catch((err) => {
+          } catch (err) {
             console.error("Erro ao atualizar progresso do projeto:", err);
-          });
+          }
+        })();
       }
       
       return {

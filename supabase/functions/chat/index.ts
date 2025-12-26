@@ -15,58 +15,72 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify authentication
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      console.error("No authorization header provided");
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate user with Supabase auth
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { authorization: authHeader } }
     });
     
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      console.error("Invalid authentication:", userError?.message);
       return new Response(
         JSON.stringify({ error: "Invalid authentication" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Chat request from authenticated user: ${user.id}`);
-
-    const { messages, systemData } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const { messages, systemData, model, provider, customApiKey } = await req.json();
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    // Build system prompt - CEO/Estrategista
+    let systemPrompt = `Você é um CEO, Analista de Negócios e Estrategista altamente inteligente do sistema EscFinan.
+Você atua como um consultor executivo em todos os departamentos: Financeiro, Comercial, Operacional e Estratégico.
 
-    // Build system prompt with financial context
-    let systemPrompt = `Você é o assistente de IA do EscFinan, um sistema de gestão financeira. 
-Seja sempre educado, prestativo e forneça respostas claras e objetivas.
-Você pode ajudar com:
-- Dúvidas sobre como usar o sistema
-- Estratégias financeiras e melhores práticas
-- Análises e insights baseados nos dados do usuário
-- Recomendações personalizadas para melhorar a gestão financeira
+Suas competências:
+- 📊 Análise financeira avançada (DRE, fluxo de caixa, indicadores)
+- 💼 Estratégias comerciais e de vendas
+- 🎯 Insights de negócios e oportunidades de crescimento
+- 📈 Recomendações baseadas em dados
+- 🔮 Previsões e tendências de mercado
+- ⚡ Otimização de processos e custos
 
-Responda sempre em português brasileiro.`;
+Seja direto, objetivo e forneça recomendações acionáveis. Responda em português brasileiro.`;
 
     if (systemData) {
-      systemPrompt += `\n\nContexto financeiro atual do usuário:
-- Total de receitas: R$ ${systemData.totalIncome?.toLocaleString('pt-BR') || '0,00'}
-- Total de despesas: R$ ${systemData.totalExpense?.toLocaleString('pt-BR') || '0,00'}
-- Saldo: R$ ${systemData.balance?.toLocaleString('pt-BR') || '0,00'}
+      systemPrompt += `\n\nContexto financeiro atual:
+- Receitas: R$ ${systemData.totalIncome?.toLocaleString('pt-BR') || '0'}
+- Despesas: R$ ${systemData.totalExpense?.toLocaleString('pt-BR') || '0'}
+- Saldo: R$ ${systemData.balance?.toLocaleString('pt-BR') || '0'}
 - Transações pendentes: ${systemData.pendingTransactions || 0}
 - Contas bancárias: ${systemData.accountsCount || 0}`;
     }
+
+    // Use Lovable AI Gateway by default
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY não configurada");
+    }
+
+    // Map model names for gateway
+    let gatewayModel = model || "google/gemini-2.5-flash";
+    if (!gatewayModel.includes("/")) {
+      const modelMap: Record<string, string> = {
+        "gemini-2.5-flash": "google/gemini-2.5-flash",
+        "gemini-2.5-pro": "google/gemini-2.5-pro",
+        "gpt-4o": "openai/gpt-5",
+        "gpt-4o-mini": "openai/gpt-5-mini",
+        "gpt-4.1-mini": "openai/gpt-5-mini",
+      };
+      gatewayModel = modelMap[gatewayModel] || "google/gemini-2.5-flash";
+    }
+
+    console.log(`AI request - User: ${user.id}, Model: ${gatewayModel}`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -75,7 +89,7 @@ Responda sempre em português brasileiro.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: gatewayModel,
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
@@ -93,26 +107,20 @@ Responda sempre em português brasileiro.`;
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Por favor, adicione créditos à sua conta." }),
+          JSON.stringify({ error: "Créditos insuficientes." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "Erro ao processar sua solicitação" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw new Error("Erro no gateway de IA");
     }
 
     const data = await response.json();
     const aiResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua solicitação.";
 
     return new Response(
-      JSON.stringify({
-        response: aiResponse,
-        type: "text",
-      }),
+      JSON.stringify({ response: aiResponse, type: "text" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

@@ -9,19 +9,21 @@ interface ThemeColors {
 }
 
 interface ThemeContextType {
-	  mode: ThemeMode;
-	  resolvedTheme: "light" | "dark";
-	  customColors?: ThemeColors;
-	  setMode: (mode: ThemeMode) => void;
-	  toggleTheme: () => void;
-	}
+  mode: ThemeMode;
+  theme: "light" | "dark";
+  resolvedTheme: "light" | "dark";
+  customColors?: ThemeColors;
+  setMode: (mode: ThemeMode) => void;
+  toggleTheme: () => void;
+}
 
 const ThemeContext = createContext<ThemeContextType>({
   mode: "auto",
-	  resolvedTheme: "light",
-	  setMode: () => {},
-	  toggleTheme: () => {},
-	});
+  theme: "light",
+  resolvedTheme: "light",
+  setMode: () => {},
+  toggleTheme: () => {},
+});
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
@@ -111,9 +113,9 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     }
   }, [customColors]);
 
-	  return (
-	    <ThemeContext.Provider value={{ mode, resolvedTheme, customColors, setMode, toggleTheme }}>
-	      {children}
-	    </ThemeContext.Provider>
+  return (
+    <ThemeContext.Provider value={{ mode, theme: resolvedTheme, resolvedTheme, customColors, setMode, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
 	  );
 };

@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_settings: {
+        Row: {
+          created_at: string
+          default_model: string | null
+          default_provider: string | null
+          google_api_key: string | null
+          id: string
+          last_token_reset: string | null
+          monthly_token_limit: number | null
+          openai_api_key: string | null
+          tokens_used_this_month: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_model?: string | null
+          default_provider?: string | null
+          google_api_key?: string | null
+          id?: string
+          last_token_reset?: string | null
+          monthly_token_limit?: number | null
+          openai_api_key?: string | null
+          tokens_used_this_month?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_model?: string | null
+          default_provider?: string | null
+          google_api_key?: string | null
+          id?: string
+          last_token_reset?: string | null
+          monthly_token_limit?: number | null
+          openai_api_key?: string | null
+          tokens_used_this_month?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_usage_log: {
+        Row: {
+          created_at: string
+          id: string
+          model: string
+          provider: string
+          request_type: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          total_tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model: string
+          provider: string
+          request_type?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          total_tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model?: string
+          provider?: string
+          request_type?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          total_tokens?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bank_accounts: {
         Row: {
           account_number: string | null
@@ -2619,6 +2697,7 @@ export type Database = {
       }
       user_permissions: {
         Row: {
+          can_manage_ai_settings: boolean | null
           can_manage_bank_accounts: boolean | null
           can_manage_cash: boolean | null
           can_manage_categories: boolean | null
@@ -2634,6 +2713,7 @@ export type Database = {
           can_manage_payables: boolean | null
           can_manage_payment_methods: boolean | null
           can_manage_products: boolean | null
+          can_manage_projects: boolean | null
           can_manage_quotes: boolean | null
           can_manage_receivables: boolean | null
           can_manage_sales: boolean | null
@@ -2646,6 +2726,7 @@ export type Database = {
           can_manage_tasks: boolean | null
           can_manage_transfers: boolean | null
           can_manage_users: boolean | null
+          can_view_ai_settings: boolean | null
           can_view_bank_accounts: boolean | null
           can_view_calendar: boolean | null
           can_view_cash: boolean | null
@@ -2664,6 +2745,7 @@ export type Database = {
           can_view_payables: boolean | null
           can_view_payment_methods: boolean | null
           can_view_products: boolean | null
+          can_view_projects: boolean | null
           can_view_quotes: boolean | null
           can_view_receivables: boolean | null
           can_view_reports: boolean | null
@@ -2685,6 +2767,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          can_manage_ai_settings?: boolean | null
           can_manage_bank_accounts?: boolean | null
           can_manage_cash?: boolean | null
           can_manage_categories?: boolean | null
@@ -2700,6 +2783,7 @@ export type Database = {
           can_manage_payables?: boolean | null
           can_manage_payment_methods?: boolean | null
           can_manage_products?: boolean | null
+          can_manage_projects?: boolean | null
           can_manage_quotes?: boolean | null
           can_manage_receivables?: boolean | null
           can_manage_sales?: boolean | null
@@ -2712,6 +2796,7 @@ export type Database = {
           can_manage_tasks?: boolean | null
           can_manage_transfers?: boolean | null
           can_manage_users?: boolean | null
+          can_view_ai_settings?: boolean | null
           can_view_bank_accounts?: boolean | null
           can_view_calendar?: boolean | null
           can_view_cash?: boolean | null
@@ -2730,6 +2815,7 @@ export type Database = {
           can_view_payables?: boolean | null
           can_view_payment_methods?: boolean | null
           can_view_products?: boolean | null
+          can_view_projects?: boolean | null
           can_view_quotes?: boolean | null
           can_view_receivables?: boolean | null
           can_view_reports?: boolean | null
@@ -2751,6 +2837,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          can_manage_ai_settings?: boolean | null
           can_manage_bank_accounts?: boolean | null
           can_manage_cash?: boolean | null
           can_manage_categories?: boolean | null
@@ -2766,6 +2853,7 @@ export type Database = {
           can_manage_payables?: boolean | null
           can_manage_payment_methods?: boolean | null
           can_manage_products?: boolean | null
+          can_manage_projects?: boolean | null
           can_manage_quotes?: boolean | null
           can_manage_receivables?: boolean | null
           can_manage_sales?: boolean | null
@@ -2778,6 +2866,7 @@ export type Database = {
           can_manage_tasks?: boolean | null
           can_manage_transfers?: boolean | null
           can_manage_users?: boolean | null
+          can_view_ai_settings?: boolean | null
           can_view_bank_accounts?: boolean | null
           can_view_calendar?: boolean | null
           can_view_cash?: boolean | null
@@ -2796,6 +2885,7 @@ export type Database = {
           can_view_payables?: boolean | null
           can_view_payment_methods?: boolean | null
           can_view_products?: boolean | null
+          can_view_projects?: boolean | null
           can_view_quotes?: boolean | null
           can_view_receivables?: boolean | null
           can_view_reports?: boolean | null

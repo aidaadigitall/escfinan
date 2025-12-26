@@ -119,14 +119,14 @@ const Dashboard = () => {
       )}
 
       {/* Projects Dashboard */}
-      {permissions.can_view_projects && (
+      {permissions.can_view_products && (
         <ErrorBoundary>
           <ProjectsDashboard hideValues={hideValues} />
         </ErrorBoundary>
       )}
 
       {/* Project Widgets */}
-      {permissions.can_view_projects && (
+      {permissions.can_view_products && (
         <>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <ErrorBoundary><ProjectBurndownChart hideValues={hideValues} /></ErrorBoundary>
