@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft, ShieldAlert, History, Globe, Hash } from "lucide-react";
+import { Loader2, Upload, X, Database, Building2, Image, ArrowRightLeft, ShieldAlert, History, Globe, Hash, Bot } from "lucide-react";
+import { AISettingsPanel } from "@/components/AISettingsPanel";
 import { DataManagementDialog } from "@/components/DataManagementDialog";
 import { DataMigrationDialog } from "@/components/DataMigrationDialog";
 import { MaskedInput } from "@/components/ui/masked-input";
@@ -687,6 +688,9 @@ const Configuracoes = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {/* AI Settings Panel - Only visible for admins */}
+      {canManage && <AISettingsPanel />}
 
       <SettingsAuditLog />
 
