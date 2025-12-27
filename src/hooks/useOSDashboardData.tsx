@@ -30,8 +30,8 @@ export const useOSDashboardData = () => {
       // 1. Buscar todas as Ordens de Serviço relevantes
       const { data: orders, error } = await supabase
         .from("service_orders")
-	        .select("*, technicians(name)")
-	        .in("status", ["pending", "in_progress", "waiting_parts", "approved", "completed", "delivered"]);
+        .select("*, employees:technician_id(name)")
+        .in("status", ["pending", "in_progress", "waiting_parts", "approved", "completed", "delivered"]);
 
       if (error) throw new Error(error.message);
 
@@ -102,7 +102,7 @@ export const useOSDashboardData = () => {
           faturamentoMensal[month] = (faturamentoMensal[month] || 0) + order.total_amount;
 
           // Faturamento por Técnico
-          const techName = order.technicians?.name || "Não atribuído";
+          const techName = order.employees?.name || "Não atribuído";
           faturamentoPorTecnico[techName] = (faturamentoPorTecnico[techName] || 0) + order.total_amount;
         }
       }
