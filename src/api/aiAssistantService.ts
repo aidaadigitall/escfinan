@@ -70,6 +70,13 @@ export const callAIAssistant = async (
   request: AIAssistantRequest
 ): Promise<AIAssistantResponse> => {
   try {
+    // Verify session is valid before making the call
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      throw new Error("Sessão expirada. Faça login novamente.");
+    }
+
     // Build messages array from conversation history
     const messages =
       request.conversationHistory?.map((m) => ({

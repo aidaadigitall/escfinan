@@ -16,7 +16,10 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const authHeader = req.headers.get("authorization");
+    console.log("Auth header present:", !!authHeader);
+    
     if (!authHeader) {
+      console.log("No authorization header found");
       return new Response(
         JSON.stringify({ error: "Autenticação necessária. Faça login." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -28,12 +31,17 @@ serve(async (req) => {
     });
     
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    console.log("User verification:", user?.id ? "success" : "failed", userError?.message);
+    
     if (userError || !user) {
+      console.log("User auth error:", userError?.message);
       return new Response(
         JSON.stringify({ error: "Sessão expirada. Faça login novamente." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    console.log("User authenticated:", user.id);
 
     const { messages, systemData, systemContext, model, provider, customApiKey } = await req.json();
     
