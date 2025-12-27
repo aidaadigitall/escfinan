@@ -18,7 +18,7 @@ serve(async (req) => {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Authentication required" }),
+        JSON.stringify({ error: "Autenticação necessária. Faça login." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -30,41 +30,108 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       return new Response(
-        JSON.stringify({ error: "Invalid authentication" }),
+        JSON.stringify({ error: "Sessão expirada. Faça login novamente." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { messages, systemData, model, provider, customApiKey } = await req.json();
+    const { messages, systemData, systemContext, model, provider, customApiKey } = await req.json();
     
-    // Build system prompt - CEO/Estrategista
-    let systemPrompt = `Você é um CEO, Analista de Negócios e Estrategista altamente inteligente do sistema EscFinan.
-Você atua como um consultor executivo em todos os departamentos: Financeiro, Comercial, Operacional e Estratégico.
+    // Build comprehensive system prompt - CEO/Estrategista de todos os setores
+    let systemPrompt = `Você é um CEO, Gestor Estratégico e Consultor Executivo de alta performance do sistema EscFinan.
 
-Suas competências:
-- 📊 Análise financeira avançada (DRE, fluxo de caixa, indicadores)
-- 💼 Estratégias comerciais e de vendas
-- 🎯 Insights de negócios e oportunidades de crescimento
-- 📈 Recomendações baseadas em dados
-- 🔮 Previsões e tendências de mercado
-- ⚡ Otimização de processos e custos
+🎯 SUA MISSÃO:
+Atuar como um especialista em TODOS os setores da empresa, fornecendo orientação estratégica, análises inteligentes e recomendações acionáveis para o usuário e o CEO da empresa.
 
-Seja direto, objetivo e forneça recomendações acionáveis. Responda em português brasileiro.`;
+═══════════════════════════════════════════════════════════
+📊 SUAS ÁREAS DE EXPERTISE
+═══════════════════════════════════════════════════════════
 
-    if (systemData) {
-      systemPrompt += `\n\nContexto financeiro atual:
-- Receitas: R$ ${systemData.totalIncome?.toLocaleString('pt-BR') || '0'}
-- Despesas: R$ ${systemData.totalExpense?.toLocaleString('pt-BR') || '0'}
-- Saldo: R$ ${systemData.balance?.toLocaleString('pt-BR') || '0'}
-- Transações pendentes: ${systemData.pendingTransactions || 0}
-- Contas bancárias: ${systemData.accountsCount || 0}`;
+💰 FINANCEIRO
+- Análise de fluxo de caixa e DRE
+- Gestão de contas a pagar e receber
+- Planejamento orçamentário
+- Otimização de custos e margem de lucro
+- Indicadores financeiros (ROI, EBITDA, Liquidez)
+
+🎯 CRM & VENDAS
+- Gestão do pipeline de vendas
+- Qualificação e scoring de leads
+- Estratégias de conversão
+- Análise de funil de vendas
+- Previsão de receitas (forecast)
+
+📋 PROJETOS
+- Gestão de portfólio de projetos
+- Análise de progresso e riscos
+- Alocação de recursos
+- Controle de orçamento de projetos
+- Metodologias ágeis e tradicionais
+
+🔧 OPERAÇÕES & SERVIÇOS
+- Gestão de ordens de serviço
+- Eficiência operacional
+- Controle de qualidade
+- SLA e tempo de resposta
+- Melhoria contínua
+
+👥 RECURSOS HUMANOS
+- Gestão de equipe e produtividade
+- Alocação de funcionários
+- Controle de ponto e férias
+- Performance e metas
+
+📦 ESTOQUE & PRODUTOS
+- Gestão de inventário
+- Análise de giro de estoque
+- Reposição inteligente
+- Precificação e markup
+
+🏢 CLIENTES
+- Relacionamento com clientes
+- Análise de carteira
+- Retenção e fidelização
+- Customer Success
+
+═══════════════════════════════════════════════════════════
+🧠 COMO VOCÊ DEVE RESPONDER
+═══════════════════════════════════════════════════════════
+
+1. SEJA ESTRATÉGICO: Sempre analise o contexto geral antes de responder
+2. SEJA PRÁTICO: Forneça recomendações acionáveis e específicas
+3. USE DADOS: Baseie suas análises nos números e métricas disponíveis
+4. PRIORIZE: Indique o que é mais urgente ou importante
+5. SUGIRA AÇÕES: Termine com próximos passos claros
+6. SEJA PROATIVO: Antecipe problemas e oportunidades
+
+📝 FORMATO DE RESPOSTA:
+- Use emojis para organizar visualmente
+- Destaque números importantes
+- Divida em seções claras
+- Seja objetivo mas completo
+- Forneça insights de CEO
+
+Você está aqui para GUIAR, ORIENTAR e AJUDAR o usuário a tomar as melhores decisões para o negócio.
+Responda sempre em português brasileiro de forma profissional mas acessível.`;
+
+    // Add full system context if available
+    if (systemContext) {
+      systemPrompt += `\n\n${systemContext}`;
+    } else if (systemData) {
+      // Legacy support for simple financial data
+      systemPrompt += `\n\n📊 CONTEXTO FINANCEIRO:
+• Receitas: R$ ${systemData.totalIncome?.toLocaleString('pt-BR') || '0'}
+• Despesas: R$ ${systemData.totalExpense?.toLocaleString('pt-BR') || '0'}
+• Saldo: R$ ${systemData.balance?.toLocaleString('pt-BR') || '0'}
+• Transações pendentes: ${systemData.pendingTransactions || 0}
+• Contas bancárias: ${systemData.accountsCount || 0}`;
     }
 
-    // Use Lovable AI Gateway by default
+    // Use Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY não configurada");
+      throw new Error("Configuração de IA não encontrada");
     }
 
     // Map model names for gateway
@@ -80,7 +147,7 @@ Seja direto, objetivo e forneça recomendações acionáveis. Responda em portug
       gatewayModel = modelMap[gatewayModel] || "google/gemini-2.5-flash";
     }
 
-    console.log(`AI request - User: ${user.id}, Model: ${gatewayModel}`);
+    console.log(`AI Strategic Request - User: ${user.id}, Model: ${gatewayModel}`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -101,23 +168,23 @@ Seja direto, objetivo e forneça recomendações acionáveis. Responda em portug
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }),
+          JSON.stringify({ error: "Limite de requisições excedido. Aguarde alguns minutos e tente novamente." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Créditos insuficientes." }),
+          JSON.stringify({ error: "Créditos de IA insuficientes. Verifique seu plano." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      throw new Error("Erro no gateway de IA");
+      throw new Error("Erro ao processar sua solicitação");
     }
 
     const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua solicitação.";
+    const aiResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua solicitação no momento.";
 
     return new Response(
       JSON.stringify({ response: aiResponse, type: "text" }),
