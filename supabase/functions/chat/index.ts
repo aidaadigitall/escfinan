@@ -1,9 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const base64UrlDecode = (input: string): string => {
+  const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  return atob(padded);
+};
+
+const getUserIdFromAuthHeader = (authHeader: string): string | null => {
+  try {
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
+    return typeof payload?.sub === "string" ? payload.sub : null;
+  } catch {
+    return null;
+  }
 };
 
 serve(async (req) => {
@@ -12,36 +29,20 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-
-    const authHeader = req.headers.get("authorization");
+    // IMPORTANT: This function already has JWT verification enabled in config.
+    // Avoid calling auth endpoints here; just use the validated JWT for context/logging.
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
     console.log("Auth header present:", !!authHeader);
-    
+
     if (!authHeader) {
-      console.log("No authorization header found");
       return new Response(
         JSON.stringify({ error: "Autenticação necessária. Faça login." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { authorization: authHeader } }
-    });
-    
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    console.log("User verification:", user?.id ? "success" : "failed", userError?.message);
-    
-    if (userError || !user) {
-      console.log("User auth error:", userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Sessão expirada. Faça login novamente." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    console.log("User authenticated:", user.id);
+    const userId = getUserIdFromAuthHeader(authHeader) || "unknown";
+    console.log("JWT decoded user:", userId);
 
     const { messages, systemData, systemContext, model, provider, customApiKey } = await req.json();
     
@@ -155,7 +156,7 @@ Responda sempre em português brasileiro de forma profissional mas acessível.`;
       gatewayModel = modelMap[gatewayModel] || "google/gemini-2.5-flash";
     }
 
-    console.log(`AI Strategic Request - User: ${user.id}, Model: ${gatewayModel}`);
+    console.log(`AI Strategic Request - User: ${userId}, Model: ${gatewayModel}`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

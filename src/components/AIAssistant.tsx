@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useAISettings, AIModel } from "@/hooks/useAISettings";
+import { useAIAssistant } from "@/hooks/useAIAssistant";
 import { useNavigate } from "react-router-dom";
 
 interface Message {
@@ -39,7 +40,17 @@ interface AIAssistantProps {
 export const AIAssistant = ({ systemData }: AIAssistantProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { settings, getActiveProvider, getActiveModel } = useAISettings();
-  const [selectedModel, setSelectedModel] = useState<AIModel>(getActiveModel());
+  const { generateSystemContext } = useAIAssistant();
+
+  const activeModel = useMemo(() => getActiveModel(), [getActiveModel, settings.default_model]);
+  const [selectedModel, setSelectedModel] = useState<AIModel>(activeModel);
+
+  // Mantém o modelo do chat sempre alinhado com o modelo configurado no painel
+  // (sem forçar troca enquanto o chat estiver aberto e o usuário estiver testando manualmente)
+  useEffect(() => {
+    if (!isOpen) setSelectedModel(activeModel);
+  }, [isOpen, activeModel]);
+
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -65,13 +76,14 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
       const { callAIAssistant: callService } = await import(
         "@/api/aiAssistantService"
       );
-      const { useAIAssistant } = await import("@/hooks/useAIAssistant");
+
       const provider = getActiveProvider();
+      const fullSystemContext = generateSystemContext();
 
       const data = await callService({
         message: userMessage,
         systemData,
-        systemContext: systemData ? undefined : undefined, // Will be enhanced in future
+        systemContext: fullSystemContext,
         conversationHistory: messages.map((m) => ({
           role: m.role,
           content: m.content,
