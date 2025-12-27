@@ -102,8 +102,8 @@ const PainelOS = () => {
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [selectedClient, setSelectedClient] = useState("");
-  const [selectedVendor, setSelectedVendor] = useState("");
-  const [selectedTechnician, setSelectedTechnician] = useState("");
+  const [selectedVendor, setSelectedVendor] = useState("all");
+  const [selectedTechnician, setSelectedTechnician] = useState("all");
 
   const handleRefresh = () => {
     refetch();
@@ -128,8 +128,8 @@ const PainelOS = () => {
     setDateFrom(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
     setDateTo(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
     setSelectedClient("");
-    setSelectedVendor("");
-    setSelectedTechnician("");
+    setSelectedVendor("all");
+    setSelectedTechnician("all");
     refetch();
     toast.info("Filtros limpos!");
   };
@@ -293,7 +293,7 @@ const PainelOS = () => {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {users?.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.name}
@@ -311,7 +311,7 @@ const PainelOS = () => {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {employees?.filter(e => e.is_active).map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>
                       {emp.name}

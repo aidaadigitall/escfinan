@@ -30,10 +30,20 @@ export const useOSDashboardData = () => {
       // 1. Buscar todas as Ordens de Serviço relevantes
       const { data: orders, error } = await supabase
         .from("service_orders")
-        .select("*, employees:technician_id(name)")
+        .select("*")
         .in("status", ["pending", "in_progress", "waiting_parts", "approved", "completed", "delivered"]);
 
       if (error) throw new Error(error.message);
+
+      // 1.1 Buscar nomes dos técnicos (sem depender de FK/relacionamento embutido)
+      const { data: employees, error: empError } = await supabase
+        .from("employees")
+        .select("id, name");
+
+      if (empError) throw new Error(empError.message);
+
+      const employeeNameById = new Map<string, string>();
+      (employees || []).forEach((e: any) => employeeNameById.set(e.id, e.name));
 
       // 2. Processar as métricas
       const today = new Date();
@@ -102,7 +112,7 @@ export const useOSDashboardData = () => {
           faturamentoMensal[month] = (faturamentoMensal[month] || 0) + order.total_amount;
 
           // Faturamento por Técnico
-          const techName = order.employees?.name || "Não atribuído";
+          const techName = order.technician_id ? employeeNameById.get(order.technician_id) : null;
           faturamentoPorTecnico[techName] = (faturamentoPorTecnico[techName] || 0) + order.total_amount;
         }
       }
