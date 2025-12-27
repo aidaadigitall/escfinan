@@ -14,6 +14,7 @@ interface AIAssistantRequest {
     pendingTransactions?: number;
     accountsCount?: number;
   };
+  systemContext?: string; // Full system context from all modules
   conversationHistory?: Array<{
     role: "user" | "assistant";
     content: string;
@@ -86,6 +87,7 @@ export const callAIAssistant = async (
       body: {
         messages,
         systemData: request.systemData,
+        systemContext: request.systemContext,
         model: request.model || "gemini-2.5-flash",
         provider: request.provider || "lovable",
         customApiKey: request.customApiKey,

@@ -46,7 +46,7 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
       id: "1",
       role: "assistant",
       content:
-        "Olá! 👋 Sou seu Analista de Negócios com IA. Atuo como CEO/Estrategista do seu negócio.\n\n• 📊 **Análise Financeira** - DRE, fluxo de caixa, indicadores\n• 💼 **Estratégias Comerciais** - Vendas e crescimento\n• 🎯 **Insights de Negócios** - Oportunidades e otimização\n• 📈 **Recomendações Estratégicas** - Decisões baseadas em dados\n\nComo posso ajudá-lo hoje?",
+        "Olá! 👋 Sou seu **Gestor Estratégico com IA**. Atuo como CEO e especialista em todos os setores:\n\n• 💰 **Financeiro** - Fluxo de caixa, DRE, custos\n• 🎯 **CRM** - Leads, pipeline, conversão\n• 📋 **Projetos** - Gestão, prazos, orçamentos\n• 🔧 **Operações** - Ordens de serviço, produtividade\n• 💼 **Vendas** - Estratégias comerciais\n• 👥 **RH** - Equipe e recursos\n• 📦 **Estoque** - Produtos e inventário\n\nComo posso ajudar a otimizar seu negócio hoje?",
       timestamp: new Date(),
       type: "text",
     },
@@ -65,11 +65,13 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
       const { callAIAssistant: callService } = await import(
         "@/api/aiAssistantService"
       );
+      const { useAIAssistant } = await import("@/hooks/useAIAssistant");
       const provider = getActiveProvider();
 
       const data = await callService({
         message: userMessage,
         systemData,
+        systemContext: systemData ? undefined : undefined, // Will be enhanced in future
         conversationHistory: messages.map((m) => ({
           role: m.role,
           content: m.content,
@@ -122,10 +124,12 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
 
   const handleQuickAction = async (action: string) => {
     const quickMessages: Record<string, string> = {
-      help: "Como uso o sistema de contas a receber?",
-      strategy: "Analise meus dados e sugira estratégias para melhorar minha gestão financeira.",
-      analysis: "Faça uma análise completa da saúde financeira do meu negócio.",
-      decision: "Qual é a melhor estratégia para otimizar custos e aumentar receitas?",
+      financial: "Analise a saúde financeira completa: receitas, despesas, fluxo de caixa e dê recomendações estratégicas.",
+      crm: "Analise meu pipeline de vendas, leads quentes e frios, taxa de conversão e sugira ações para melhorar as vendas.",
+      projects: "Qual o status dos projetos ativos? Há algum atrasado ou com risco? Como otimizar a entrega?",
+      operations: "Analise as ordens de serviço: pendentes, ticket médio, eficiência operacional e como melhorar.",
+      strategy: "Faça uma análise estratégica completa do negócio considerando todos os setores e sugira as 5 principais ações.",
+      help: "Quais são suas capacidades? Como você pode me ajudar a gerenciar melhor o negócio?",
     };
     const message = quickMessages[action];
     if (message) {
@@ -152,13 +156,13 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-lg flex items-center gap-2">
                 <Lightbulb className="h-5 w-5" />
-                Analista IA
+                Gestor IA
               </h3>
               <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:bg-white/20" onClick={() => navigate("/configuracoes")}>
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-xs text-blue-100 mt-1">CEO & Estrategista de Negócios</p>
+            <p className="text-xs text-blue-100 mt-1">CEO & Estrategista de Todos os Setores</p>
             <Select value={selectedModel} onValueChange={(v: AIModel) => setSelectedModel(v)}>
               <SelectTrigger className="w-full h-8 text-xs mt-2 bg-white/20 border-white/30 text-white">
                 <SelectValue />
@@ -193,8 +197,15 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
           {messages.length <= 1 && (
             <div className="px-4 py-3 border-t space-y-2">
               <p className="text-xs font-semibold text-muted-foreground">Ações rápidas:</p>
-              <div className="grid grid-cols-2 gap-1">
-                {[{ key: "help", icon: HelpCircle, label: "Ajuda" }, { key: "strategy", icon: TrendingUp, label: "Estratégia" }, { key: "analysis", icon: Lightbulb, label: "Análise" }, { key: "decision", icon: TrendingUp, label: "Decisão" }].map(({ key, icon: Icon, label }) => (
+              <div className="grid grid-cols-3 gap-1">
+                {[
+                  { key: "financial", icon: TrendingUp, label: "Financeiro" },
+                  { key: "crm", icon: MessageCircle, label: "CRM" },
+                  { key: "projects", icon: Lightbulb, label: "Projetos" },
+                  { key: "operations", icon: HelpCircle, label: "Operações" },
+                  { key: "strategy", icon: TrendingUp, label: "Estratégia" },
+                  { key: "help", icon: HelpCircle, label: "Ajuda" },
+                ].map(({ key, icon: Icon, label }) => (
                   <Button key={key} size="sm" variant="outline" className="text-xs h-8" onClick={() => handleQuickAction(key)}>
                     <Icon className="h-3 w-3 mr-1" />{label}
                   </Button>
