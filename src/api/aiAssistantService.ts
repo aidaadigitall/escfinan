@@ -30,39 +30,71 @@ interface AIAssistantResponse {
   creditsRemaining?: number;
 }
 
+const getInvokeErrorMessage = (err: unknown): string => {
+  const anyErr = err as any;
+  const ctx = anyErr?.context;
+  const status: number | undefined = ctx?.status;
+  const rawBody = ctx?.body;
+
+  let bodyMessage: string | undefined;
+  try {
+    if (typeof rawBody === "string") {
+      const parsed = JSON.parse(rawBody);
+      bodyMessage = parsed?.error;
+    } else if (rawBody && typeof rawBody === "object") {
+      bodyMessage = rawBody?.error;
+    }
+  } catch {
+    // ignore
+  }
+
+  if (status === 401) {
+    return bodyMessage || "Autenticação necessária. Faça login novamente.";
+  }
+  if (status === 402) {
+    return bodyMessage || "Créditos insuficientes para usar a IA.";
+  }
+  if (status === 429) {
+    return bodyMessage || "Limite de requisições excedido. Tente novamente em alguns minutos.";
+  }
+
+  return bodyMessage || anyErr?.message || "Erro ao conectar com o assistente";
+};
+
 /**
- * Chama o assistente de IA através da edge function
- * A edge function usa o Lovable AI Gateway ou API customizada
+ * Chama o assistente de IA através da função de backend
+ * A função usa o Lovable AI Gateway ou API customizada
  */
 export const callAIAssistant = async (
   request: AIAssistantRequest
 ): Promise<AIAssistantResponse> => {
   try {
     // Build messages array from conversation history
-    const messages = request.conversationHistory?.map(m => ({
-      role: m.role,
-      content: m.content
-    })) || [];
+    const messages =
+      request.conversationHistory?.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })) || [];
 
     // Add current user message
     messages.push({
       role: "user" as const,
-      content: request.message
+      content: request.message,
     });
 
-    const { data, error } = await supabase.functions.invoke('chat', {
-      body: { 
+    const { data, error } = await supabase.functions.invoke("chat", {
+      body: {
         messages,
         systemData: request.systemData,
         model: request.model || "gemini-2.5-flash",
         provider: request.provider || "lovable",
-        customApiKey: request.customApiKey
-      }
+        customApiKey: request.customApiKey,
+      },
     });
 
     if (error) {
       console.error("Erro ao chamar assistente de IA:", error);
-      throw new Error(error.message || "Erro ao conectar com o assistente");
+      throw new Error(getInvokeErrorMessage(error));
     }
 
     if (data?.error) {

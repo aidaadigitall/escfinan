@@ -62,28 +62,44 @@ export const AIAssistant = ({ systemData }: AIAssistantProps) => {
   const callAIAssistant = async (userMessage: string) => {
     setIsLoading(true);
     try {
-      const { callAIAssistant: callService } = await import("@/api/aiAssistantService");
+      const { callAIAssistant: callService } = await import(
+        "@/api/aiAssistantService"
+      );
       const provider = getActiveProvider();
-      
+
       const data = await callService({
         message: userMessage,
         systemData,
-        conversationHistory: messages.map(m => ({ role: m.role, content: m.content })),
+        conversationHistory: messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
         model: selectedModel,
         provider,
-        customApiKey: provider === "openai" ? settings.openai_api_key : 
-                      provider === "google" ? settings.google_api_key : null
+        customApiKey:
+          provider === "openai"
+            ? settings.openai_api_key
+            : provider === "google"
+              ? settings.google_api_key
+              : null,
       });
 
-      setMessages((prev) => [...prev, {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: data.response,
-        timestamp: new Date(),
-        type: data.type || "text",
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: data.response,
+          timestamp: new Date(),
+          type: data.type || "text",
+        },
+      ]);
     } catch (error) {
-      toast.error("Erro ao conectar com o assistente de IA");
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Erro ao conectar com o assistente de IA";
+      toast.error(message);
       console.error(error);
     } finally {
       setIsLoading(false);
